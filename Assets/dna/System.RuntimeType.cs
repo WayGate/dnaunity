@@ -18,17 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.RuntimeType.h"
-
-#include "Types.h"
-#include "Type.h"
-#include "Heap.h"
-#include "System.String.h"
-#include "System.RuntimeType.h"
-#include "System.Array.h"
+#if NO
 
 HEAP_PTR RuntimeType_New(tMD_TypeDef *pTypeDef) {
 	tRuntimeType *pRuntimeType;
@@ -162,3 +152,5 @@ tAsyncCall* System_RuntimeType_GetElementType(PTR pThis_, PTR pParams, PTR pRetu
 
 	return NULL;
 }
+
+#endif

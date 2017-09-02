@@ -18,18 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Net.Dns.h"
-
-#include "Type.h"
-#include "System.Array.h"
-#include "System.String.h"
-
-#ifndef WIN32
-#include <netdb.h>
-#endif
+#if NO
 
 tAsyncCall* System_Net_Dns_Internal_GetHostEnt(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	struct hostent *pHostEnt;
@@ -61,3 +50,5 @@ tAsyncCall* System_Net_Dns_Internal_GetHostEnt(PTR pThis_, PTR pParams, PTR pRet
 	return NULL;
 
 }
+
+#endif

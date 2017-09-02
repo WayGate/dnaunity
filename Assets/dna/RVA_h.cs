@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined (__RVA_H)
-#define __RVA_H
+#if NO
 
 typedef struct tRVA_Item_ tRVA_Item;
 struct tRVA_Item_ {

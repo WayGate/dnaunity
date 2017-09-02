@@ -18,15 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "Generics.h"
-
-#include "MetaData.h"
-#include "Types.h"
-#include "Type.h"
-#include "EvalStack.h"
+#if NO
 
 void Generic_GetHeapRoots(tHeapRoots *pHeapRoots, tMD_TypeDef *pTypeDef) {
 	tGenericInstance *pInst = pTypeDef->pGenericInstances;
@@ -227,3 +219,5 @@ tMD_MethodDef* Generics_GetMethodDefFromCoreMethod
 
 	return pMethod;
 }
+
+#endif

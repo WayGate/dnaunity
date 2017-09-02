@@ -1,13 +1,4 @@
-#include "Compat.h"
-#include "Sys.h"
-#include "CLIFile.h"
-#include "MetaData.h"
-#include "Thread.h"
-#include "Type.h"
-
-#include "System.Array.h"
-#include "System.RuntimeType.h"
-#include "System.String.h"
+#if NO
 
 int JSInterop_CallDotNet(char* assemblyName, char* namespace, char* className, char* methodName, char* stringArg) {
 	// TODO: Can't we reuse threads? Need to reset their state somehow.
@@ -57,3 +48,5 @@ tAsyncCall* Framework_JSInterop_Activator_CreateInstance(PTR pThis_, PTR pParams
 	*(HEAP_PTR*)pReturnValue = (HEAP_PTR)Heap_AllocType(pTypeDef);
 	return NULL;
 }
+
+#endif

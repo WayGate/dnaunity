@@ -18,10 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Threading.Interlocked.h"
+#if NO
 
 tAsyncCall* System_Threading_Interlocked_CompareExchange_Int32(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	U32 *pLoc = INTERNALCALL_PARAM(0, U32*);
@@ -73,3 +70,5 @@ tAsyncCall* System_Threading_Interlocked_Exchange_Int32(PTR pThis_, PTR pParams,
 
 	return NULL;
 }
+
+#endif

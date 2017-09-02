@@ -18,12 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__METHODSTATE_H)
-#define __METHODSTATE_H
+#if NO
 
 typedef struct tMethodState_ tMethodState;
-
-#include "MetaData.h"
 
 struct tMethodState_ {
 	// This method's meta-data
@@ -54,7 +51,7 @@ struct tMethodState_ {
 	// When a leave instruction has to run a 'finally' bit of code, store the leave jump address here
 	U32 *pOpEndFinally;
 
-#ifdef DIAG_METHOD_CALLS
+#if DIAG_METHOD_CALLS
 	// For tracking execution time.
 	U64 startTime;
 #endif

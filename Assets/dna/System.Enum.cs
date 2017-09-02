@@ -18,17 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Enum.h"
-
-#include "MetaData.h"
-#include "Types.h"
-#include "Type.h"
-#include "System.RuntimeType.h"
-#include "System.Array.h"
-#include "System.String.h"
+#if NO
 
 tAsyncCall* System_Enum_Internal_GetValue(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	*(U32*)pReturnValue = *(U32*)pThis_;
@@ -66,3 +56,5 @@ tAsyncCall* System_Enum_Internal_GetInfo(PTR pThis_, PTR pParams, PTR pReturnVal
 
 	return NULL;
 }
+
+#endif

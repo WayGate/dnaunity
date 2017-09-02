@@ -18,13 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__METADATA_H)
-#define __METADATA_H
+#if NO
 
-#include "Types.h"
-#include "RVA.h"
-
-#define MAX_TABLES 48
+const int MAX_TABLES 48
 
 struct tMetaDataStrings_ {
 	// The start of the string heap
@@ -75,55 +71,54 @@ struct tMetaData_ {
 	unsigned char index32BitString, index32BitBlob, index32BitGUID;
 };
 
-#define TYPEATTRIBUTES_INTERFACE 0x20
+const int TYPEATTRIBUTES_INTERFACE 0x20
 
-#define METHODATTRIBUTES_STATIC 0x10
-#define METHODATTRIBUTES_VIRTUAL 0x40
-#define METHODATTRIBUTES_NEWSLOT 0x100
-#define METHODATTRIBUTES_PINVOKEIMPL 0x2000
+const int METHODATTRIBUTES_STATIC 0x10
+const int METHODATTRIBUTES_VIRTUAL 0x40
+const int METHODATTRIBUTES_NEWSLOT 0x100
+const int METHODATTRIBUTES_PINVOKEIMPL 0x2000
 
-#define METHODIMPLATTRIBUTES_CODETYPE_MASK 0x3
-#define METHODIMPLATTRIBUTES_CODETYPE_RUNTIME 0x3
-#define METHODIMPLATTRIBUTES_INTERNALCALL 0x1000
+const int METHODIMPLATTRIBUTES_CODETYPE_MASK 0x3
+const int METHODIMPLATTRIBUTES_CODETYPE_RUNTIME 0x3
+const int METHODIMPLATTRIBUTES_INTERNALCALL 0x1000
 
-#define FIELDATTRIBUTES_STATIC 0x10
-#define FIELDATTRIBUTES_LITERAL 0x40 // compile-time constant
-#define FIELDATTRIBUTES_HASFIELDRVA 0x100
+const int FIELDATTRIBUTES_STATIC 0x10
+const int FIELDATTRIBUTES_LITERAL 0x40 // compile-time constant
+const int FIELDATTRIBUTES_HASFIELDRVA 0x100
 
-#define SIG_METHODDEF_GENERIC 0x10
-#define SIG_METHODDEF_HASTHIS 0x20
+const int SIG_METHODDEF_GENERIC 0x10
+const int SIG_METHODDEF_HASTHIS 0x20
 
-#define IMPLMAP_FLAGS_CHARSETMASK 0x0006
-#define IMPLMAP_FLAGS_CHARSETNOTSPEC 0x0000
-#define IMPLMAP_FLAGS_CHARSETANSI 0x0002
-#define IMPLMAP_FLAGS_CHARSETUNICODE 0x0004
-#define IMPLMAP_FLAGS_CHARSETAUTO 0x0006
+const int IMPLMAP_FLAGS_CHARSETMASK 0x0006
+const int IMPLMAP_FLAGS_CHARSETNOTSPEC 0x0000
+const int IMPLMAP_FLAGS_CHARSETANSI 0x0002
+const int IMPLMAP_FLAGS_CHARSETUNICODE 0x0004
+const int IMPLMAP_FLAGS_CHARSETAUTO 0x0006
 
-#define TYPE_ISARRAY(pType) ((pType)->pArrayElementType != NULL)
-#define TYPE_ISINTERFACE(pType) ((pType)->flags & TYPEATTRIBUTES_INTERFACE)
-#define TYPE_ISGENERICINSTANCE(pType) ((pType)->pGenericDefinition != NULL)
+const int TYPE_ISARRAY(pType) ((pType)->pArrayElementType != NULL)
+const int TYPE_ISINTERFACE(pType) ((pType)->flags & TYPEATTRIBUTES_INTERFACE)
+const int TYPE_ISGENERICINSTANCE(pType) ((pType)->pGenericDefinition != NULL)
 
-#define METHOD_ISVIRTUAL(pMethod) ((pMethod)->flags & METHODATTRIBUTES_VIRTUAL)
-#define METHOD_ISSTATIC(pMethod) ((pMethod)->flags & METHODATTRIBUTES_STATIC)
-#define METHOD_ISNEWSLOT(pMethod) ((pMethod)->flags & METHODATTRIBUTES_NEWSLOT)
+const int METHOD_ISVIRTUAL(pMethod) ((pMethod)->flags & METHODATTRIBUTES_VIRTUAL)
+const int METHOD_ISSTATIC(pMethod) ((pMethod)->flags & METHODATTRIBUTES_STATIC)
+const int METHOD_ISNEWSLOT(pMethod) ((pMethod)->flags & METHODATTRIBUTES_NEWSLOT)
 
-#define FIELD_HASFIELDRVA(pField) ((pField)->flags & FIELDATTRIBUTES_HASFIELDRVA)
-#define FIELD_ISLITERAL(pField) ((pField)->flags & FIELDATTRIBUTES_LITERAL)
-#define FIELD_ISSTATIC(pField) ((pField)->flags & FIELDATTRIBUTES_STATIC)
+const int FIELD_HASFIELDRVA(pField) ((pField)->flags & FIELDATTRIBUTES_HASFIELDRVA)
+const int FIELD_ISLITERAL(pField) ((pField)->flags & FIELDATTRIBUTES_LITERAL)
+const int FIELD_ISSTATIC(pField) ((pField)->flags & FIELDATTRIBUTES_STATIC)
 
-#define IMPLMAP_ISCHARSET_NOTSPEC(pImplMap) (((pImplMap)->mappingFlags & IMPLMAP_FLAGS_CHARSETMASK) == IMPLMAP_FLAGS_CHARSETNOTSPEC)
-#define IMPLMAP_ISCHARSET_ANSI(pImplMap) (((pImplMap)->mappingFlags & IMPLMAP_FLAGS_CHARSETMASK) == IMPLMAP_FLAGS_CHARSETANSI)
-#define IMPLMAP_ISCHARSET_UNICODE(pImplMap) (((pImplMap)->mappingFlags & IMPLMAP_FLAGS_CHARSETMASK) == IMPLMAP_FLAGS_CHARSETUNICODE)
-#define IMPLMAP_ISCHARSET_AUTO(pImplMap) (((pImplMap)->mappingFlags & IMPLMAP_FLAGS_CHARSETMASK) == IMPLMAP_FLAGS_CHARSETAUTO)
+const int IMPLMAP_ISCHARSET_NOTSPEC(pImplMap) (((pImplMap)->mappingFlags & IMPLMAP_FLAGS_CHARSETMASK) == IMPLMAP_FLAGS_CHARSETNOTSPEC)
+const int IMPLMAP_ISCHARSET_ANSI(pImplMap) (((pImplMap)->mappingFlags & IMPLMAP_FLAGS_CHARSETMASK) == IMPLMAP_FLAGS_CHARSETANSI)
+const int IMPLMAP_ISCHARSET_UNICODE(pImplMap) (((pImplMap)->mappingFlags & IMPLMAP_FLAGS_CHARSETMASK) == IMPLMAP_FLAGS_CHARSETUNICODE)
+const int IMPLMAP_ISCHARSET_AUTO(pImplMap) (((pImplMap)->mappingFlags & IMPLMAP_FLAGS_CHARSETMASK) == IMPLMAP_FLAGS_CHARSETAUTO)
 
-#define TABLE_ID(index) ((index) >> 24)
-#define TABLE_OFS(index) ((index) & 0x00ffffff)
-#define MAKE_TABLE_INDEX(table, index) ((IDX_TABLE)(((table) << 24) | ((index) & 0x00ffffff)))
+const int TABLE_ID(index) ((index) >> 24)
+const int TABLE_OFS(index) ((index) & 0x00ffffff)
+const int MAKE_TABLE_INDEX(table, index) ((IDX_TABLE)(((table) << 24) | ((index) & 0x00ffffff)))
 
 typedef struct tParameter_ tParameter;
 typedef struct tInterfaceMap_ tInterfaceMap;
 
-#include "MetaDataTables.h"
 
 struct tParameter_ {
 	// The type of the parameter
@@ -153,7 +148,7 @@ void MetaData_GetHeapRoots(tHeapRoots *pHeapRoots, tMetaData *pMetaData);
 
 // Meta-data filling extra information
 
-#define MetaData_Fill_TypeDef(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs) if ((pTypeDef)->isFilled == 0) MetaData_Fill_TypeDef_(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs)
+const int MetaData_Fill_TypeDef(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs) if ((pTypeDef)->isFilled == 0) MetaData_Fill_TypeDef_(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs)
 void MetaData_Fill_TypeDef_(tMD_TypeDef *pTypeDef, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs);
 void MetaData_Fill_FieldDef(tMD_TypeDef *pParentType, tMD_FieldDef *pFieldDef, U32 memOffset, tMD_TypeDef **ppClassTypeArgs);
 void MetaData_Fill_MethodDef(tMD_TypeDef *pParentType, tMD_MethodDef *pMethodDef, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs);

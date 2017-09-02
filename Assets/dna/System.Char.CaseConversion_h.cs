@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#if NO
+
 static unsigned short UC_CaseLower[] = {
 	0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067, 0x0068, // 0000
 	0x0069, 0x006a, 0x006b, 0x006c, 0x006d, 0x006e, 0x006f, 0x0070, // 0008
@@ -194,3 +196,4 @@ static unsigned short UC_CaseUpper[] = {
 	0xff3a, 0xffff
 };
 
+#endif

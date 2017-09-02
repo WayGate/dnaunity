@@ -18,41 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#if NO
 
-#include "InternalCall.h"
-#include "MetaData.h"
-#include "Type.h"
-
-#include "System.String.h"
-#include "System.Object.h"
-#include "System.Console.h"
-#include "System.Array.h"
-#include "System.Environment.h"
-#include "System.Runtime.CompilerServices.RuntimeHelpers.h"
-#include "System.ValueType.h"
-#include "System.RuntimeType.h"
-#include "System.Type.h"
-#include "System.Threading.Monitor.h"
-#include "System.Threading.Thread.h"
-#include "System.Threading.Interlocked.h"
-#include "System.Enum.h"
-#include "System.WeakReference.h"
-#include "System.GC.h"
-#include "System.IO.FileInternal.h"
-#include "System.Char.h"
-#include "System.Diagnostics.Debugger.h"
-#include "System.Net.Sockets.Socket.h"
-#include "System.Net.Dns.h"
-#include "System.DateTime.h"
-#include "System.Math.h"
-#include "System.Reflection.MethodInfo.h"
-#include "Delegate.h"
-
-#include "JSInterop.h"
-
-#define MAX_PARAMS 6
+const int MAX_PARAMS = 6
 
 typedef struct tInternalCall_ tInternalCall;
 struct tInternalCall_ {
@@ -218,3 +186,6 @@ fnInternalCall InternalCall_Map(tMD_MethodDef *pMethod) {
 	Crash("InternalCall_Map(): Cannot map [%s]%s.%s", pMethod->pParentType->nameSpace, pMethod->pParentType->name, pMethod->name);
 	FAKE_RETURN;
 }
+
+#endif
+

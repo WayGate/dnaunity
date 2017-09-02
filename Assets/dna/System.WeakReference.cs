@@ -18,15 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Array.h"
-
-#include "Types.h"
-#include "MetaData.h"
-#include "Heap.h"
-#include "Type.h"
+#if NO
 
 typedef struct tWeakRef_ tWeakRef;
 struct tWeakRef_ {
@@ -86,3 +78,5 @@ void SystemWeakReference_TargetGone(HEAP_PTR *ppWeakRef_, U32 removeLongRefs) {
 	}
 	*ppWeakRef = NULL;
 }
+
+#endif

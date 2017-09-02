@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#if NO
+
 case CALL0(SINGLE):
 	fRet = ((_fC)(pFn))();
 	break;
@@ -1107,3 +1109,5 @@ case CALL4(DEFAULT, DEFAULT, DEFAULT, DEFAULT, DOUBLE):
 case CALL4(DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT):
 	u64Ret = ((_uCuuuu)(pFn))(_args[0], _args[1], _args[2], _args[3]);
 	break;
+
+#endif

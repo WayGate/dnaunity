@@ -18,26 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#if NO
 
-#include "JIT.h"
-
-#include "JIT_OpCodes.h"
-#include "MetaData.h"
-#include "MetaDataTables.h"
-#include "Heap.h"
-#include "Type.h"
-#include "MethodState.h"
-#include "Finalizer.h"
-#include "Delegate.h"
-#include "PInvoke.h"
-
-#include "System.String.h"
-#include "System.Array.h"
-#include "System.Reflection.MethodBase.h"
-
-//#define TRACE 1
+//const int TRACE 1
 
 // Global array which stores the absolute addresses of the start and end of all JIT code
 // fragment machine code.
@@ -45,79 +28,79 @@ tJITCodeInfo jitCodeInfo[JIT_OPCODE_MAXNUM];
 tJITCodeInfo jitCodeGoNext;
 
 // Get the next op-code
-#define GET_OP() (*(pCurOp++))
+const int GET_OP() (*(pCurOp++))
 
 // Get a 32/64 bit pointer
-#ifdef _32BIT_
-#define GET_PTR() (*(pCurOp++))
+#if _32BIT_
+const int GET_PTR() (*(pCurOp++))
 #else
 // NOTE: Technically this is undefined behavior having two increments in the same expression
-#define GET_PTR() (((U64)*(pCurOp++)) | ((U64)*(pCurOp++) << 32));
+const int GET_PTR() (((U64)*(pCurOp++)) | ((U64)*(pCurOp++) << 32));
 #endif
 
 // Push a PTR value on the top of the stack
-#define PUSH_PTR(ptr) *(PTR*)pCurEvalStack = (PTR)(ptr); pCurEvalStack += sizeof(void*)
+const int PUSH_PTR(ptr) *(PTR*)pCurEvalStack = (PTR)(ptr); pCurEvalStack += sizeof(void*)
 // Push an arbitrarily-sized value-type onto the top of the stack
-#define PUSH_VALUETYPE(ptr, valueSize, stackInc) memcpy(pCurEvalStack, ptr, valueSize); pCurEvalStack += stackInc
+const int PUSH_VALUETYPE(ptr, valueSize, stackInc) memcpy(pCurEvalStack, ptr, valueSize); pCurEvalStack += stackInc
 // Push a U32 value on the top of the stack
-#define PUSH_U32(value) *(U32*)pCurEvalStack = (U32)(value); pCurEvalStack += 4
+const int PUSH_U32(value) *(U32*)pCurEvalStack = (U32)(value); pCurEvalStack += 4
 // Push a U64 value on the top of the stack
-#define PUSH_U64(value) *(U64*)pCurEvalStack = (U64)(value); pCurEvalStack += 8
+const int PUSH_U64(value) *(U64*)pCurEvalStack = (U64)(value); pCurEvalStack += 8
 // Push a float value on the top of the stack
-#define PUSH_FLOAT(value) *(float*)pCurEvalStack = (float)(value); pCurEvalStack += 4;
+const int PUSH_FLOAT(value) *(float*)pCurEvalStack = (float)(value); pCurEvalStack += 4;
 // Push a double value on the top of the stack
-#define PUSH_DOUBLE(value) *(double*)pCurEvalStack = (double)(value); pCurEvalStack += 8;
+const int PUSH_DOUBLE(value) *(double*)pCurEvalStack = (double)(value); pCurEvalStack += 8;
 // Push a heap pointer on to the top of the stack
-#define PUSH_O(pHeap) *(void**)pCurEvalStack = (void*)(pHeap); pCurEvalStack += sizeof(void*)
+const int PUSH_O(pHeap) *(void**)pCurEvalStack = (void*)(pHeap); pCurEvalStack += sizeof(void*)
 // DUP4() duplicates the top 4 bytes on the eval stack
-#define DUP4() *(U32*)pCurEvalStack = *(U32*)(pCurEvalStack - 4); pCurEvalStack += 4
+const int DUP4() *(U32*)pCurEvalStack = *(U32*)(pCurEvalStack - 4); pCurEvalStack += 4
 // DUP8() duplicates the top 4 bytes on the eval stack
-#define DUP8() *(U64*)pCurEvalStack = *(U64*)(pCurEvalStack - 8); pCurEvalStack += 8
+const int DUP8() *(U64*)pCurEvalStack = *(U64*)(pCurEvalStack - 8); pCurEvalStack += 8
 // DUP() duplicates numBytes bytes from the top of the stack
-#define DUP(numBytes) memcpy(pCurEvalStack, pCurEvalStack - numBytes, numBytes); pCurEvalStack += numBytes
+const int DUP(numBytes) memcpy(pCurEvalStack, pCurEvalStack - numBytes, numBytes); pCurEvalStack += numBytes
 // Pop a U32 value from the stack
-#define POP_U32() (*(U32*)(pCurEvalStack -= 4))
+const int POP_U32() (*(U32*)(pCurEvalStack -= 4))
 // Pop a U64 value from the stack
-#define POP_U64() (*(U64*)(pCurEvalStack -= 8))
+const int POP_U64() (*(U64*)(pCurEvalStack -= 8))
 // Pop a float value from the stack
-#define POP_FLOAT() (*(float*)(pCurEvalStack -= 4))
+const int POP_FLOAT() (*(float*)(pCurEvalStack -= 4))
 // Pop a double value from the stack
-#define POP_DOUBLE() (*(double*)(pCurEvalStack -= 8))
+const int POP_DOUBLE() (*(double*)(pCurEvalStack -= 8))
 // Pop 2 U32's from the stack
-#define POP_U32_U32(v1,v2) pCurEvalStack -= 8; v1 = *(U32*)pCurEvalStack; v2 = *(U32*)(pCurEvalStack + 4)
+const int POP_U32_U32(v1,v2) pCurEvalStack -= 8; v1 = *(U32*)pCurEvalStack; v2 = *(U32*)(pCurEvalStack + 4)
 // Pop 2 U64's from the stack
-#define POP_U64_U64(v1,v2) pCurEvalStack -= 16; v1 = *(U64*)pCurEvalStack; v2 = *(U64*)(pCurEvalStack + 8)
+const int POP_U64_U64(v1,v2) pCurEvalStack -= 16; v1 = *(U64*)pCurEvalStack; v2 = *(U64*)(pCurEvalStack + 8)
 // Pop 2 F32's from the stack
-#define POP_F32_F32(v1,v2) pCurEvalStack -= 8; v1 = *(float*)pCurEvalStack; v2 = *(float*)(pCurEvalStack + 4)
+const int POP_F32_F32(v1,v2) pCurEvalStack -= 8; v1 = *(float*)pCurEvalStack; v2 = *(float*)(pCurEvalStack + 4)
 // Pop 2 F64's from the stack
-#define POP_F64_F64(v1,v2) pCurEvalStack -= 16; v1 = *(double*)pCurEvalStack; v2 = *(double*)(pCurEvalStack + 8)
+const int POP_F64_F64(v1,v2) pCurEvalStack -= 16; v1 = *(double*)pCurEvalStack; v2 = *(double*)(pCurEvalStack + 8)
 // Pop a PTR value from the stack
-#define POP_PTR() (*(PTR*)(pCurEvalStack -= sizeof(void*)))
+const int POP_PTR() (*(PTR*)(pCurEvalStack -= sizeof(void*)))
 // Pop an arbitrarily-sized value-type from the stack (copies it to the specified memory location)
-#define POP_VALUETYPE(ptr, valueSize, stackDec) memcpy(ptr, pCurEvalStack -= stackDec, valueSize)
+const int POP_VALUETYPE(ptr, valueSize, stackDec) memcpy(ptr, pCurEvalStack -= stackDec, valueSize)
 // Pop a Object (heap) pointer value from the stack
-#define POP_O() (*(HEAP_PTR*)(pCurEvalStack -= sizeof(void*)))
+const int POP_O() (*(HEAP_PTR*)(pCurEvalStack -= sizeof(void*)))
 // POP() returns nothing - it just alters the stack offset correctly
-#define POP(numBytes) pCurEvalStack -= numBytes
+const int POP(numBytes) pCurEvalStack -= numBytes
 // POP_ALL() empties the evaluation stack
-#define POP_ALL() pCurEvalStack = pCurrentMethodState->pEvalStack
+const int POP_ALL() pCurEvalStack = pCurrentMethodState->pEvalStack
 
-#define STACK_ADDR(type) *(type*)(pCurEvalStack - sizeof(type))
+const int STACK_ADDR(type) *(type*)(pCurEvalStack - sizeof(type))
 // General binary ops
-#define BINARY_OP(returnType, type1, type2, op) \
+const int BINARY_OP(returnType, type1, type2, op) \
 	pCurEvalStack -= sizeof(type1) + sizeof(type2) - sizeof(returnType); \
 	*(returnType*)(pCurEvalStack - sizeof(returnType)) = \
 	*(type1*)(pCurEvalStack - sizeof(returnType)) op \
 	*(type2*)(pCurEvalStack - sizeof(returnType) + sizeof(type1))
 // General unary ops
-#define UNARY_OP(type, op) STACK_ADDR(type) = op STACK_ADDR(type)
+const int UNARY_OP(type, op) STACK_ADDR(type) = op STACK_ADDR(type)
 
 // Set the new method state (for use when the method state changes - in calls mainly)
-#define SAVE_METHOD_STATE() \
+const int SAVE_METHOD_STATE() \
 	pCurrentMethodState->stackOfs = (U32)(pCurEvalStack - pCurrentMethodState->pEvalStack); \
 	pCurrentMethodState->ipOffset = (U32)(pCurOp - pOps)
 
-#define LOAD_METHOD_STATE() \
+const int LOAD_METHOD_STATE() \
 	pCurrentMethodState = pThread->pCurrentMethodState; \
 	pParamsLocals = pCurrentMethodState->pParamsLocals; \
 	pCurEvalStack = pCurrentMethodState->pEvalStack + pCurrentMethodState->stackOfs; \
@@ -125,16 +108,16 @@ tJITCodeInfo jitCodeGoNext;
 	pOps = pJIT->pOps; \
 	pCurOp = pOps + pCurrentMethodState->ipOffset
 
-#define CHANGE_METHOD_STATE(pNewMethodState) \
+const int CHANGE_METHOD_STATE(pNewMethodState) \
 	SAVE_METHOD_STATE(); \
 	pThread->pCurrentMethodState = pNewMethodState; \
 	LOAD_METHOD_STATE()
 
 // Easy access to method parameters and local variables
-#define PARAMLOCAL_U32(offset) *(U32*)(pParamsLocals + offset)
-#define PARAMLOCAL_U64(offset) *(U64*)(pParamsLocals + offset)
+const int PARAMLOCAL_U32(offset) *(U32*)(pParamsLocals + offset)
+const int PARAMLOCAL_U64(offset) *(U64*)(pParamsLocals + offset)
 
-#define THROW(exType) heapPtr = Heap_AllocType(exType); goto throwHeapPtr
+const int THROW(exType) heapPtr = Heap_AllocType(exType); goto throwHeapPtr
 
 // Note: newObj is only set if a constructor is being called
 static void CreateParameters(PTR pParamsLocals, tMD_MethodDef *pCallMethod, PTR *ppCurEvalStack, HEAP_PTR newObj) {
@@ -172,7 +155,7 @@ static tMethodState* RunFinalizer(tThread *pThread) {
 	return NULL;
 }
 
-#ifdef DIAG_OPCODE_TIMES
+#if DIAG_OPCODE_TIMES
 U64 opcodeTimes[JIT_OPCODE_MAXNUM];
 static __inline unsigned __int64 __cdecl rdtsc() {
 	__asm {
@@ -181,50 +164,50 @@ static __inline unsigned __int64 __cdecl rdtsc() {
 }
 #endif
 
-#ifdef DIAG_OPCODE_USE
+#if DIAG_OPCODE_USE
 U32 opcodeNumUses[JIT_OPCODE_MAXNUM];
 
-#ifdef TRACE
-#define OPCODE_USE(op) printf("%s %X "#op "\n", pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack)); opcodeNumUses[op]++;
+#if TRACE
+const int OPCODE_USE(op) printf("%s %X "#op "\n", pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack)); opcodeNumUses[op]++;
 #else
-#define OPCODE_USE(op) opcodeNumUses[op]++;
+const int OPCODE_USE(op) opcodeNumUses[op]++;
 #endif
 
 #else
 
-#ifdef TRACE
-#define OPCODE_USE(op) printf("%s %X "#op "\n", pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack));
+#if TRACE
+const int OPCODE_USE(op) printf("%s %X "#op "\n", pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack));
 #else
-#define OPCODE_USE(op)
+const int OPCODE_USE(op)
 #endif
 
 #endif
 
-#define GET_LABEL(var, label) var = &&label
+const int GET_LABEL(var, label) var = &&label
 
-#define GO_NEXT() goto *(void*)jitCodeInfo[*pCurOp++].pStart;
+const int GO_NEXT() goto *(void*)jitCodeInfo[*pCurOp++].pStart;
 
-//#define GO_NEXT() goto *(void*)jitCodeInfo[*pCurOp++].pStart;
+//const int GO_NEXT() goto *(void*)jitCodeInfo[*pCurOp++].pStart;
 
-#define GO_NEXT_CHECK() \
+const int GO_NEXT_CHECK() \
 	if (--numInst == 0) goto done; \
 	GO_NEXT()
 
-#define GET_LABELS(op) \
+const int GET_LABELS(op) \
 	GET_LABEL(pAddr, op##_start); \
 	jitCodeInfo[op].pStart = pAddr; \
 	GET_LABEL(pAddr, op##_end); \
 	jitCodeInfo[op].pEnd = pAddr; \
 	jitCodeInfo[op].isDynamic = 0
 
-#define GET_LABELS_DYNAMIC(op, extraBytes) \
+const int GET_LABELS_DYNAMIC(op, extraBytes) \
 	GET_LABEL(pAddr, op##_start); \
 	jitCodeInfo[op].pStart = pAddr; \
 	GET_LABEL(pAddr, op##_end); \
 	jitCodeInfo[op].pEnd = pAddr; \
 	jitCodeInfo[op].isDynamic = 0x100 | (extraBytes & 0xff)
 
-#define RUN_FINALIZER() {tMethodState *pMS = RunFinalizer(pThread);if(pMS) {CHANGE_METHOD_STATE(pMS);}}
+const int RUN_FINALIZER() {tMethodState *pMS = RunFinalizer(pThread);if(pMS) {CHANGE_METHOD_STATE(pMS);}}
 
 U32 JIT_Execute(tThread *pThread, U32 numInst) {
 	tJITted *pJIT;
@@ -585,7 +568,7 @@ U32 JIT_Execute(tThread *pThread, U32 numInst) {
 		return 0;
 	}
 
-#ifdef DIAG_OPCODE_TIMES
+#if DIAG_OPCODE_TIMES
 	U64 opcodeStartTime = rdtsc();
 	U32 realOp;
 #endif
@@ -719,7 +702,7 @@ JIT_LOADPARAMLOCAL_O_start:
 JIT_LOADPARAMLOCAL_PTR_start:
     OPCODE_USE(JIT_LOADPARAMLOCAL_O);
     {
-#ifdef _32BIT_
+#if _32BIT_
         U32 ofs = GET_OP();
         U32 value = PARAMLOCAL_U32(ofs);
         PUSH_U32(value);
@@ -838,7 +821,7 @@ JIT_STOREPARAMLOCAL_O_start:
 JIT_STOREPARAMLOCAL_PTR_start:
     OPCODE_USE(JIT_STOREPARAMLOCAL_PTR);
     {
-#ifdef _32BIT_
+#if _32BIT_
         U32 ofs = GET_OP();
         U32 value = POP_U32();
         PARAMLOCAL_U32(ofs) = value;
@@ -953,7 +936,7 @@ JIT_LOADINDIRECT_REF_start:
     OPCODE_USE(JIT_LOADINDIRECT_U32);
     {
         PTR pMem = POP_PTR();
-#ifdef _32BIT_
+#if _32BIT_
         U32 value = *(U32*)pMem;
         PUSH_U32(value);
 #else
@@ -993,7 +976,7 @@ JIT_STOREINDIRECT_U32_end:
 JIT_STOREINDIRECT_REF_start:
     OPCODE_USE(JIT_STOREINDIRECT_U32);
     {
-#ifdef _32BIT_
+#if _32BIT_
         U32 value = POP_U32(); // The value to store
         PTR pMem = POP_PTR(); // The address to store to
         *(U32*)pMem = value;
@@ -1070,7 +1053,7 @@ JIT_CALL_NATIVE_end:
 
 JIT_RETURN_start:
 	OPCODE_USE(JIT_RETURN);
-#ifdef TRACE
+#if TRACE
 	log_f(2, "Returned from %s() to %s()\n", pCurrentMethodState->pMethod->name, (pCurrentMethodState->pCaller)?pCurrentMethodState->pCaller->pMethod->name:"<none>");
 #endif
 	if (pCurrentMethodState->pCaller == NULL) {
@@ -2770,7 +2753,7 @@ JIT_STORE_ELEMENT_64_start:
 		U64 value = POP_U64(); // Value
 		U32 idx = POP_U32(); // Array index
 		PTR heapPtr = POP_O();
-#ifdef TRACE
+#if TRACE
         printf("  val 0x%llx idx %d ptr 0x%llx\n", value, idx, (U64)heapPtr);
 #endif
 		SystemArray_StoreElement(heapPtr, idx, (PTR)&value);
@@ -2807,7 +2790,7 @@ JIT_STOREFIELD_F32_start:
 		value = POP_U32();
 		heapPtr = POP_O();
 		pMem = heapPtr + pFieldDef->memOffset;
-#ifdef TRACE
+#if TRACE
         printf("  val 0x%x off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (U64)heapPtr);
 #endif
 		*(U32*)pMem = value;
@@ -2821,7 +2804,7 @@ JIT_STOREFIELD_O_start:
 JIT_STOREFIELD_PTR_start:
     OPCODE_USE(JIT_STOREFIELD_PTR);
     {
-#ifdef _32BIT_
+#if _32BIT_
         tMD_FieldDef *pFieldDef;
         PTR pMem;
         U32 value;
@@ -2843,7 +2826,7 @@ JIT_STOREFIELD_PTR_start:
         value = POP_U64();
         heapPtr = POP_O();
         pMem = heapPtr + pFieldDef->memOffset;
-#ifdef TRACE
+#if TRACE
         printf("  val 0x%llx off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (U64)heapPtr);
 #endif
         *(U64*)pMem = value;
@@ -2982,7 +2965,7 @@ JIT_STORESTATICFIELD_O_start: // only for 32-bit
 JIT_STORESTATICFIELD_PTR_start: // only for 32-bit
     OPCODE_USE(JIT_STORESTATICFIELD_INT32);
     {
-#ifdef _32BIT_
+#if _32BIT_
         tMD_FieldDef *pFieldDef;
         PTR pMem;
         U32 value;
@@ -3086,7 +3069,7 @@ loadStaticFieldStart:
 			PUSH_U64(value);
         } else if (op == JIT_LOADSTATICFIELD_CHECKTYPEINIT_PTR ||
                    op == JIT_LOADSTATICFIELDADDRESS_CHECKTYPEINIT) {
-#ifdef _32BIT_
+#if _32BIT_
             U32 value;
             if (op == JIT_LOADSTATICFIELDADDRESS_CHECKTYPEINIT) {
                 value = (U32)(pFieldDef->pMemory);
@@ -3429,3 +3412,5 @@ void JIT_Execute_Init() {
 	// Initialise the JIT code addresses
 	JIT_Execute(NULL, 0);
 }
+
+#endif

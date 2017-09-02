@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__METADATATABLES_H)
-#define __METADATATABLES_H
+#if NO
 
 // Forward typedef's (anything used in MetaData.h must be here)
 typedef struct tMD_MethodDef_ tMD_MethodDef;
@@ -27,11 +26,6 @@ typedef struct tMD_FieldDef_ tMD_FieldDef;
 typedef struct tMD_TypeDef_ tMD_TypeDef;
 typedef struct tMD_MethodSpec_ tMD_MethodSpec;
 typedef struct tMD_ImplMap_ tMD_ImplMap;
-
-#include "Types.h"
-#include "JIT.h"
-#include "MetaData.h"
-#include "Generics.h"
 
 // First, the combined tables
 
@@ -77,7 +71,7 @@ struct tMD_TypeRef_ {
 	STRING nameSpace;
 };
 typedef struct tMD_TypeRef_ tMD_TypeRef;
-#define MD_TABLE_TYPEREF 0x01
+const int MD_TABLE_TYPEREF 0x01
 
 // Table 0x02 - TypeDef
 struct tMD_TypeDef_ {
@@ -177,7 +171,7 @@ struct tMD_TypeDef_ {
 	// This is only allocated as needed, so defaults to NULL
 	HEAP_PTR typeObject;
 };
-#define MD_TABLE_TYPEDEF 0x02
+const int MD_TABLE_TYPEDEF 0x02
 
 struct tMD_FieldDef_ {
 	// Combined
@@ -213,7 +207,7 @@ struct tMD_FieldDef_ {
 	// If this is a literal field, then this is a pointer to the tMD_Constant literal definition.
 	PTR pMemory;
 };
-#define MD_TABLE_FIELDDEF 0x04
+const int MD_TABLE_FIELDDEF 0x04
 
 // Table 0x06 - MethodDef
 struct tMD_MethodDef_ {
@@ -268,7 +262,7 @@ struct tMD_MethodDef_ {
 	// If this is a generic core method, then store type instances here.
 	tGenericMethodInstance *pGenericMethodInstances;
 
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	// The number of times this method is on the call stack of all threads
 	U32 callStackCount;
     // Padding
@@ -283,7 +277,7 @@ struct tMD_MethodDef_ {
 	tJITted *pJITtedCombined;
 #endif
 
-#ifdef DIAG_METHOD_CALLS
+#if DIAG_METHOD_CALLS
 	// Number of times this method has been called
 	U32 callCount;
     // Padding
@@ -292,10 +286,10 @@ struct tMD_MethodDef_ {
 	U64 totalTime;
 #endif
 };
-#define MD_TABLE_METHODDEF 0x06
+const int MD_TABLE_METHODDEF 0x06
 
 // Table 0x08 - Param
-#define MD_TABLE_PARAM 0x08
+const int MD_TABLE_PARAM 0x08
 typedef struct tMD_Param_ tMD_Param;
 struct tMD_Param_ {
 	// Flags - ParamAttributes
@@ -309,7 +303,7 @@ struct tMD_Param_ {
 };
 
 // Table 0x09 - InterfaceImpl
-#define MD_TABLE_INTERFACEIMPL 0x09
+const int MD_TABLE_INTERFACEIMPL 0x09
 typedef struct tMD_InterfaceImpl_ tMD_InterfaceImpl;
 struct tMD_InterfaceImpl_ {
 	// The class that implements...
@@ -336,7 +330,7 @@ struct tMD_MemberRef_ {
 	BLOB_ signature;
 };
 typedef struct tMD_MemberRef_ tMD_MemberRef;
-#define MD_TABLE_MEMBERREF 0x0a
+const int MD_TABLE_MEMBERREF 0x0a
 
 // Table 0x0B - Constant
 struct tMD_Constant_ {
@@ -350,7 +344,7 @@ struct tMD_Constant_ {
 	BLOB_ value;
 };
 typedef struct tMD_Constant_ tMD_Constant;
-#define MD_TABLE_CONSTANT 0x0b
+const int MD_TABLE_CONSTANT 0x0b
 
 // Table 0x0C - CustomAttribute
 struct tMD_CustomAttribute_ {
@@ -362,9 +356,9 @@ struct tMD_CustomAttribute_ {
 	BLOB_ value;
 };
 typedef struct tMD_CustomAttribute_ tMD_CustomAttribute;
-#define MD_TABLE_CUSTOMATTRIBUTE 0x0c
+const int MD_TABLE_CUSTOMATTRIBUTE 0x0c
 
-#define MD_TABLE_DECLSECURITY 0x0e
+const int MD_TABLE_DECLSECURITY 0x0e
 typedef struct tMD_DeclSecurity_ tMD_DeclSecurity;
 struct tMD_DeclSecurity_ {
 	// The security action
@@ -421,7 +415,7 @@ struct tMD_Event_ {
 typedef struct tMD_Event_ tMD_Event;
 
 // Table 0x15 - PropertyMap
-#define MD_TABLE_PROPERTYMAP 0x15
+const int MD_TABLE_PROPERTYMAP 0x15
 struct tMD_PropertyMap_ {
 	// Parent - index into TypeDef table
 	IDX_TABLE parent;
@@ -444,7 +438,7 @@ struct tMD_Property_ {
 	BLOB_ typeSig;
 };
 typedef struct tMD_Property_ tMD_Property;
-#define MD_TABLE_PROPERTY 0x17
+const int MD_TABLE_PROPERTY 0x17
 
 // Table 0x18 - MethodSemantics
 struct tMD_MethodSemantics_ {
@@ -458,10 +452,10 @@ struct tMD_MethodSemantics_ {
 	IDX_TABLE association;
 };
 typedef struct tMD_MethodSemantics_ tMD_MethodSemantics;
-#define MD_TABLE_METHODSEMANTICS 0x18
+const int MD_TABLE_METHODSEMANTICS 0x18
 
 // Table 0x19 - MethodImpl
-#define MD_TABLE_METHODIMPL 0x19
+const int MD_TABLE_METHODIMPL 0x19
 typedef struct tMD_MethodImpl_ tMD_MethodImpl;
 struct tMD_MethodImpl_ {
 	// Index into TypeDef table
@@ -472,7 +466,7 @@ struct tMD_MethodImpl_ {
 	IDX_TABLE methodDeclaration;
 };
 
-#define MD_TABLE_MODULEREF 0x1a
+const int MD_TABLE_MODULEREF 0x1a
 typedef struct tMD_ModuleRef_ tMD_ModuleRef;
 struct tMD_ModuleRef_ {
 	// The module name referenced
@@ -480,7 +474,7 @@ struct tMD_ModuleRef_ {
 };
 
 // Table 0x1B - TypeSpec
-#define MD_TABLE_TYPESPEC 0x1b
+const int MD_TABLE_TYPESPEC 0x1b
 typedef struct tMD_TypeSpec_ tMD_TypeSpec;
 struct tMD_TypeSpec_ {
 	// Combined
@@ -492,7 +486,7 @@ struct tMD_TypeSpec_ {
 	BLOB_ signature;
 };
 
-#define MD_TABLE_IMPLMAP 0x1c
+const int MD_TABLE_IMPLMAP 0x1c
 struct tMD_ImplMap_ {
 	// Mapping flags of type PInvokeAttributes
 	U16 mappingFlags;
@@ -514,7 +508,7 @@ struct tMD_FieldRVA_ {
 	IDX_TABLE field;
 };
 typedef struct tMD_FieldRVA_ tMD_FieldRVA;
-#define MD_TABLE_FIELDRVA 0x1d
+const int MD_TABLE_FIELDRVA 0x1d
 
 // Table 0x20 - Assembly
 struct tMD_Assembly_ {
@@ -532,7 +526,7 @@ struct tMD_Assembly_ {
 	STRING culture;
 };
 typedef struct tMD_Assembly_ tMD_Assembly;
-#define MD_TABLE_ASSEMBLY 0x20
+const int MD_TABLE_ASSEMBLY 0x20
 
 struct tMD_AssemblyRef_ {
 	// Version info
@@ -551,7 +545,7 @@ struct tMD_AssemblyRef_ {
 	BLOB_ hashValue;
 };
 typedef struct tMD_AssemblyRef_ tMD_AssemblyRef;
-#define MD_TABLE_ASSEMBLYREF 0x23
+const int MD_TABLE_ASSEMBLYREF 0x23
 
 typedef struct tMD_NestedClass_ tMD_NestedClass;
 struct tMD_NestedClass_ {
@@ -560,10 +554,10 @@ struct tMD_NestedClass_ {
 	// The TypeDef of the class in which nestedClass is enclosed
 	IDX_TABLE enclosingClass;
 };
-#define MD_TABLE_NESTEDCLASS 0x29
+const int MD_TABLE_NESTEDCLASS 0x29
 
 // Table 0x2A - Generic param
-#define MD_TABLE_GENERICPARAM 0x2A
+const int MD_TABLE_GENERICPARAM 0x2A
 typedef struct tMD_GenericParam_ tMD_GenericParam;
 struct tMD_GenericParam_ {
 	// The number of this generic parameter. Numbered left-to-right, starting from 0
@@ -577,7 +571,7 @@ struct tMD_GenericParam_ {
 };
 
 // Table 0x2B - MethodSpec
-#define MD_TABLE_METHODSPEC 0x2B
+const int MD_TABLE_METHODSPEC 0x2B
 struct tMD_MethodSpec_ {
 	// Combined
 	tMD_MethodDef *pMethodDef;
@@ -593,7 +587,7 @@ struct tMD_MethodSpec_ {
 };
 
 // Table 0x2C - GenericParamConstraint
-#define MD_TABLE_GENERICPARAMCONSTRAINT 0x2C
+const int MD_TABLE_GENERICPARAMCONSTRAINT 0x2C
 typedef struct tMD_GenericParamConstraint_ tMD_GenericParamConstraint;
 struct tMD_GenericParamConstraint_ {
 	// The generic param that this constraint applies to

@@ -18,13 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "MetaData.h"
-#include "CLIFile.h"
-#include "Type.h"
-#include "EvalStack.h"
+#if NO
 
 void MetaData_Fill_FieldDef(tMD_TypeDef *pParentType, tMD_FieldDef *pFieldDef, U32 memOffset, tMD_TypeDef **ppClassTypeArgs) {
 	U32 sigLength;
@@ -491,3 +485,4 @@ void MetaData_Fill_TypeDef_(tMD_TypeDef *pTypeDef, tMD_TypeDef **ppClassTypeArgs
 	log_f(2, "Type:  %s.%s\n", pTypeDef->nameSpace, pTypeDef->name);
 }
 
+#endif

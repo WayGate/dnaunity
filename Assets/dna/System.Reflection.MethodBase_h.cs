@@ -1,5 +1,4 @@
-#if !defined(__SYSTEM_REFLECTION_METHODBASE_H)
-#define __SYSTEM_REFLECTION_METHODBASE_H
+#if NO
 
 typedef struct tMethodBase_ tMethodBase;
 struct tMethodBase_ {

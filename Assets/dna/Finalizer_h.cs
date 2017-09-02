@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined (__FINALIZER_H)
-#define __FINALIZER_H
+#if NO
 
 void Finalizer_Init();
 

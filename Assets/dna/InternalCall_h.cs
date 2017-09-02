@@ -18,11 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__INTERNALCALL_H)
-#define __INTERNALCALL_H
-
-#include "Types.h"
-#include "MetaData.h"
+#if NO
 
 fnInternalCall InternalCall_Map(tMD_MethodDef *pMethod);
 

@@ -18,14 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.String.h"
-
-#include "MetaData.h"
-#include "Types.h"
-#include "Type.h"
+#if NO
 
 tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	HEAP_PTR string;
@@ -34,7 +27,7 @@ tAsyncCall* System_Console_Write(PTR pThis_, PTR pParams, PTR pReturnValue) {
 
 	string = *(HEAP_PTR*)pParams;
 	if (string != NULL) {
-#define SUB_LEN 128
+const int SUB_LEN 128
 		unsigned char str8[SUB_LEN+1];
 		U32 start = 0;
 		str = SystemString_GetString(string, &strLen);
@@ -61,7 +54,7 @@ static U32 Internal_ReadKey_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAs
 		nextKeybC = 0xffffffff;
 		return 1;
 	} else {
-#ifdef WIN32
+#if WIN32
 		if (_kbhit()) {
 			U32 c = _getch();
 			*(U32*)pReturnValue = c;
@@ -119,3 +112,5 @@ tAsyncCall* System_Console_Internal_KeyAvailable(PTR pThis_, PTR pParams, PTR pR
 
 	return NULL;
 }
+
+#endif

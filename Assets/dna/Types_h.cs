@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__TYPES_H)
-#define __TYPES_H
+#if NO
 
 // Indexes into the user-string heap
 typedef unsigned int IDX_USERSTRINGS;
@@ -44,7 +43,7 @@ typedef unsigned char* GUID_;
 typedef long long I64;
 typedef unsigned long long U64;
 
-//#ifdef WIN32
+//#if WIN32
 
 typedef int I32;
 typedef unsigned int U32;

@@ -18,20 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "Type.h"
-
-#include "MetaData.h"
-#include "Types.h"
-#include "EvalStack.h"
-#include "Generics.h"
-#include "System.Reflection.MethodBase.h"
-#include "System.Reflection.MethodInfo.h"
-#include "System.Reflection.PropertyInfo.h"
-#include "System.RuntimeType.h"
-#include "Thread.h"
+#if NO
 
 typedef struct tArrayTypeDefs_ tArrayTypeDefs;
 struct tArrayTypeDefs_ {
@@ -43,23 +30,23 @@ struct tArrayTypeDefs_ {
 
 static tArrayTypeDefs *pArrays;
 
-#define GENERICARRAYMETHODS_NUM 13
+const int GENERICARRAYMETHODS_NUM 13
 static U8 genericArrayMethodsInited = 0;
 static tMD_MethodDef *ppGenericArrayMethods[GENERICARRAYMETHODS_NUM];
 
-#define GENERICARRAYMETHODS_Internal_GetGenericEnumerator 0
-#define GENERICARRAYMETHODS_get_Length 1
-#define GENERICARRAYMETHODS_get_IsReadOnly 2
-#define GENERICARRAYMETHODS_Internal_GenericAdd 3
-#define GENERICARRAYMETHODS_Internal_GenericClear 4
-#define GENERICARRAYMETHODS_Internal_GenericContains 5
-#define GENERICARRAYMETHODS_Internal_GenericCopyTo 6
-#define GENERICARRAYMETHODS_Internal_GenericRemove 7
-#define GENERICARRAYMETHODS_Internal_GenericIndexOf 8
-#define GENERICARRAYMETHODS_Internal_GenericInsert 9
-#define GENERICARRAYMETHODS_Internal_GenericRemoveAt 10
-#define GENERICARRAYMETHODS_Internal_GenericGetItem 11
-#define GENERICARRAYMETHODS_Internal_GenericSetItem 12
+const int GENERICARRAYMETHODS_Internal_GetGenericEnumerator 0
+const int GENERICARRAYMETHODS_get_Length 1
+const int GENERICARRAYMETHODS_get_IsReadOnly 2
+const int GENERICARRAYMETHODS_Internal_GenericAdd 3
+const int GENERICARRAYMETHODS_Internal_GenericClear 4
+const int GENERICARRAYMETHODS_Internal_GenericContains 5
+const int GENERICARRAYMETHODS_Internal_GenericCopyTo 6
+const int GENERICARRAYMETHODS_Internal_GenericRemove 7
+const int GENERICARRAYMETHODS_Internal_GenericIndexOf 8
+const int GENERICARRAYMETHODS_Internal_GenericInsert 9
+const int GENERICARRAYMETHODS_Internal_GenericRemoveAt 10
+const int GENERICARRAYMETHODS_Internal_GenericGetItem 11
+const int GENERICARRAYMETHODS_Internal_GenericSetItem 12
 static char *pGenericArrayMethodsInit[GENERICARRAYMETHODS_NUM] = {
 	"Internal_GetGenericEnumerator",
 	"get_Length",
@@ -523,3 +510,5 @@ HEAP_PTR Type_GetTypeObject(tMD_TypeDef *pTypeDef) {
 	}
 	return pTypeDef->typeObject;
 }
+
+#endif

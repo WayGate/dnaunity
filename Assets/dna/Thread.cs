@@ -18,14 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "Thread.h"
-
-#include "MethodState.h"
-#include "Heap.h"
-#include "Type.h"
+#if NO
 
 static U32 maxInstrPerThread = 100;
 static tThread *pAllThreads = NULL;
@@ -353,3 +346,5 @@ void Thread_GetHeapRoots(tHeapRoots *pHeapRoots) {
 		pThread = pThread->pNextThread;
 	}
 }
+
+#endif

@@ -18,10 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "Finalizer.h"
+#if NO
 
 static HEAP_PTR *ppToFinalize;
 static int toFinalizeOfs, toFinalizeCapacity;
@@ -46,3 +43,5 @@ HEAP_PTR GetNextFinalizer() {
 	}
 	return ppToFinalize[--toFinalizeOfs];
 }
+
+#endif

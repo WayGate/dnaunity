@@ -18,19 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Array.h"
-#include "System.Type.h"
-#include "System.Reflection.MethodInfo.h"
-#include "System.Reflection.PropertyInfo.h"
-#include "System.RuntimeType.h"
-#include "System.String.h"
-
-#include "Types.h"
-#include "Type.h"
-#include "CLIFile.h"
+#if NO
 
 tAsyncCall* System_Type_GetTypeFromHandle(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	tMD_TypeDef *pTypeDef = *(tMD_TypeDef**)pParams;
@@ -189,3 +177,5 @@ tAsyncCall* System_Type_GetMethod(PTR pThis_, PTR pParams, PTR pReturnValue)
 	*(HEAP_PTR*)pReturnValue = NULL;
 	return NULL;
 }
+
+#endif

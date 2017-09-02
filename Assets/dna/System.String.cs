@@ -18,18 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <string.h>
-
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.String.h"
-
-#include "MetaData.h"
-#include "Types.h"
-#include "Heap.h"
-#include "Type.h"
-#include "System.Array.h"
+#if NO
 
 typedef struct tSystemString_ tSystemString;
 // This structure must tie up with string.cs
@@ -399,3 +388,5 @@ STRING2 SystemString_GetString(HEAP_PTR pThis_, U32 *pLength) {
 U32 SystemString_GetNumBytes(HEAP_PTR pThis_) {
 	return (((tSystemString*)pThis_)->length << 1) + sizeof(tSystemString);
 }
+
+#endif

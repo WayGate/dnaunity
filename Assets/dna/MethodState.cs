@@ -18,14 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#if NO
 
-#include "Thread.h"
-#include "MethodState.h"
-#include "JIT.h"
-
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 
 // Pointer to the least called method
 static tMD_MethodDef *pLeastCalledMethod = NULL;
@@ -147,7 +142,7 @@ tMethodState* MethodState_Direct(tThread *pThread, tMD_MethodDef *pMethod, tMeth
 	pThis->pParamsLocals = (PTR)Thread_StackAlloc(pThread, pMethod->parameterStackSize + pMethod->pJITted->localsStackSize);
 	memset(pThis->pParamsLocals, 0, pMethod->parameterStackSize + pMethod->pJITted->localsStackSize);
 
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	AddCall(pMethod);
 
 	/*if (combinedJITSize < GEN_COMBINED_OPCODES_MAX_MEMORY) {
@@ -186,7 +181,7 @@ tMethodState* MethodState_Direct(tThread *pThread, tMD_MethodDef *pMethod, tMeth
 	}
 #endif
 
-#ifdef DIAG_METHOD_CALLS
+#if DIAG_METHOD_CALLS
 	// Keep track of the number of times this method is called
 	pMethod->callCount++;
 	pThis->startTime = microTime();
@@ -221,7 +216,7 @@ void MethodState_Delete(tThread *pThread, tMethodState **ppMethodState) {
 	tMethodState *pThis = *ppMethodState;
 
 
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	if (pThis->pJIT != pThis->pMethod->pJITted) {
 		// Only decrease call-stack count if it's been using the combined JIT
 		pThis->pMethod->callStackCount--;
@@ -234,7 +229,7 @@ void MethodState_Delete(tThread *pThread, tMethodState **ppMethodState) {
 	}
 #endif
 
-#ifdef DIAG_METHOD_CALLS
+#if DIAG_METHOD_CALLS
 	pThis->pMethod->totalTime += microTime() - pThis->startTime;
 #endif
 
@@ -253,3 +248,5 @@ void MethodState_Delete(tThread *pThread, tMethodState **ppMethodState) {
 
 	*ppMethodState = NULL;
 }
+
+#endif

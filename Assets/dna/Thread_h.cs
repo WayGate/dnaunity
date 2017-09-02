@@ -18,18 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__THREAD_H)
-#define __THREAD_H
+#if NO
 
 typedef struct tThread_ tThread;
 typedef struct tThreadStack_ tThreadStack;
 
-#include "MetaData.h"
-#include "MethodState.h"
-#include "Heap.h"
-#include "Types.h"
-
-#define THREADSTACK_CHUNK_SIZE 10000
+const int THREADSTACK_CHUNK_SIZE 10000
 
 struct tThreadStack_ {
 	// This chunk of stack memory
@@ -81,23 +75,23 @@ struct tThread_ {
 };
 
 // The thread has finished
-#define THREAD_STATUS_EXIT 1
+const int THREAD_STATUS_EXIT 1
 // The thread is still running, but has completed its timeslot
-#define THREAD_STATUS_RUNNING 2
+const int THREAD_STATUS_RUNNING 2
 // The thread is waiting on some async data (sleep or IO)
-#define THREAD_STATUS_ASYNC 3
+const int THREAD_STATUS_ASYNC 3
 // The thread has just exited a lock, so allow other threads to acquire it if they are waiting
-#define THREAD_STATUS_LOCK_EXIT 4
+const int THREAD_STATUS_LOCK_EXIT 4
 
-#define ASYNC_LOCK_EXIT ((tAsyncCall*)0x00000001)
+const int ASYNC_LOCK_EXIT ((tAsyncCall*)0x00000001)
 
 // These are the same as the C# definitions in corelib,
 // and can be ORed together.
-#define THREADSTATE_RUNNING			0x0000
-#define THREADSTATE_BACKGROUND		0x0004
-#define THREADSTATE_UNSTARTED		0x0008
-#define THREADSTATE_STOPPED			0x0010
-#define THREADSTATE_SUSPENDED		0x0040
+const int THREADSTATE_RUNNING			0x0000
+const int THREADSTATE_BACKGROUND		0x0004
+const int THREADSTATE_UNSTARTED		0x0008
+const int THREADSTATE_STOPPED			0x0010
+const int THREADSTATE_SUSPENDED		0x0040
 
 tThread* Thread();
 void Thread_SetEntryPoint(tThread *pThis, tMetaData *pMetaData, IDX_TABLE entryPointToken, PTR params, U32 paramBytes);

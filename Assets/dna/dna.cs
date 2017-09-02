@@ -18,17 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "CLIFile.h"
-#include "MetaData.h"
-#include "Type.h"
-#include "Heap.h"
-#include "Finalizer.h"
-#include "System.Net.Sockets.Socket.h"
-#include "MethodState.h"
-#include "JSInterop.h"
+#if NO
 
 static void ShowUsage() {
 	printf("Usage:\n");
@@ -45,7 +35,7 @@ int main(int argc, char **argp) {
 	char *pFileName;
 	U32 i;
 	I32 retValue;
-#ifdef DIAG_TOTAL_TIME
+#if DIAG_TOTAL_TIME
 	U64 startTime;
 #endif
 
@@ -82,8 +72,8 @@ doneArgs:;
 	Finalizer_Init();
 	Socket_Init();
 
-#ifdef DIAG_OPCODE_TIMES
-#ifdef WIN32
+#if DIAG_OPCODE_TIMES
+#if WIN32
 	{
 		HANDLE hProcess = GetCurrentProcess();
 		SetProcessAffinityMask(hProcess, 1);
@@ -92,7 +82,7 @@ doneArgs:;
 	memset(opcodeTimes, 0, sizeof(opcodeTimes));
 #endif
 
-#ifdef DIAG_OPCODE_USE
+#if DIAG_OPCODE_USE
 	memset(opcodeNumUses, 0, sizeof(opcodeNumUses));
 #endif
 
@@ -100,7 +90,7 @@ doneArgs:;
 
 	pCLIFile = CLIFile_Load(pFileName);
 
-#ifdef DIAG_TOTAL_TIME
+#if DIAG_TOTAL_TIME
 	startTime = microTime();
 #endif
 
@@ -111,15 +101,15 @@ doneArgs:;
 		retValue = 0;
 	}
 
-#ifdef DIAG_TOTAL_TIME
+#if DIAG_TOTAL_TIME
 	printf("Total execution time = %d ms\n", (int)((microTime() - startTime) / 1000));
 #endif
 
-#ifdef DIAG_GC
+#if DIAG_GC
 	printf("Total GC time = %d ms\n", (int)(gcTotalTime / 1000));
 #endif
 
-#ifdef DIAG_METHOD_CALLS
+#if DIAG_METHOD_CALLS
 	{
 		U32 numMethods, i;
 		I32 howMany = 25;
@@ -170,7 +160,7 @@ doneArgs:;
 		printf("\n");
 	}
 #endif
-#ifdef DIAG_OPCODE_TIMES
+#if DIAG_OPCODE_TIMES
 	{
 		I32 howMany = 25;
 		U32 i;
@@ -190,7 +180,7 @@ doneArgs:;
 		}
 	}
 #endif
-#ifdef DIAG_OPCODE_USE
+#if DIAG_OPCODE_USE
 	{
 		I32 howMany = 25;
 		U32 i, j;
@@ -214,5 +204,7 @@ doneArgs:;
 
 	return retValue;
 }
+
+#endif
 
 

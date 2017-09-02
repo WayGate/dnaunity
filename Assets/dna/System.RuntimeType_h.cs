@@ -18,11 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__SYSTEM_RUNTIMETYPE_H)
-#define __SYSTEM_RUNTIMETYPE_H
-
-#include "Types.h"
-#include "MetaData.h"
+#if NO
 
 typedef struct tRuntimeType_ tRuntimeType;
 struct tRuntimeType_ {

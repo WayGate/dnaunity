@@ -18,13 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Threading.Monitor.h"
-
-#include "Type.h"
-#include "Types.h"
+#if NO
 
 static U32 Internal_TryEntry_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
 	HEAP_PTR pObj = ((HEAP_PTR*)pParams)[0];
@@ -79,3 +73,5 @@ tAsyncCall* System_Threading_Monitor_Internal_Exit(PTR pThis_, PTR pParams, PTR 
 	Heap_SyncExit(pObj);
 	return ASYNC_LOCK_EXIT;
 }
+
+#endif

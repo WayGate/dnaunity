@@ -18,86 +18,90 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined (__COMPAT_H)
-#define __COMPAT_H
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <fcntl.h>
-#include <stdint.h>
-
-#ifdef WIN32
-#include <winsock2.h> // winsock2.h must be included before windows.h
-#include <io.h>
-#include <windows.h>
-#include <conio.h>
-// Disable warning about deprecated functions
-#pragma warning(disable:4996)
-// Disable warning about converting pointer to int
-#pragma warning(disable:4311)
-// Disable warning about converting int to pointer
-#pragma warning(disable:4312)
-// convert warning to error about not all control paths return value in a function
-#pragma warning(error:4715)
-// convert warning to error about no return value in a function
-#pragma warning(error:4716)
-// convert warning to error about function must return a value
-#pragma warning(error:4033)
-// convert warning to error about no pointer mismatch
-#pragma warning(error:4022)
-// convert warning to error about pointer differs in indirection
-#pragma warning(error:4047)
-// convert warning to error about function undefined
-#pragma warning(error:4013)
-// convert warning to error about too many parameters to function call
-#pragma warning(error:4020)
-// convert warning to error about incompatible types
-#pragma warning(error:4133)
-// convert warning to error about different types for parameters in function call
-#pragma warning(error:4024)
-// convert warning to error about different parameter lists
-#pragma warning(error:4113)
-// convert warning to error about macro not enough parameters
-#pragma warning(error:4003)
-
-#define strcasecmp stricmp
-
-#define LIB_PREFIX ""
-#define LIB_SUFFIX "dll"
-#define STDCALL __stdcall
-
-#else // WIN32
-
-#include <stdlib.h>
-#include <strings.h>
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <unistd.h>
-#include <termios.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-// #include <dev/wscons/wsconsio.h>
-#include <dlfcn.h>
-#include <glob.h>
-
-#define O_BINARY 0
-#define LIB_PREFIX "./"
-#define LIB_SUFFIX "so"
-#define STDCALL
-
-#endif // WIN32
-
-#if UINTPTR_MAX == 0xffffffff
-#define _32BIT_
-#define PTR_SIZE 4
-#elif UINTPTR_MAX == 0xffffffffffffffff
-#define _64BIT_
-#define PTR_SIZE 8
-#else
-#error "Unable to detect 32/64 bit"
-#endif
-
-#define TMALLOC(t) (t*)malloc(sizeof(t))
-#define TMALLOCFOREVER(t) (t*)mallocForever(sizeof(t))
+#if NO
+//
+//#if !defined (__COMPAT_H)
+//const int __COMPAT_H
+//#include <string.h>
+//#include <stdio.h>
+//#include <stdarg.h>
+//#include <fcntl.h>
+//#include <stdint.h>
+//
+//#if WIN32
+//#include <winsock2.h> // winsock2.h must be included before windows.h
+//#include <io.h>
+//#include <windows.h>
+//#include <conio.h>
+//// Disable warning about deprecated functions
+//#pragma warning(disable:4996)
+//// Disable warning about converting pointer to int
+//#pragma warning(disable:4311)
+//// Disable warning about converting int to pointer
+//#pragma warning(disable:4312)
+//// convert warning to error about not all control paths return value in a function
+//#pragma warning(error:4715)
+//// convert warning to error about no return value in a function
+//#pragma warning(error:4716)
+//// convert warning to error about function must return a value
+//#pragma warning(error:4033)
+//// convert warning to error about no pointer mismatch
+//#pragma warning(error:4022)
+//// convert warning to error about pointer differs in indirection
+//#pragma warning(error:4047)
+//// convert warning to error about function undefined
+//#pragma warning(error:4013)
+//// convert warning to error about too many parameters to function call
+//#pragma warning(error:4020)
+//// convert warning to error about incompatible types
+//#pragma warning(error:4133)
+//// convert warning to error about different types for parameters in function call
+//#pragma warning(error:4024)
+//// convert warning to error about different parameter lists
+//#pragma warning(error:4113)
+//// convert warning to error about macro not enough parameters
+//#pragma warning(error:4003)
+//
+//const int strcasecmp stricmp
+//
+//const int LIB_PREFIX ""
+//const int LIB_SUFFIX "dll"
+//const int STDCALL __stdcall
+//
+//#else // WIN32
+//
+//#include <stdlib.h>
+//#include <strings.h>
+//#include <sys/types.h>
+//#include <sys/uio.h>
+//#include <unistd.h>
+//#include <termios.h>
+//#include <sys/ioctl.h>
+//#include <sys/types.h>
+//// #include <dev/wscons/wsconsio.h>
+//#include <dlfcn.h>
+//#include <glob.h>
+//
+//const int O_BINARY 0
+//const int LIB_PREFIX "./"
+//const int LIB_SUFFIX "so"
+//const int STDCALL
+//
+//#endif // WIN32
+//
+//#if UINTPTR_MAX == 0xffffffff
+//const int _32BIT_
+//const int PTR_SIZE 4
+//#elif UINTPTR_MAX == 0xffffffffffffffff
+//const int _64BIT_
+//const int PTR_SIZE 8
+//#else
+//#error "Unable to detect 32/64 bit"
+//#endif
+//
+//const int TMALLOC(t) (t*)malloc(sizeof(t))
+//const int TMALLOCFOREVER(t) (t*)mallocForever(sizeof(t))
+//
+//#endif
 
 #endif

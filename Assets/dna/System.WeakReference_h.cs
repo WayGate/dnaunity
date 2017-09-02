@@ -18,11 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__SYSTEM_WEAKREFERENCE_H)
-#define __SYSTEM_WEAKREFERENCE_H
-
-#include "MetaData.h"
-#include "Types.h"
+#if NO
 
 tAsyncCall* System_WeakReference_get_Target(PTR pThis_, PTR pParams, PTR pReturnValue);
 tAsyncCall* System_WeakReference_set_Target(PTR pThis_, PTR pParams, PTR pReturnValue);

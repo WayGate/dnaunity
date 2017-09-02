@@ -18,33 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__SYS_H)
-#define __SYS_H
+#if NO
 
-#include "Config.h"
+const int FAKE_RETURN exit(101)
 
-/*#ifdef _DEBUG
-void* mallocTrace(int s, char *pFile, int line);
-#define malloc(s) mallocTrace(s, __FILE__, __LINE__)
-#endif*/
+const int INTERNALCALL_PARAM(ofs, type) (*(type*)(pParams + ofs))
+const int INTERNALCALL_RETURN_U32(val) *(U32*)pReturnValue = (val)
+const int INTERNALCALL_RETURN_I32(val) *(I32*)pReturnValue = (val)
+const int INTERNALCALL_RETURN_PTR(val) *(void**)pReturnValue = (void*)(val)
 
-#ifdef _DEBUG
-#define Assert(cond) if (!(cond)) Crash("Assert failed: %s, line %d", __FILE__, __LINE__);
-#else
-#define Assert(cond)
-#endif
+const int S_PTR PTR_SIZE
+const int S_INT (4)
 
-#define FAKE_RETURN exit(101)
-
-#define INTERNALCALL_PARAM(ofs, type) (*(type*)(pParams + ofs))
-#define INTERNALCALL_RETURN_U32(val) *(U32*)pReturnValue = (val)
-#define INTERNALCALL_RETURN_I32(val) *(I32*)pReturnValue = (val)
-#define INTERNALCALL_RETURN_PTR(val) *(void**)pReturnValue = (void*)(val)
-
-#define S_PTR PTR_SIZE
-#define S_INT (4)
-
-#include "MetaData.h"
 
 void Crash(char *pMsg, ...);
 
@@ -56,9 +41,6 @@ char* Sys_GetMethodDesc(tMD_MethodDef *pMethod);
 void* mallocForever(U32 size);
 
 U64 msTime();
-#if defined(DIAG_METHOD_CALLS) || defined(DIAG_OPCODE_TIMES) || defined(DIAG_GC) || defined(DIAG_TOTAL_TIME)
-U64 microTime();
-#endif
 void SleepMS(U32 ms);
 
 #endif

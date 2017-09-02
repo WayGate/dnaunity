@@ -18,22 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined (__EVALSTACK_H)
-#define __EVALSTACK_H
+#if NO
 
-#define EVALSTACK_INT64 0
-#define EVALSTACK_INT32 1
-#define EVALSTACK_INTNATIVE 2
-//#define EVALSTACK_F 3
-#define EVALSTACK_F64 3
-#define EVALSTACK_PTR 4
-#define EVALSTACK_O 5
-//#define EVALSTACK_TRANSPTR 6
-#define EVALSTACK_F32 6
-#define EVALSTACK_VALUETYPE 7
-
+const int EVALSTACK_INT64 0
+const int EVALSTACK_INT32 1
+const int EVALSTACK_INTNATIVE 2
+//const int EVALSTACK_F 3
+const int EVALSTACK_F64 3
+const int EVALSTACK_PTR 4
+const int EVALSTACK_O 5
+//const int EVALSTACK_TRANSPTR 6
+const int EVALSTACK_F32 6
+const int EVALSTACK_VALUETYPE 7
 
 // dummy value used for methods that return nothing (void)
-#define EVALSTACK_VOID 0xff
+const int EVALSTACK_VOID 0xff
 
 #endif

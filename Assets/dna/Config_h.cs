@@ -18,44 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#ifndef __CONFIG_H
-#define __CONFIG_H
+#if NO
 
-// Diagnostic stuff
-// Some of this will only work on Windows
-// (although could be implemented on other platforms with a little work.
-// The issue is that a very fast time function is needed. It uses the rdtsc
-// instruction on x86 - so the results are in ticks, not seconds)
-
-// Count how many times each .NET method is called
-#undef DIAG_METHOD_CALLS
-
-// Measure how much time is spent in each .NET opcode
-// This only works on Windows
-// This is not currently implemented, after the change to threaded code
-#undef DIAG_OPCODE_TIMES
-
-// Count how many times each .NET opcode is used
-#ifdef _DEBUG
-#undef DIAG_OPCODE_USE
-#endif
-
-// Measure how much time is spent in the garbage collector
-#undef DIAG_GC
-
-// Measure how long the entire .NET programme execution takes
-#define DIAG_TOTAL_TIME
-
-
-
-// Non-diagnostic stuff
-
-// Generate combined (dynamic) .NET opcodes.
-// This does work, but currently has no intellegence about which opcodes
-// are worth combining, so it uses lots of memory and on some platforms
-// will not lead to a performance increase.
-//#define GEN_COMBINED_OPCODES
-#define GEN_COMBINED_OPCODES_MAX_MEMORY 0x4000
-#define GEN_COMBINED_OPCODES_CALL_TRIGGER 20
+//// Diagnostic stuff
+//// Some of this will only work on Windows
+//// (although could be implemented on other platforms with a little work.
+//// The issue is that a very fast time function is needed. It uses the rdtsc
+//// instruction on x86 - so the results are in ticks, not seconds)
+//
+//// Count how many times each .NET method is called
+//#undef DIAG_METHOD_CALLS
+//
+//// Measure how much time is spent in each .NET opcode
+//// This only works on Windows
+//// This is not currently implemented, after the change to threaded code
+//#undef DIAG_OPCODE_TIMES
+//
+//// Count how many times each .NET opcode is used
+//#if _DEBUG
+//#undef DIAG_OPCODE_USE
+//#endif
+//
+//// Measure how much time is spent in the garbage collector
+//#undef DIAG_GC
+//
+//// Measure how long the entire .NET programme execution takes
+//const int DIAG_TOTAL_TIME
+//
+//
+//
+//// Non-diagnostic stuff
+//
+//// Generate combined (dynamic) .NET opcodes.
+//// This does work, but currently has no intellegence about which opcodes
+//// are worth combining, so it uses lots of memory and on some platforms
+//// will not lead to a performance increase.
+////const int GEN_COMBINED_OPCODES
+//const int GEN_COMBINED_OPCODES_MAX_MEMORY 0x4000
+//const int GEN_COMBINED_OPCODES_CALL_TRIGGER 20
 
 #endif

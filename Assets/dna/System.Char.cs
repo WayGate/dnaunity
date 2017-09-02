@@ -18,19 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#if NO
 
-#include "System.Char.h"
-
-#include "MetaData.h"
-#include "Types.h"
-#include "Type.h"
-
-#include "System.Char.UC_IndexRuns.h"
-#include "System.Char.CaseConversion.h"
-
-#define UC_INDEX_LEN (sizeof(UC_Index) / 4)
+const int UC_INDEX_LEN (sizeof(UC_Index) / 4)
 tAsyncCall* System_Char_GetUnicodeCategory(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	U32 paramCodePoint = ((U32*)pParams)[0];
 	// Do a binary search on the UC_Index array
@@ -118,3 +108,5 @@ tAsyncCall* System_Char_ToUpperInvariant(PTR pThis_, PTR pParams, PTR pReturnVal
 
 	return NULL;
 }
+
+#endif

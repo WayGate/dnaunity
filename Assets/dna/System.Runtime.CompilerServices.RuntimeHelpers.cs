@@ -18,16 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Runtime.CompilerServices.RuntimeHelpers.h"
-
-#include "MetaData.h"
-#include "Types.h"
-#include "Heap.h"
-#include "Type.h"
-#include "System.Array.h"
+#if NO
 
 tAsyncCall* System_Runtime_CompilerServices_InitializeArray(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	HEAP_PTR pArray;
@@ -45,3 +36,5 @@ tAsyncCall* System_Runtime_CompilerServices_InitializeArray(PTR pThis_, PTR pPar
 
 	return NULL;
 }
+
+#endif

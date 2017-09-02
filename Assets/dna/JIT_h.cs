@@ -18,8 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined (__JIT_H)
-#define __JIT_H
+#if NO
 
 typedef struct tJITted_ tJITted;
 typedef struct tExceptionHeader_ tExceptionHeader;
@@ -37,9 +36,8 @@ typedef struct tJITExceptionHeader_ tJITExceptionHeader;
 // with that now.
 typedef int(*fnPInvoke)(STRING libName, STRING funcName, STRING arg0);
 
-#include "Types.h"
 
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 typedef struct tCombinedOpcodesMem_ tCombinedOpcodesMem;
 struct tCombinedOpcodesMem_ {
 	void *pMem;
@@ -58,7 +56,7 @@ struct tJITted_ {
 	U32 numExceptionHandlers;
 	// Pointer to the exception handler headers (NULL if none)
 	tJITExceptionHeader *pExceptionHeaders;
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	// The number of bytes used by this JITted method - to include ALL bytes:
 	// The size of the opcodes, plus the size of the combined opcodes.
 	U32 opsMemSize;
@@ -67,11 +65,9 @@ struct tJITted_ {
 #endif
 };
 
-#include "MetaDataTables.h"
-#include "Thread.h"
 
-#define COR_ILEXCEPTION_CLAUSE_EXCEPTION 0
-#define COR_ILEXCEPTION_CLAUSE_FINALLY 2
+const int COR_ILEXCEPTION_CLAUSE_EXCEPTION 0
+const int COR_ILEXCEPTION_CLAUSE_FINALLY 2
 
 struct tExceptionHeader_ {
 	U32 flags;
@@ -132,7 +128,6 @@ typedef struct tJITCodeInfo_ {
 	U32 isDynamic;
 } tJITCodeInfo;
 
-#include "JIT_OpCodes.h"
 
 extern tJITCodeInfo jitCodeInfo[JIT_OPCODE_MAXNUM];
 extern tJITCodeInfo jitCodeGoNext;
@@ -144,13 +139,11 @@ void JIT_Prepare(tMD_MethodDef *pMethodDef, U32 genCombinedOpcodes);
 
 U32 JIT_Execute(tThread *pThread, U32 numInst);
 
-#ifdef DIAG_OPCODE_TIMES
-#include "JIT_OpCodes.h"
+#if DIAG_OPCODE_TIMES
 extern U64 opcodeTimes[JIT_OPCODE_MAXNUM];
 #endif
 
-#ifdef DIAG_OPCODE_USE
-#include "JIT_OpCodes.h"
+#if DIAG_OPCODE_USE
 extern U32 opcodeNumUses[JIT_OPCODE_MAXNUM];
 #endif
 

@@ -18,20 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "Heap.h"
-
-#include "MetaData.h"
-#include "CLIFile.h"
-#include "Type.h"
-#include "EvalStack.h"
-#include "Finalizer.h"
-#include "Thread.h"
-#include "System.String.h"
-#include "System.Array.h"
-#include "System.WeakReference.h"
+#if NO
 
 // Memory roots are:
 // All threads, all MethodStates - the ParamLocals memory and the evaluation stack
@@ -82,14 +69,14 @@ struct tHeapEntry_ {
 	U8 memory[0];
 };
 // Get the tHeapEntry pointer when given a HEAP_PTR object
-#define GET_HEAPENTRY(heapObj) ((tHeapEntry*)(heapObj - sizeof(tHeapEntry)))
+const int GET_HEAPENTRY(heapObj) ((tHeapEntry*)(heapObj - sizeof(tHeapEntry)))
 
 // Forward ref
 static void RemoveWeakRefTarget(tHeapEntry *pHeapEntry, U32 removeLongRefs);
 
 static tHeapEntry *pHeapTreeRoot;
 static tHeapEntry *nil;
-#define MAX_TREE_DEPTH 40
+const int MAX_TREE_DEPTH = 40;
 
 // The total heap memory currently allocated
 static U32 trackHeapSize;
@@ -100,13 +87,13 @@ static U32 numNodes = 0;
 // The number of collections done
 static U32 numCollections = 0;
 
-#ifdef DIAG_GC
+#if DIAG_GC
 // Track how much time GC's are taking
 U64 gcTotalTime = 0;
 #endif
 
-#define MIN_HEAP_SIZE 50000
-#define MAX_HEAP_EXCESS 200000
+const int MIN_HEAP_SIZE = 50000;
+const int MAX_HEAP_EXCESS = 200000;
 
 void Heap_Init() {
 	// Initialise vars
@@ -258,13 +245,13 @@ static void GarbageCollect() {
 	tHeapEntry *pToDelete = NULL;
 	U32 orgHeapSize = trackHeapSize;
 	U32 orgNumNodes = numNodes;
-#ifdef DIAG_GC
+#if DIAG_GC
 	U64 startTime;
 #endif
 
 	numCollections++;
 
-#ifdef DIAG_GC
+#if DIAG_GC
 	startTime = microTime();
 #endif
 
@@ -405,14 +392,14 @@ static void GarbageCollect() {
 		free(pThis);
 	}
 
-#ifdef DIAG_GC
+#if DIAG_GC
 	gcTotalTime += microTime() - startTime;
 #endif
 
 	log_f(1, "--- GARBAGE --- [Size: %d -> %d] [Nodes: %d -> %d]\n",
 		orgHeapSize, trackHeapSize, orgNumNodes, numNodes);
 
-#ifdef DIAG_GC
+#if DIAG_GC
 	log_f(1, "GC time = %d ms\n", gcTotalTime / 1000);
 #endif
 }
@@ -599,3 +586,6 @@ void Heap_RemovedWeakRefTarget(HEAP_PTR target) {
 	tHeapEntry *pTarget = GET_HEAPENTRY(target);
 	DeleteSync(pTarget);
 }
+
+#endif
+

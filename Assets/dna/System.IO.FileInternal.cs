@@ -17,30 +17,19 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-#include <sys/stat.h>
-#include "Compat.h"
-#include "Sys.h"
 
-#include "System.Object.h"
+#if NO
 
-#include "Types.h"
-#include "Type.h"
-#include "Heap.h"
-#include "System.String.h"
-#include "System.Array.h"
+const int ERROR_UNKNOWNMODE -1
 
-#include "errno.h"
+const int FILEMODE_CREATENEW 1
+const int FILEMODE_CREATE 2
+const int FILEMODE_OPEN 3
+const int FILEMODE_OPENORCREATE 4
+const int FILEMODE_TRUNCATE 5
+const int FILEMODE_APPEND 6
 
-#define ERROR_UNKNOWNMODE -1
-
-#define FILEMODE_CREATENEW 1
-#define FILEMODE_CREATE 2
-#define FILEMODE_OPEN 3
-#define FILEMODE_OPENORCREATE 4
-#define FILEMODE_TRUNCATE 5
-#define FILEMODE_APPEND 6
-
-#define FILEATTRIBUTES_DIRECTORY 0x00010
+const int FILEATTRIBUTES_DIRECTORY 0x00010
 
 tAsyncCall* System_IO_FileInternal_Open(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	U32 filenameLen;
@@ -127,7 +116,7 @@ tAsyncCall* System_IO_FileInternal_Close(PTR pThis_, PTR pParams, PTR pReturnVal
 tAsyncCall* System_IO_FileInternal_GetCurrentDirectory(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	U32 *pError = INTERNALCALL_PARAM(0, U32*);
 	HEAP_PTR curDir;
-#ifdef WIN32
+#if WIN32
 	unsigned short dir[256];
 	GetCurrentDirectoryW(256, dir);
 	curDir = SystemString_FromCharPtrUTF16(dir);
@@ -141,7 +130,7 @@ tAsyncCall* System_IO_FileInternal_GetCurrentDirectory(PTR pThis_, PTR pParams, 
 	return NULL;
 }
 
-#ifndef WIN32
+#if ! WIN32
 // Get attributes of file and map from UNIX to .NET attribute flags
 static U32 Attrs(unsigned char *pPath, U32 *pError) {
 	struct stat info;
@@ -168,7 +157,7 @@ tAsyncCall* System_IO_FileInternal_GetFileAttributes(PTR pThis_, PTR pParams, PT
 	U32 pathLen;
 	STRING2 path = SystemString_GetString(pathHeapPtr, &pathLen);
 	U32 ret;
-#ifdef WIN32
+#if WIN32
 	unsigned short pathNullTerm[256];
 	memcpy(pathNullTerm, path, pathLen << 1);
 	pathNullTerm[pathLen] = 0;
@@ -203,7 +192,7 @@ tAsyncCall* System_IO_FileInternal_GetFileSystemEntries(PTR pThis_, PTR pParams,
 	U32 tempStoreSize = 32, tempStoreOfs = 0, i;
 	HEAP_PTR *pTempStore = malloc(tempStoreSize * sizeof(void*));
 	PTR arrayElements;
-#ifdef WIN32
+#if WIN32
 	unsigned short pathPatternNullTerm[256];
 	HANDLE hFind;
 	WIN32_FIND_DATA find;
@@ -272,3 +261,5 @@ tAsyncCall* System_IO_FileInternal_GetFileSystemEntries(PTR pThis_, PTR pParams,
 	}
 	return NULL;
 }
+
+#endif

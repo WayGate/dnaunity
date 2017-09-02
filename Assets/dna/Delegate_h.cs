@@ -18,16 +18,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined (__DELEGATE_H)
-#define __DELEGATE_H
-
-#include "MetaData.h"
-#include "Types.h"
+#if NO
 
 fnInternalCall Map_Delegate(tMD_MethodDef *pMethod);
 
 tMD_MethodDef* Delegate_GetMethod(void *pThis_);
 tMD_MethodDef* Delegate_GetMethodAndStore(void *pThis_, HEAP_PTR *pTargetObj, void **ppNextDelegate);
-
 
 #endif

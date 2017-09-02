@@ -18,33 +18,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#if NO
 
-#include "JIT.h"
+const int CorILMethod_TinyFormat = 0x02;
+const int CorILMethod_MoreSects = 0x08;
 
-#include "JIT_OpCodes.h"
-#include "CIL_OpCodes.h"
+const int CorILMethod_Sect_EHTable = 0x01;
+const int CorILMethod_Sect_FatFormat = 0x40;
+const int CorILMethod_Sect_MoreSects = 0x80;
 
-#include "MetaData.h"
-#include "Types.h"
-#include "Type.h"
-#include "InternalCall.h"
-#include "Heap.h"
-#include "PInvoke.h"
-
-#define CorILMethod_TinyFormat 0x02
-#define CorILMethod_MoreSects 0x08
-
-#define CorILMethod_Sect_EHTable 0x01
-#define CorILMethod_Sect_FatFormat 0x40
-#define CorILMethod_Sect_MoreSects 0x80
-
-#define DYNAMIC_OK 0x100
-#define DYNAMIC_JUMP_TARGET 0x200
-#define DYNAMIC_EX_START 0x400
-#define DYNAMIC_EX_END 0x800
-#define DYNAMIC_BYTE_COUNT_MASK 0xff
+const int DYNAMIC_OK = 0x100;
+const int DYNAMIC_JUMP_TARGET = 0x200;
+const int DYNAMIC_EX_START = 0x400;
+const int DYNAMIC_EX_END = 0x800;
+const int DYNAMIC_BYTE_COUNT_MASK = 0xff;
 
 typedef struct tOps_ tOps;
 struct tOps_ {
@@ -60,8 +47,8 @@ struct tTypeStack_ {
 	U32 maxBytes; // The max size of the stack in bytes
 };
 
-#define InitOps(ops_, initialCapacity) ops_.capacity = initialCapacity; ops_.ofs = 0; ops_.p = malloc((initialCapacity) * sizeof(I32));
-#define DeleteOps(ops_) free(ops_.p)
+const int InitOps(ops_, initialCapacity) ops_.capacity = initialCapacity; ops_.ofs = 0; ops_.p = malloc((initialCapacity) * sizeof(I32));
+const int DeleteOps(ops_) free(ops_.p)
 
 // Turn this into a MACRO at some point?
 /* static U32 Translate(U32 op, U32 getDynamic) {
@@ -78,41 +65,41 @@ struct tTypeStack_ {
 	}
 } */
 
-#ifdef GEN_COMBINED_OPCODES
-#define PushU32(v) PushU32_(&ops, (U32)(v)); PushU32_(&isDynamic, 0)
-#define PushI32(v) PushU32_(&ops, (U32)(v)); PushU32_(&isDynamic, 0)
-#define PushFloat(v) convFloat.f=(float)(v); PushU32_(&ops, convFloat.u32); PushU32_(&isDynamic, 0)
-#define PushDouble(v) convDouble.d=(double)(v); PushU32_(&ops, convDouble.u32.a); PushU32_(&ops, convDouble.u32.b); PushU32_(&isDynamic, 0); PushU32_(&isDynamic, 0)
-#ifdef _32BIT_
-#define PushPTR(ptr) PushU32_(&ops, (U32)(ptr)); PushU32_(&isDynamic, 0)
+#if GEN_COMBINED_OPCODES
+const int PushU32(v) PushU32_(&ops, (U32)(v)); PushU32_(&isDynamic, 0)
+const int PushI32(v) PushU32_(&ops, (U32)(v)); PushU32_(&isDynamic, 0)
+const int PushFloat(v) convFloat.f=(float)(v); PushU32_(&ops, convFloat.u32); PushU32_(&isDynamic, 0)
+const int PushDouble(v) convDouble.d=(double)(v); PushU32_(&ops, convDouble.u32.a); PushU32_(&ops, convDouble.u32.b); PushU32_(&isDynamic, 0); PushU32_(&isDynamic, 0)
+#if _32BIT_
+const int PushPTR(ptr) PushU32_(&ops, (U32)(ptr)); PushU32_(&isDynamic, 0)
 #else
-#define PushPTR(ptr) PushU32_(&ops, (U32)(ptr)); PushU32_(&isDynamic, 0); PushU32_(&ops, (U32)((U64)(ptr) >> 32)); PushU32_(&isDynamic, 0)
+const int PushPTR(ptr) PushU32_(&ops, (U32)(ptr)); PushU32_(&isDynamic, 0); PushU32_(&ops, (U32)((U64)(ptr) >> 32)); PushU32_(&isDynamic, 0)
 #endif
-#define PushOp(op) PushU32_(&ops, (U32)(op)); PushU32_(&isDynamic, (U32)(op))
-#define PushOpParam(op, param) PushOp(op); PushU32_(&ops, (U32)(param)); PushU32_(&isDynamic, 0)
+const int PushOp(op) PushU32_(&ops, (U32)(op)); PushU32_(&isDynamic, (U32)(op))
+const int PushOpParam(op, param) PushOp(op); PushU32_(&ops, (U32)(param)); PushU32_(&isDynamic, 0)
 #else
-#define PushU32(v) PushU32_(&ops, (U32)(v))
-#define PushI32(v) PushU32_(&ops, (U32)(v))
-#define PushFloat(v) convFloat.f=(float)(v); PushU32_(&ops, convFloat.u32)
-#define PushDouble(v) convDouble.d=(double)(v); PushU32_(&ops, convDouble.u32.a); PushU32_(&ops, convDouble.u32.b)
-#ifdef _32BIT_
-#define PushPTR(ptr) PushU32_(&ops, (U32)(ptr))
+const int PushU32(v) PushU32_(&ops, (U32)(v))
+const int PushI32(v) PushU32_(&ops, (U32)(v))
+const int PushFloat(v) convFloat.f=(float)(v); PushU32_(&ops, convFloat.u32)
+const int PushDouble(v) convDouble.d=(double)(v); PushU32_(&ops, convDouble.u32.a); PushU32_(&ops, convDouble.u32.b)
+#if _32BIT_
+const int PushPTR(ptr) PushU32_(&ops, (U32)(ptr))
 #else
-#define PushPTR(ptr) PushU32_(&ops, (U32)(ptr)); PushU32_(&ops, (U32)((U64)(ptr) >> 32))
+const int PushPTR(ptr) PushU32_(&ops, (U32)(ptr)); PushU32_(&ops, (U32)((U64)(ptr) >> 32))
 #endif
-#define PushOp(op) PushU32_(&ops, (U32)(op))
-#define PushOpParam(op, param) PushOp(op); PushU32_(&ops, (U32)(param))
+const int PushOp(op) PushU32_(&ops, (U32)(op))
+const int PushOpParam(op, param) PushOp(op); PushU32_(&ops, (U32)(param))
 #endif
 
-#define PushBranch() PushU32_(&branchOffsets, ops.ofs)
+const int PushBranch() PushU32_(&branchOffsets, ops.ofs)
 
-#define PushStackType(type) PushStackType_(&typeStack, type);
-#define PopStackType() (typeStack.ppTypes[--typeStack.ofs])
-#define PopStackTypeDontCare() typeStack.ofs--
-#define PopStackTypeMulti(number) typeStack.ofs -= number
-#define PopStackTypeAll() typeStack.ofs = 0;
+const int PushStackType(type) PushStackType_(&typeStack, type);
+const int PopStackType() (typeStack.ppTypes[--typeStack.ofs])
+const int PopStackTypeDontCare() typeStack.ofs--
+const int PopStackTypeMulti(number) typeStack.ofs -= number
+const int PopStackTypeAll() typeStack.ofs = 0;
 
-#define MayCopyTypeStack() if (u32Value > cilOfs) ppTypeStacks[u32Value] = DeepCopyTypeStack(&typeStack)
+const int MayCopyTypeStack() if (u32Value > cilOfs) ppTypeStacks[u32Value] = DeepCopyTypeStack(&typeStack)
 
 static void PushStackType_(tTypeStack *pTypeStack, tMD_TypeDef *pType) {
 	U32 i, size;
@@ -176,7 +163,7 @@ static void RestoreTypeStack(tTypeStack *pMainStack, tTypeStack *pCopyFrom) {
 	}
 }
 
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 static U32 FindOpCode(void *pAddr) {
 	U32 i;
 	for (i=0; i<JIT_OPCODE_MAXNUM; i++) {
@@ -250,7 +237,7 @@ static U32* JITit(tMD_MethodDef *pMethodDef, U8 *pCIL, U32 codeSize, tParameter 
 	tMD_TypeDef *pStackType;
 	tTypeStack typeStack;
 
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	tOps isDynamic;
 #endif
 
@@ -290,7 +277,7 @@ static U32* JITit(tMD_MethodDef *pMethodDef, U8 *pCIL, U32 codeSize, tParameter 
 
 	InitOps(ops, 32);
 	InitOps(branchOffsets, 16);
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	InitOps(isDynamic, 32);
 #endif
 
@@ -760,14 +747,14 @@ cilBrCond:
 				pTypeA = PopStackType();
 				u32Value = cilOfs + (I32)u32Value;
 				MayCopyTypeStack();
-#ifdef _32BIT_
+#if _32BIT_
 				if ((pTypeA->stackType == EVALSTACK_INT32 && pTypeB->stackType == EVALSTACK_INT32) ||
 					(pTypeA->stackType == EVALSTACK_O && pTypeB->stackType == EVALSTACK_O)) {
 #else
                 if (pTypeA->stackType == EVALSTACK_INT32 && pTypeB->stackType == EVALSTACK_INT32) {
 #endif
 					PushOp(JIT_BEQ_I32I32 + (op - u32Value2));
-#ifdef _32BIT_
+#if _32BIT_
 				} else if (pTypeA->stackType == EVALSTACK_INT64 && pTypeB->stackType == EVALSTACK_INT64) {
 #else
                 } else if ((pTypeA->stackType == EVALSTACK_INT64 && pTypeB->stackType == EVALSTACK_INT64) ||
@@ -874,7 +861,7 @@ cilBinaryArithOp:
 			case CIL_CONV_I4:
 			case CIL_CONV_OVF_I4: // Fix this later - will never overflow
 			case CIL_CONV_OVF_I4_UN: // Fix this later - will never overflow
-#ifdef _32BIT_
+#if _32BIT_
 			case CIL_CONV_I: // Only on 32-bit
 			case CIL_CONV_OVF_I_UN: // Only on 32-bit; Fix this later - will never overflow
 #endif
@@ -898,7 +885,7 @@ cilConvInt32:
 			case CIL_CONV_U4:
 			case CIL_CONV_OVF_U4: // Fix this later - will never overflow
 			case CIL_CONV_OVF_U4_UN: // Fix this later - will never overflow
-#ifdef _32BIT_
+#if _32BIT_
 			case CIL_CONV_U:
 			case CIL_CONV_OVF_U_UN:
 #endif
@@ -911,7 +898,7 @@ cilConvUInt32:
 			case CIL_CONV_I8:
 			case CIL_CONV_OVF_I8: // Fix this later - will never overflow
 			case CIL_CONV_OVF_I8_UN: // Fix this later - will never overflow
-#ifdef _64BIT_
+#if _64BIT_
             case CIL_CONV_I:
             case CIL_CONV_OVF_I_UN:
 #endif
@@ -921,7 +908,7 @@ cilConvUInt32:
 			case CIL_CONV_U8:
 			case CIL_CONV_OVF_U8: // Fix this later - will never overflow
 			case CIL_CONV_OVF_U8_UN: // Fix this later - will never overflow
-#ifdef _64BIT_
+#if _64BIT_
             case CIL_CONV_U:
             case CIL_CONV_OVF_U_UN:
 #endif
@@ -957,7 +944,7 @@ cilConv:
 					case EVALSTACK_PTR:
 						opCodeBase =
 							(pStackType == types[TYPE_SYSTEM_UINTPTR])
-#ifdef _32BIT_
+#if _32BIT_
                                 ?JIT_CONV_FROM_U32:JIT_CONV_FROM_I32;
 #else
                                 ?JIT_CONV_FROM_U64:JIT_CONV_FROM_I64;
@@ -1137,7 +1124,7 @@ cilConv:
 
 			case CIL_LDELEM_REF:
 				PopStackTypeMulti(2); // Don't care what any of these are
-#ifdef _32BIT_
+#if _32BIT_
 				PushOp(JIT_LOAD_ELEMENT_U32);
 #else
                 PushOp(JIT_LOAD_ELEMENT_I64);
@@ -1175,7 +1162,7 @@ cilConv:
 				break;
 
             case CIL_STELEM_REF:
-#ifdef _32BIT_
+#if _32BIT_
                 PopStackTypeMulti(3); // Don't care what any of these are
                 PushOp(JIT_STORE_ELEMENT_32);
 #else
@@ -1428,7 +1415,7 @@ cilLeave:
 				case CILX_CLT_UN:
 					pTypeB = PopStackType();
 					pTypeA = PopStackType();
-#ifdef _32BIT_
+#if _32BIT_
 					if ((pTypeA->stackType == EVALSTACK_INT32 && pTypeB->stackType == EVALSTACK_INT32) ||
 						(pTypeA->stackType == EVALSTACK_O && pTypeB->stackType == EVALSTACK_O) ||
 						(pTypeA->stackType == EVALSTACK_PTR && pTypeB->stackType == EVALSTACK_PTR)) {
@@ -1436,7 +1423,7 @@ cilLeave:
                         if (pTypeA->stackType == EVALSTACK_INT32 && pTypeB->stackType == EVALSTACK_INT32) {
 #endif
 						PushOp(JIT_CEQ_I32I32 + (op - CILX_CEQ));
-#ifdef _32BIT_
+#if _32BIT_
                     } else if (pTypeA->stackType == EVALSTACK_INT64 && pTypeB->stackType == EVALSTACK_INT64) {
 #else
                     } else if ((pTypeA->stackType == EVALSTACK_INT64 && pTypeB->stackType == EVALSTACK_INT64) ||
@@ -1488,7 +1475,7 @@ cilLeave:
 		// Rewrite the branch offset
 		jumpTarget = pJITOffsets[jumpTarget];
 		ops.p[ofs] = jumpTarget;
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 		isDynamic.p[jumpTarget] |= DYNAMIC_JUMP_TARGET;
 #endif
 	}
@@ -1502,7 +1489,7 @@ cilLeave:
 		pEx->tryStart = pJITOffsets[pEx->tryStart];
 		pEx->handlerEnd = pJITOffsets[pEx->handlerStart + pEx->handlerEnd];
 		pEx->handlerStart = pJITOffsets[pEx->handlerStart];
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 		isDynamic.p[pEx->tryStart] |= DYNAMIC_EX_START | DYNAMIC_JUMP_TARGET;
 		isDynamic.p[pEx->tryEnd] |= DYNAMIC_EX_END | DYNAMIC_JUMP_TARGET;
 		isDynamic.p[pEx->handlerStart] |= DYNAMIC_EX_START | DYNAMIC_JUMP_TARGET;
@@ -1510,7 +1497,7 @@ cilLeave:
 #endif
 	}
 
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	// Find any candidates for instruction combining
 	if (genCombinedOpcodes) {
 		U32 inst0 = 0;
@@ -1605,7 +1592,7 @@ combineDone:
 	pFinalOps = genCombinedOpcodes?malloc(u32Value):mallocForever(u32Value);
 	memcpy(pFinalOps, ops.p, u32Value);
 	DeleteOps(ops);
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	pJITted->opsMemSize += u32Value;
 	DeleteOps(isDynamic);
 #endif
@@ -1631,7 +1618,7 @@ void JIT_Prepare(tMD_MethodDef *pMethodDef, U32 genCombinedOpcodes) {
 
 	pMetaData = pMethodDef->pMetaData;
 	pJITted = (genCombinedOpcodes)?TMALLOC(tJITted):TMALLOCFOREVER(tJITted);
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	pJITted->pCombinedOpcodesMem = NULL;
 	pJITted->opsMemSize = 0;
 	if (genCombinedOpcodes) {
@@ -1796,3 +1783,6 @@ void JIT_Prepare(tMD_MethodDef *pMethodDef, U32 genCombinedOpcodes) {
     
 	free(pLocals);
 }
+  
+#endif
+

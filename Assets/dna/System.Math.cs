@@ -18,12 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Math.h"
-
-#include <math.h>
+#if NO
 
 tAsyncCall* System_Math_Sin(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	*(double*)pReturnValue = sin(INTERNALCALL_PARAM(0, double));
@@ -54,3 +49,5 @@ tAsyncCall* System_Math_Sqrt(PTR pThis_, PTR pParams, PTR pReturnValue) {
 
 	return NULL;
 }
+
+#endif

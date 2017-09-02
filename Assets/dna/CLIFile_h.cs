@@ -18,15 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined (__CLIFILE_H)
-#define __CLIFILE_H
+#if NO
 
-#include "RVA.h"
-#include "Types.h"
-#include "MetaData.h"
-
-typedef struct tCLIFile_ tCLIFile;
-struct tCLIFile_ {
+struct tCLIFile {
 	// The filename
 	char *pFileName;
 	// The RVA sections of this file

@@ -1,5 +1,4 @@
-#if !defined(__SYSTEM_REFLECTION_PROPERTYINFO_H)
-#define __SYSTEM_REFLECTION_PROPERTYINFO_H
+#if NO
 
 typedef struct tPropertyInfo_ tPropertyInfo;
 struct tPropertyInfo_ {

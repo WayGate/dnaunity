@@ -18,18 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <dlfcn.h>
-
-#include "Compat.h"
-#include "Sys.h"
-
-#include "PInvoke.h"
-#include "MetaData.h"
-#include "MetaDataTables.h"
-#include "JIT.h"
-#include "Type.h"
-#include "System.String.h"
-#include "EvalStack.h"
+#if NO
 
 typedef struct tLoadedLib_ tLoadedLib;
 struct tLoadedLib_ {
@@ -71,7 +60,7 @@ static tLoadedLib* GetLib(STRING name) {
 	if (pNativeLib == NULL) {
 		// Failed to load library
 		printf("Failed to load library: %s\n", libName);
-#ifndef WIN32
+#if !WIN32
 		{
 			char *pError;
 			pError = dlerror();
@@ -90,7 +79,7 @@ static tLoadedLib* GetLib(STRING name) {
 	return pLib;
 }
 
-#ifdef TARGET_EMCRIPTEN
+#if TARGET_EMCRIPTEN
 extern char* invokeJsFunc(STRING libName, STRING funcName, STRING arg0);
 #else
 char* invokeJsFunc(STRING libName, STRING funcName, STRING arg0)
@@ -145,8 +134,6 @@ static void* ConvertStringToUnicode(HEAP_PTR pHeapEntry) {
 	return pUnicode;
 }
 
-#include "PInvoke_TypeDef.h"
-
 typedef U64    (STDCALL *_uCuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4);
 typedef U64    (STDCALL *_uCuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5);
 typedef U64    (STDCALL *_uCuuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5, U32 _6);
@@ -154,26 +141,26 @@ typedef U64    (STDCALL *_uCuuuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U3
 typedef U64    (STDCALL *_uCuuuuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5, U32 _6, U32 _7, U32 _8);
 typedef U64    (STDCALL *_uCuuuuuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5, U32 _6, U32 _7, U32 _8, U32 _9);
 
-#define CALL0(returnType) (returnType)
-#define CALL1(returnType, t0) ((returnType) | ((t0)<<2))
-#define CALL2(returnType, t0, t1) ((returnType) | ((t0)<<2) | ((t1)<<4))
-#define CALL3(returnType, t0, t1, t2) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6))
-#define CALL4(returnType, t0, t1, t2, t3) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8))
-#define CALL5(returnType, t0, t1, t2, t3, t4) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10))
-#define CALL6(returnType, t0, t1, t2, t3, t4, t5) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12))
-#define CALL7(returnType, t0, t1, t2, t3, t4, t5, t6) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12) | ((t6)<<14))
-#define CALL8(returnType, t0, t1, t2, t3, t4, t5, t6, t7) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12) | ((t6)<<14) | ((t7)<<16))
-#define CALL9(returnType, t0, t1, t2, t3, t4, t5, t6, t7, t8) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12) | ((t6)<<14) | ((t7)<<16) | ((t8)<<18))
-#define CALL10(returnType, t0, t1, t2, t3, t4, t5, t6, t7, t8, t9) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12) | ((t6)<<14) | ((t7)<<16) | ((t8)<<18) | ((t9)<<20))
+const int CALL0(returnType) (returnType)
+const int CALL1(returnType, t0) ((returnType) | ((t0)<<2))
+const int CALL2(returnType, t0, t1) ((returnType) | ((t0)<<2) | ((t1)<<4))
+const int CALL3(returnType, t0, t1, t2) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6))
+const int CALL4(returnType, t0, t1, t2, t3) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8))
+const int CALL5(returnType, t0, t1, t2, t3, t4) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10))
+const int CALL6(returnType, t0, t1, t2, t3, t4, t5) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12))
+const int CALL7(returnType, t0, t1, t2, t3, t4, t5, t6) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12) | ((t6)<<14))
+const int CALL8(returnType, t0, t1, t2, t3, t4, t5, t6, t7) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12) | ((t6)<<14) | ((t7)<<16))
+const int CALL9(returnType, t0, t1, t2, t3, t4, t5, t6, t7, t8) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12) | ((t6)<<14) | ((t7)<<16) | ((t8)<<18))
+const int CALL10(returnType, t0, t1, t2, t3, t4, t5, t6, t7, t8, t9) ((returnType) | ((t0)<<2) | ((t1)<<4) | ((t2)<<6) | ((t3)<<8) | ((t4)<<10) | ((t5)<<12) | ((t6)<<14) | ((t7)<<16) | ((t8)<<18) | ((t9)<<20))
 
-#define NOTHING 0
-#define SINGLE 1
-#define DOUBLE 2
-#define DEFAULT 3
+const int NOTHING 0
+const int SINGLE 1
+const int DOUBLE 2
+const int DEFAULT 3
 
-#define SET_ARG_TYPE(paramNum, type) funcParams |= (type << ((paramNum+1) << 1))
+const int SET_ARG_TYPE(paramNum, type) funcParams |= (type << ((paramNum+1) << 1))
 
-#define MAX_ARGS 16
+const int MAX_ARGS 16
 U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread *pCallingThread) {
 	U32 _args[MAX_ARGS];
 	double _argsd[MAX_ARGS];
@@ -274,8 +261,7 @@ U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread 
 
 	/*
 	switch (funcParams) {
-
-#include "PInvoke_CaseCode.h"
+    
 
 	case CALL5(DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT):
 		u64Ret = ((_uCuuuuu)(pFn))(_args[0], _args[1], _args[2], _args[3], _args[4]);
@@ -346,3 +332,6 @@ U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread 
 	Crash("PInvoke_Call() Cannot handle return type: %s", pReturnType->name);
 	FAKE_RETURN;
 }
+
+#endif
+

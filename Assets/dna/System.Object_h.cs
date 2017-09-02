@@ -18,11 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__SYSTEM_OBJECT_H)
-#define __SYSTEM_OBJECT_H
-
-#include "Types.h"
-#include "MetaData.h"
+#if NO
 
 tAsyncCall* System_Object_Equals(PTR pThis_, PTR pParams, PTR pReturnValue);
 tAsyncCall* System_Object_Clone(PTR pThis_, PTR pParams, PTR pReturnValue);

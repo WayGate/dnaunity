@@ -18,13 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include <sys/time.h>
-
-#include "Compat.h"
-#include "Sys.h"
-
-#include "MetaData.h"
-#include "Types.h"
+#if NO
 
 void Crash(char *pMsg, ...) {
 	va_list va;
@@ -39,7 +33,7 @@ void Crash(char *pMsg, ...) {
 
 	printf("\n\n");
 
-#ifdef WIN32
+#if WIN32
 	{
 		// Cause a delibrate exception, to get into debugger
 		__debugbreak();
@@ -108,7 +102,7 @@ log_f(3, "--- mallocForever: TotalSize %d\n", mallocForeverSize);
 }
 
 /*
-#ifdef _DEBUG
+#if _DEBUG
 void* mallocTrace(int s, char *pFile, int line) {
 	//printf("MALLOC: %s:%d %d\n", pFile, line, s);
 #undef malloc
@@ -118,7 +112,7 @@ void* mallocTrace(int s, char *pFile, int line) {
 */
 
 U64 msTime() {
-#ifdef WIN32
+#if WIN32
 	static LARGE_INTEGER freq = {0,0};
 	LARGE_INTEGER time;
 	if (freq.QuadPart == 0) {
@@ -137,9 +131,9 @@ U64 msTime() {
 #endif
 }
 
-#if defined(DIAG_METHOD_CALLS) || defined(DIAG_OPCODE_TIMES) || defined(DIAG_GC) || defined(DIAG_TOTAL_TIME)
+#if DIAG_METHOD_CALLS || DIAG_OPCODE_TIMES || DIAG_GC || DIAG_TOTAL_TIME
 U64 microTime() {
-#ifdef WIN32
+#if WIN32
 	static LARGE_INTEGER freq = {0,0};
 	LARGE_INTEGER time;
 	if (freq.QuadPart == 0) {
@@ -160,10 +154,12 @@ U64 microTime() {
 #endif
 
 void SleepMS(U32 ms) {
-#ifdef WIN32
+#if WIN32
 	Sleep(ms);
 #else
 	sleep(ms / 1000);
 	usleep((ms % 1000) * 1000);
 #endif
 }
+
+#endif

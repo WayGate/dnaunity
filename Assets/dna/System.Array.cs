@@ -18,16 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Array.h"
-#include "System.RuntimeType.h"
-
-#include "Types.h"
-#include "MetaData.h"
-#include "Heap.h"
-#include "Type.h"
+#if NO
 
 typedef struct tSystemArray_ tSystemArray;
 struct tSystemArray_ {
@@ -100,7 +91,7 @@ tAsyncCall* System_Array_Internal_SetValue(PTR pThis_, PTR pParams, PTR pReturnV
 
     index = INTERNALCALL_PARAM(S_PTR, U32);
 
-#if defined(WIN32) && defined(_DEBUG)
+#if WIN32 && _DEBUG
 	// Do a bounds-check
 	if (index >= pArray->length) {
 		printf("[Array] Internal_SetValue() Bounds-check failed\n");
@@ -166,7 +157,7 @@ tAsyncCall* System_Array_Internal_Copy(PTR pThis_, PTR pParams, PTR pReturnValue
 		dstIndex = INTERNALCALL_PARAM(S_PTR + S_INT + S_PTR, U32);
 		length = INTERNALCALL_PARAM(S_PTR + S_INT + S_PTR + S_INT, U32);
 
-#if defined(WIN32) && defined(_DEBUG)
+#if WIN32 && _DEBUG
 		// Do bounds check
 		if (srcIndex + length > pSrc->length || dstIndex + length > pDst->length) {
 			printf("[Array] Internal_Copy() Bounds check failed\n");
@@ -258,7 +249,7 @@ void SystemArray_StoreElement(HEAP_PTR pThis_, U32 index, PTR value) {
 	tMD_TypeDef *pArrayTypeDef;
 	U32 elemSize;
 
-#if defined(WIN32) && defined(_DEBUG)
+#if WIN32 && _DEBUG
 	// Do a bounds check
 	if (index >= pArray->length) {
 		printf("SystemArray_StoreElement() Bounds check failed. Array length: %d  index: %d\n", pArray->length, index);
@@ -311,7 +302,7 @@ PTR SystemArray_LoadElementAddress(HEAP_PTR pThis_, U32 index) {
 	tSystemArray *pArray = (tSystemArray*)pThis_;
 	tMD_TypeDef *pArrayTypeDef;
 
-#if defined(WIN32) && defined(_DEBUG)
+#if WIN32 && _DEBUG
 	if (index >= pArray->length) {
 		printf("SystemArray_LoadElementAddress() Bounds check failed\n");
 		__debugbreak();
@@ -333,3 +324,5 @@ tAsyncCall* System_Array_CreateInstance(PTR pThis_, PTR pParams, PTR pReturnValu
 	INTERNALCALL_RETURN_PTR(SystemArray_NewVector(pArrayType, length));
 	return NULL;
 }
+
+#endif

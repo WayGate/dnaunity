@@ -18,10 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__SYSTEM_MATH_H)
-#define __SYSTEM_MATH_H
-
-#include "Types.h"
+#if NO
 
 tAsyncCall* System_Math_Sin(PTR pThis_, PTR pParams, PTR pReturnValue);
 tAsyncCall* System_Math_Cos(PTR pThis_, PTR pParams, PTR pReturnValue);

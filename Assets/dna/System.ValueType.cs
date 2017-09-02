@@ -18,16 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.ValueType.h"
-
-#include "Types.h"
-#include "MetaData.h"
-#include "Heap.h"
-#include "Type.h"
-#include "System.Array.h"
+#if NO
 
 // Get all the fields in the value-types in the parameters.
 // If the 2nd parameter is NULL, then don't include it!
@@ -80,3 +71,5 @@ tAsyncCall* System_ValueType_GetFields(PTR pThis_, PTR pParams, PTR pReturnValue
 
 	return NULL;
 }
+
+#endif

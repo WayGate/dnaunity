@@ -18,25 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#if NO
 
-#include "System.DateTime.h"
-
-#ifndef WIN32
-
-#include <sys/time.h>
-
-#endif
-
-#define TicksPerSecond 10000000L
-#define TicksPerMicroSecond 10L
-#define TicksAtUnixEpoch 621355968000000000L
-#define TicksAtFileTimeEpoch 504911232000000000L
+const int TicksPerSecond 10000000L
+const int TicksPerMicroSecond 10L
+const int TicksAtUnixEpoch 621355968000000000L
+const int TicksAtFileTimeEpoch 504911232000000000L
 
 tAsyncCall* System_DateTime_InternalUtcNow(PTR pThis_, PTR pParams, PTR pReturnValue) {
 
-#ifdef WIN32
+#if WIN32
 
 	FILETIME ft;
 
@@ -57,3 +48,5 @@ tAsyncCall* System_DateTime_InternalUtcNow(PTR pThis_, PTR pParams, PTR pReturnV
 
 	return NULL;
 }
+
+#endif

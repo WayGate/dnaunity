@@ -18,24 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "CLIFile.h"
-#include "RVA.h"
-#include "MetaData.h"
-#include "Thread.h"
-#include "MetaDataTables.h"
-#include "Type.h"
-
-#include "System.Array.h"
-#include "System.String.h"
+#if NO
 
 // Is this exe/dll file for the .NET virtual machine?
-#define DOT_NET_MACHINE 0x14c
+const int DOT_NET_MACHINE 0x14c
 
-typedef struct tFilesLoaded_ tFilesLoaded;
-struct tFilesLoaded_ {
+struct tFilesLoaded {
 	tCLIFile *pCLIFile;
 	tFilesLoaded *pNext;
 };
@@ -350,3 +338,5 @@ void CLIFile_GetHeapRoots(tHeapRoots *pHeapRoots) {
 		pFile = pFile->pNext;
 	}
 }
+
+#endif

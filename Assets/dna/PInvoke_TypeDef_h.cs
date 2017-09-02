@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#if NO
+
 typedef float  (STDCALL *_fC)();
 typedef double (STDCALL *_dC)();
 typedef U64    (STDCALL *_uC)();
@@ -381,3 +383,5 @@ typedef U64    (STDCALL *_uCuudu)(U32 _0, U32 _1, double _2, U32 _3);
 typedef U64    (STDCALL *_uCuuuf)(U32 _0, U32 _1, U32 _2, float _3);
 typedef U64    (STDCALL *_uCuuud)(U32 _0, U32 _1, U32 _2, double _3);
 typedef U64    (STDCALL *_uCuuuu)(U32 _0, U32 _1, U32 _2, U32 _3);
+
+#endif

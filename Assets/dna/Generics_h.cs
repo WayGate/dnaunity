@@ -18,15 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__GENERICS_H)
-#define __GENERICS_H
+#if NO
 
 typedef struct tGenericInstance_ tGenericInstance;
 typedef struct tGenericMethodInstance_ tGenericMethodInstance;
-
-#include "Types.h"
-#include "MetaData.h"
-
 
 struct tGenericInstance_ {
 	// The tMD_TypeDef for this instance of this generic type

@@ -18,21 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
+#if NO
 
-#include "System.Char.h"
+//tAsyncCall* System_Diagnostics_Debugger_Break(PTR pThis_, PTR pParams, PTR pReturnValue) {
+//	printf("BREAK\n");
+//#if defined(WIN32) && defined(_DEBUG)
+//	__debugbreak();
+//#elif __APPLE__
+//    __asm__("int $3");
+//#endif
+//	return NULL;
+//}
 
-#include "MetaData.h"
-#include "Types.h"
-#include "Type.h"
-
-tAsyncCall* System_Diagnostics_Debugger_Break(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	printf("BREAK\n");
-#if defined(WIN32) && defined(_DEBUG)
-	__debugbreak();
-#elif __APPLE__
-    __asm__("int $3");
 #endif
-	return NULL;
-}

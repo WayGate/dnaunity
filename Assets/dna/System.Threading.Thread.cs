@@ -18,15 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Threading.Thread.h"
-
-#include "Types.h"
-#include "Type.h"
-#include "Delegate.h"
-#include "Thread.h"
+#if NO
 
 tAsyncCall* System_Threading_Thread_ctor(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	tThread *pThread = Thread();
@@ -85,3 +77,5 @@ tAsyncCall* System_Threading_Thread_get_CurrentThread(PTR pThis_, PTR pParams, P
 
 	return NULL;
 }
+
+#endif

@@ -18,10 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
-#include "Compat.h"
-
-#include "RVA.h"
+#if NO
 
 tRVA* RVA() {
 	tRVA *pRet;
@@ -70,3 +67,5 @@ void* RVA_FindData(tRVA *pThis, unsigned int rva) {
 	}
 	return NULL;
 }
+
+#endif

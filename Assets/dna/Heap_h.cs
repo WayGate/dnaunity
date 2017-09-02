@@ -18,16 +18,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__HEAP_H)
-#define __HEAP_H
-
-#include "MetaData.h"
-#include "Types.h"
+#if NO
 
 typedef struct tHeapRoots_ tHeapRoots;
 typedef struct tHeapRootEntry_ tHeapRootEntry;
 
-#ifdef DIAG_GC
+#if DIAG_GC
 extern U64 gcTotalTime;
 #endif
 
@@ -65,4 +61,5 @@ U32 Heap_SyncExit(HEAP_PTR obj);
 HEAP_PTR Heap_SetWeakRefTarget(HEAP_PTR target, HEAP_PTR weakRef);
 HEAP_PTR* Heap_GetWeakRefAddress(HEAP_PTR target);
 void Heap_RemovedWeakRefTarget(HEAP_PTR target);
+
 #endif

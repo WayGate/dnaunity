@@ -18,15 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Array.h"
-
-#include "Types.h"
-#include "MetaData.h"
-#include "Heap.h"
-#include "Type.h"
+#if NO
 
 tAsyncCall* System_GC_Collect(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	Heap_GarbageCollect();
@@ -51,3 +43,5 @@ tAsyncCall* System_GC_SuppressFinalize(PTR pThis_, PTR pParams, PTR pReturnValue
 	Heap_UnmarkFinalizer(obj);
 	return NULL;
 }
+
+#endif

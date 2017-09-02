@@ -18,13 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "MetaData.h"
-#include "CLIFile.h"
-#include "Type.h"
-#include "Types.h"
+#if NO
 
 U32 MetaData_CompareNameAndSig(STRING name, BLOB_ sigBlob, tMetaData *pSigMetaData, tMD_TypeDef **ppSigClassTypeArgs, tMD_TypeDef **ppSigMethodTypeArgs, tMD_MethodDef *pMethod, tMD_TypeDef **ppMethodClassTypeArgs, tMD_TypeDef **ppMethodMethodTypeArgs) {
 	if (strcmp(name, pMethod->name) == 0) {
@@ -469,3 +463,5 @@ STRING MetaData_GetModuleRefName(tMetaData *pMetaData, IDX_TABLE memberRefToken)
 	tMD_ModuleRef *pModRef = (tMD_ModuleRef*)MetaData_GetTableRow(pMetaData, memberRefToken);
 	return pModRef->name;
 }
+
+#endif

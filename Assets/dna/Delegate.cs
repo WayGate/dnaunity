@@ -18,12 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "Delegate.h"
-#include "MetaData.h"
-#include "Heap.h"
+#if NO
 
 // Note that care is needed to ensure the target object refered to in the delegate is not accidently
 // garbage collected.
@@ -77,3 +72,5 @@ fnInternalCall Map_Delegate(tMD_MethodDef *pMethod) {
 
 	return NULL;
 }
+
+#endif

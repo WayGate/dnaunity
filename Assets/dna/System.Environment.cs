@@ -18,16 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Environment.h"
-
-#include "Type.h"
-#include "System.String.h"
-#include "Heap.h"
-
-#include <time.h>
+#if NO
 
 tAsyncCall* System_Environment_get_TickCount(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	I32 t;
@@ -42,7 +33,7 @@ tAsyncCall* System_Environment_GetOSVersionString(PTR pThis_, PTR pParams, PTR p
 	static HEAP_PTR versionString = NULL;
 	if (versionString == NULL) {
 		char ver[64];
-#ifdef WIN32
+#if WIN32
 		OSVERSIONINFO osVer;
 		osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 		GetVersionEx(&osVer);
@@ -58,7 +49,7 @@ tAsyncCall* System_Environment_GetOSVersionString(PTR pThis_, PTR pParams, PTR p
 }
 
 tAsyncCall* System_Environment_get_Platform(PTR pThis_, PTR pParams, PTR pReturnValue) {
-#ifdef WIN32
+#if WIN32
 	OSVERSIONINFO osVer;
 	osVer.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
 	GetVersionEx(&osVer);
@@ -68,3 +59,5 @@ tAsyncCall* System_Environment_get_Platform(PTR pThis_, PTR pParams, PTR pReturn
 #endif
 	return NULL;
 }
+
+#endif

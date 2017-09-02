@@ -18,14 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "MetaData.h"
-
-#include "Types.h"
-#include "Type.h"
-#include "RVA.h"
+#if NO
 
 unsigned int MetaData_DecodeSigEntry(SIG *pSig) {
 	unsigned char a,b,c,d;
@@ -150,10 +143,10 @@ static char* tableDefs[] = {
 	NULL,
 	// 0x06
 	"x*m*^*ssssxiS*B*\x08ixix*xixix*xixix*x*Iixix*x*"
-#ifdef GEN_COMBINED_OPCODES
+#if GEN_COMBINED_OPCODES
 	"xixix*x*x*x*"
 #endif
-#ifdef DIAG_METHOD_CALLS
+#if DIAG_METHOD_CALLS
 	"xixix*"
 #endif
 	,
@@ -626,3 +619,5 @@ void MetaData_GetHeapRoots(tHeapRoots *pHeapRoots, tMetaData *pMetaData) {
 		}
 	}
 }
+
+#endif

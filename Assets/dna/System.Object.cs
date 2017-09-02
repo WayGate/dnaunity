@@ -18,13 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "Compat.h"
-#include "Sys.h"
-
-#include "System.Object.h"
-
-#include "Types.h"
-#include "Type.h"
+#if NO
 
 tAsyncCall* System_Object_Equals(PTR pThis_, PTR pParams, PTR pReturnValue) {
 	INTERNALCALL_RETURN_U32(pThis_ == *(PTR*)pParams);
@@ -58,3 +52,5 @@ tAsyncCall* System_Object_GetType(PTR pThis_, PTR pParams, PTR pReturnValue) {
 
 	return NULL;
 }
+
+#endif

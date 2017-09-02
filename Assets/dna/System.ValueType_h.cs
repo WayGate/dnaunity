@@ -18,11 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if !defined(__SYSTEM_VALUETYPE_H)
-#define __SYSTEM_VALUETYPE_H
-
-#include "MetaData.h"
-#include "Types.h"
+#if NO
 
 tAsyncCall* System_ValueType_GetFields(PTR pThis_, PTR pParams, PTR pReturnValue);
 
