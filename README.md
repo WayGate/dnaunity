@@ -26,3 +26,10 @@ Some details:
   
 - Requires whitelist of objects to expose.
 
+Further Work:
+
+- Support overridding MonoBehavior through DnaScript component.
+
+- Support auto-serialization of script component properties in existing scenes/prefabs through DnaScript component byte[] data fields.
+
+- Utility code to convert existing scene with standard MonoBehaviours to scene with DnaScript components.
