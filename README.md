@@ -7,6 +7,8 @@ to be loaded dynamically from asset bundles.
 
 Some details:
 
+- Unlike original DNA, supports both 32 bit (WebGL) and 64 bit (iOS, Android, Windows, Mac) mem models.
+
 - Runs as C# unsafe code.  Basically C code of DNA ported unmodified to C# unsafe code.
 
 - Runnable/debuggable from within Unity/Visual Studio/Monodevelop without having to deal with C/.NET interop.
