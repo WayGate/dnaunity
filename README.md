@@ -2,8 +2,9 @@
 
 *Current status: WIP*
 
-DotNetAnywhere interpreter ported to C#/Unity to run well with either Mono or IL2CPP.  Allows C# script assemblies
-to be loaded dynamically from asset bundles.
+DotNetAnywhere interpreter ported to C#/Unity to run well with either Mono or IL2CPP.  Allows .NET assemblies
+to be loaded dynamically from files or as asset bundles on the fly without having to be compiled into the 
+original executable.
 
 Some details:
 
