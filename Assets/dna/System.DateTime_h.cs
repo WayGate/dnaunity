@@ -20,6 +20,6 @@
 
 #if NO
 
-tAsyncCall* System_DateTime_InternalUtcNow(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_DateTime_InternalUtcNow(byte* pThis_, byte* pParams, byte* pReturnValue);
 
 #endif

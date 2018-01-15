@@ -1,4 +1,4 @@
-// Copyright (c) 2012 DotNetAnywhere
+﻿// Copyright (c) 2012 DotNetAnywhere
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
+    public unsafe static class CsObject
+    {
+        public static void* Create(object o)
+        {
+            throw new System.NotImplementedException();
+        }
+    }
+}
 
-tAsyncCall* System_Runtime_CompilerServices_InitializeArray(PTR pThis_, PTR pParams, PTR pReturnValue);
-
-#endif

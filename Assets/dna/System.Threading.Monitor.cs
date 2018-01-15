@@ -20,14 +20,14 @@
 
 #if NO
 
-static U32 Internal_TryEntry_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tAsyncCall *pAsync) {
-	HEAP_PTR pObj = ((HEAP_PTR*)pParams)[0];
-	I32 timeout = ((I32*)pParams)[1];
-	U32 ret = Heap_SyncTryEnter(pObj);
-	U64 now;
+static uint Internal_TryEntry_Check(byte* pThis_, byte* pParams, byte* pReturnValue, tAsyncCall *pAsync) {
+	/*HEAP_PTR*/byte* pObj = ((/*HEAP_PTR*/byte**)pParams)[0];
+	int timeout = ((int*)pParams)[1];
+	uint ret = Heap_SyncTryEnter(pObj);
+	ulong now;
 	if (ret) {
 		// Lock achieved, so return that we've got it, and unblock this thread
-		*(U32*)pReturnValue = 1;
+		*(uint*)pReturnValue = 1;
 		return 1;
 	}
 	// Can't get lock - check timeout
@@ -37,41 +37,41 @@ static U32 Internal_TryEntry_Check(PTR pThis_, PTR pParams, PTR pReturnValue, tA
 	}
 	if (timeout == 0) {
 		// Timeout is 0, so always unblock, and return failure to get lock
-		*(U32*)pReturnValue = 0;
+		*(uint*)pReturnValue = 0;
 		return 1;
 	}
-	if (pAsync == NULL) {
+	if (pAsync == null) {
 		// This is the first time, so it can always block thread and wait
 		return 0;
 	}
 	now = msTime();
-	if ((I32)(now - pAsync->startTime) > timeout) {
+	if ((int)(now - pAsync->startTime) > timeout) {
 		// Lock not got, but timeout has expired, unblock thread and return no lock
-		*(U32*)pReturnValue = 0;
+		*(uint*)pReturnValue = 0;
 		return 1;
 	}
 	// Continue waiting, timeout not yet expired
 	return 0;
 }
 
-tAsyncCall* System_Threading_Monitor_Internal_TryEnter(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 ok = Internal_TryEntry_Check(pThis_, pParams, pReturnValue, NULL);
+tAsyncCall* System_Threading_Monitor_Internal_TryEnter(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	uint ok = Internal_TryEntry_Check(pThis_, pParams, pReturnValue, null);
 	tAsyncCall *pAsync;
 	if (ok) {
 		// Got lock already, so don't block thread
-		return NULL;
+		return null;
 	}
-	pAsync = TMALLOC(tAsyncCall);
+	pAsync = ((tAsyncCall*)Mem.malloc(sizeof(tAsyncCall)));
 	pAsync->sleepTime = -1;
 	pAsync->checkFn = Internal_TryEntry_Check;
-	pAsync->state = NULL;
+	pAsync->state = null;
 	return pAsync;
 }
 
-tAsyncCall* System_Threading_Monitor_Internal_Exit(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR pObj = ((HEAP_PTR*)pParams)[0];
+tAsyncCall* System_Threading_Monitor_Internal_Exit(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	/*HEAP_PTR*/byte* pObj = ((/*HEAP_PTR*/byte**)pParams)[0];
 	Heap_SyncExit(pObj);
-	return ASYNC_LOCK_EXIT;
+    return Thread.ASYNC_LOCK_EXIT();
 }
 
 #endif

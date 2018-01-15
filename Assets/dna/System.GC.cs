@@ -20,28 +20,28 @@
 
 #if NO
 
-tAsyncCall* System_GC_Collect(PTR pThis_, PTR pParams, PTR pReturnValue) {
+tAsyncCall* System_GC_Collect(byte* pThis_, byte* pParams, byte* pReturnValue) {
 	Heap_GarbageCollect();
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_GC_Internal_CollectionCount(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = Heap_NumCollections();
-	return NULL;
+tAsyncCall* System_GC_Internal_CollectionCount(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	*(uint*)pReturnValue = Heap_NumCollections();
+	return null;
 }
 
-tAsyncCall* System_GC_GetTotalMemory(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	if (*(U32*)pParams) {
+tAsyncCall* System_GC_GetTotalMemory(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	if (*(uint*)pParams) {
 		Heap_GarbageCollect();
 	}
-	*(U64*)pReturnValue = Heap_GetTotalMemory();
-	return NULL;
+	*(ulong*)pReturnValue = Heap_GetTotalMemory();
+	return null;
 }
 
-tAsyncCall* System_GC_SuppressFinalize(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR obj = ((HEAP_PTR*)pParams)[0];
+tAsyncCall* System_GC_SuppressFinalize(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	/*HEAP_PTR*/byte* obj = ((/*HEAP_PTR*/byte**)pParams)[0];
 	Heap_UnmarkFinalizer(obj);
-	return NULL;
+	return null;
 }
 
 #endif

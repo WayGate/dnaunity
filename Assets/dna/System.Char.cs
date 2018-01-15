@@ -21,31 +21,31 @@
 #if NO
 
 const int UC_INDEX_LEN (sizeof(UC_Index) / 4)
-tAsyncCall* System_Char_GetUnicodeCategory(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 paramCodePoint = ((U32*)pParams)[0];
+tAsyncCall* System_Char_GetUnicodeCategory(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	uint paramCodePoint = ((uint*)pParams)[0];
 	// Do a binary search on the UC_Index array
-	U32 curOfs = UC_INDEX_LEN / 2;
-	U32 upper = UC_INDEX_LEN;
-	U32 lower = 0;
-	U32 indexCodePoint;
+	uint curOfs = UC_INDEX_LEN / 2;
+	uint upper = UC_INDEX_LEN;
+	uint lower = 0;
+	uint indexCodePoint;
 	if (paramCodePoint == 0xffff) {
 		// Special case for 0xffff, as this will not be handled correctly by the code below
-		*(U32*)pReturnValue = 29;
-		return NULL;
+		*(uint*)pReturnValue = 29;
+		return null;
 	}
 	for(;;) {
 		indexCodePoint = UC_Index[curOfs << 1];
 		if (paramCodePoint >= indexCodePoint && paramCodePoint < UC_Index[(curOfs+1) << 1]) {
 			// Found the correct entry...
-			U32 value = UC_Index[(curOfs << 1) + 1];
+			uint value = UC_Index[(curOfs << 1) + 1];
 			if (value & 0x8000) {
 				// This is a run, not a direct look-up
 				value &= 0x7fff;
 				value += paramCodePoint - indexCodePoint;
 				value = UC_Runs[value];
 			}
-			*(U32*)pReturnValue = value;
-			return NULL;
+			*(uint*)pReturnValue = value;
+			return null;
 		}
 		if (paramCodePoint < indexCodePoint) {
 			upper = curOfs;
@@ -57,11 +57,11 @@ tAsyncCall* System_Char_GetUnicodeCategory(PTR pThis_, PTR pParams, PTR pReturnV
 }
 
 // Return -1 if not found
-static I32 SearchCaseArray(unsigned short *pCaseArray, unsigned short find) {
-	U32 lower = 0;
-	U32 upper = sizeof(UC_CaseUpper) / 2;
-	U32 curOfs = sizeof(UC_CaseUpper) / 4;
-	unsigned short val;
+static int SearchCaseArray(ushort *pCaseArray, ushort find) {
+	uint lower = 0;
+	uint upper = sizeof(UC_CaseUpper) / 2;
+	uint curOfs = sizeof(UC_CaseUpper) / 4;
+	ushort val;
 
 	if (find == 0xffff) {
 		// Hande 0xffff specially, as the search below cannot handle it.
@@ -73,7 +73,7 @@ static I32 SearchCaseArray(unsigned short *pCaseArray, unsigned short find) {
 		if (find >= val && find < pCaseArray[curOfs + 1]) {
 			// Found the correct entry
 			if (find == val) {
-				return (I32)curOfs;
+				return (int)curOfs;
 			}
 			return -1;
 		}
@@ -89,24 +89,24 @@ static I32 SearchCaseArray(unsigned short *pCaseArray, unsigned short find) {
 	}
 }
 
-tAsyncCall* System_Char_ToLowerInvariant(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 paramCodePoint = ((U32*)pParams)[0];
-	I32 pos;
+tAsyncCall* System_Char_ToLowerInvariant(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	uint paramCodePoint = ((uint*)pParams)[0];
+	int pos;
 
-	pos = SearchCaseArray(UC_CaseUpper, (unsigned short)paramCodePoint);
-	*(U32*)pReturnValue = (pos < 0)?paramCodePoint:UC_CaseLower[pos];
+	pos = SearchCaseArray(UC_CaseUpper, (ushort)paramCodePoint);
+	*(uint*)pReturnValue = (pos < 0)?paramCodePoint:UC_CaseLower[pos];
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Char_ToUpperInvariant(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 paramCodePoint = ((U32*)pParams)[0];
-	I32 pos;
+tAsyncCall* System_Char_ToUpperInvariant(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	uint paramCodePoint = ((uint*)pParams)[0];
+	int pos;
 
-	pos = SearchCaseArray(UC_CaseLower, (unsigned short)paramCodePoint);
-	*(U32*)pReturnValue = (pos < 0)?paramCodePoint:UC_CaseUpper[pos];
+	pos = SearchCaseArray(UC_CaseLower, (ushort)paramCodePoint);
+	*(uint*)pReturnValue = (pos < 0)?paramCodePoint:UC_CaseUpper[pos];
 
-	return NULL;
+	return null;
 }
 
 #endif

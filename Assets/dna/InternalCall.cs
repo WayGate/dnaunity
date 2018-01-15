@@ -18,174 +18,192 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+using System.Runtime.InteropServices;
 
-const int MAX_PARAMS = 6
+namespace DnaUnity
+{
+    #if UNITY_WEBGL || DNA_32BIT
+    using SIZE_T = System.UInt32;
+    using PTR = System.UInt32;
+    #else
+    using SIZE_T = System.UInt64;
+    using PTR = System.UInt64;
+    #endif
 
-typedef struct tInternalCall_ tInternalCall;
-struct tInternalCall_ {
-	STRING nameSpace;
-	STRING type;
-	STRING method;
-	fnInternalCall fn;
-	U8 returnType;
-	U8 numParameters;
-	U8 parameterTypes[MAX_PARAMS];
-};
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct tInternalCall 
+    {
+        public const int MAX_PARAMS = 6;
 
-static tInternalCall internalCalls[] = {
-	{"System", "Object", "Equals", System_Object_Equals, TYPE_SYSTEM_BOOLEAN, 1, {TYPE_SYSTEM_OBJECT}},
-	{NULL,      NULL,    "Clone", System_Object_Clone, TYPE_SYSTEM_OBJECT, 1, {TYPE_SYSTEM_OBJECT}},
-	{NULL,      NULL,    "GetHashCode", System_Object_GetHashCode, TYPE_SYSTEM_INT32, 0},
-	{NULL,      NULL,    "GetType", System_Object_GetType, TYPE_SYSTEM_TYPE, 0},
+        public /*char*/byte* nameSpace;
+        public /*char*/byte* type;
+        public /*char*/byte* method;
+        public /*fnInternalCall*/void* fn;
+        public byte returnType;
+        public uint numParameters;
+        public byte* parameterTypes;
+    }
 
-	{NULL, "String", ".ctor", System_String_ctor_CharInt32, TYPE_SYSTEM_VOID, 2, {TYPE_SYSTEM_CHAR, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,     ".ctor", System_String_ctor_CharAIntInt, TYPE_SYSTEM_VOID, 3, {TYPE_SYSTEM_ARRAY_CHAR, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,     ".ctor", System_String_ctor_StringIntInt, TYPE_SYSTEM_VOID, 3, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,     "get_Chars", System_String_get_Chars, TYPE_SYSTEM_CHAR, 1, {TYPE_SYSTEM_INT32}},
-	{NULL, NULL,     "InternalConcat", System_String_InternalConcat, TYPE_SYSTEM_STRING, 2, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_STRING}},
-	{NULL, NULL,     "InternalTrim", System_String_InternalTrim, TYPE_SYSTEM_STRING, 2, {TYPE_SYSTEM_ARRAY_CHAR, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,     "Equals", System_String_Equals, TYPE_SYSTEM_BOOLEAN, 2, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_STRING}},
-	{NULL, NULL,     "GetHashCode", System_String_GetHashCode, TYPE_SYSTEM_INT32, 0},
-	{NULL, NULL,     "InternalReplace", System_String_InternalReplace, TYPE_SYSTEM_STRING, 2, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_STRING}},
-	{NULL, NULL,     "InternalIndexOf", System_String_InternalIndexOf, TYPE_SYSTEM_INT32, 4, {TYPE_SYSTEM_CHAR, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_BOOLEAN}},
-	{NULL, NULL,     "InternalIndexOfAny", System_String_InternalIndexOfAny, TYPE_SYSTEM_INT32, 4, {TYPE_SYSTEM_ARRAY_CHAR, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_BOOLEAN}},
+    public unsafe static class InternalCall
+    {
 
-	{NULL, "Activator", "CreateInstance", Framework_JSInterop_Activator_CreateInstance, TYPE_SYSTEM_OBJECT, 1, {TYPE_SYSTEM_TYPE}},
+        public static byte* PTypes(byte a, byte b = 0, byte c = 0, byte d = 0, byte e = 0, byte f = 0)
+        {
+            throw new System.NotImplementedException();
+        }
 
-	{NULL, "Array", "Internal_GetValue", System_Array_Internal_GetValue, TYPE_SYSTEM_OBJECT, 1, {TYPE_SYSTEM_INT32}},
-	{NULL, NULL,    "Internal_SetValue", System_Array_Internal_SetValue, TYPE_SYSTEM_BOOLEAN, 2, {TYPE_SYSTEM_OBJECT, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,    "Clear", System_Array_Clear, TYPE_SYSTEM_VOID, 3, {TYPE_SYSTEM_ARRAY_NO_TYPE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,    "Internal_Copy", System_Array_Internal_Copy, TYPE_SYSTEM_BOOLEAN, 5, {TYPE_SYSTEM_ARRAY_NO_TYPE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_ARRAY_NO_TYPE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,    "Resize", System_Array_Resize, TYPE_SYSTEM_VOID, 2, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,    "Reverse", System_Array_Reverse, TYPE_SYSTEM_VOID, 3, {TYPE_SYSTEM_ARRAY_NO_TYPE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,    "CreateInstance", System_Array_CreateInstance, TYPE_SYSTEM_ARRAY_NO_TYPE, 2, {TYPE_SYSTEM_TYPE, TYPE_SYSTEM_INT32}},
+        public static tInternalCall[] internalCalls = new tInternalCall[] {
+/*            
+            {"System", "Object", "Equals", System_Object_Equals, Type.TYPE_SYSTEM_BOOLEAN, 1, {Type.TYPE_SYSTEM_OBJECT}},
+            {null,      null,    "Clone", System_Object_Clone, Type.TYPE_SYSTEM_OBJECT, 1, {Type.TYPE_SYSTEM_OBJECT}},
+            {null,      null,    "GetHashCode", System_Object_GetHashCode, Type.TYPE_SYSTEM_INT32, 0},
+            {null,      null,    "GetType", System_Object_GetType, Type.TYPE_SYSTEM_TYPE, 0}, */
 
-	{NULL, "Console", "Write", System_Console_Write, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_STRING}},
-	{NULL, NULL     , "Internal_ReadKey", System_Console_Internal_ReadKey, TYPE_SYSTEM_INT32, 0},
-	{NULL, NULL     , "Internal_KeyAvailable", System_Console_Internal_KeyAvailable, TYPE_SYSTEM_BOOLEAN, 0},
+            new tInternalCall {nameSpace = null, type = new S("String"), method = new S(".ctor"), fn = new H(SystemString.ctor_CharInt32), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_CHAR, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S(".ctor"), fn = new H(SystemString.ctor_CharAIntInt), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_CHAR, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S(".ctor"), fn = new H(SystemString.ctor_StringIntInt), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S("get_Chars"), fn = new H(SystemString.get_Chars), returnType = Type.TYPE_SYSTEM_CHAR, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S("InternalConcat"), fn = new H(SystemString.InternalConcat), returnType = Type.TYPE_SYSTEM_STRING, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S("InternalTrim"), fn = new H(SystemString.InternalTrim), returnType = Type.TYPE_SYSTEM_STRING, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_CHAR, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S("Equals"), fn = new H(SystemString.Equals), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S("GetHashCode"), fn = new H(SystemString.GetHashCode), returnType = Type.TYPE_SYSTEM_INT32},
+            new tInternalCall {nameSpace = null, type = null,     method = new S("InternalReplace"), fn = new H(SystemString.InternalReplace), returnType = Type.TYPE_SYSTEM_STRING, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S("InternalIndexOf"), fn = new H(SystemString.InternalIndexOf), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 4, parameterTypes = PTypes(Type.TYPE_SYSTEM_CHAR, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_BOOLEAN)},
+            new tInternalCall {nameSpace = null, type = null,     method = new S("InternalIndexOfAny"), fn = new H(SystemString.InternalIndexOfAny), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 4, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_CHAR, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_BOOLEAN)},
 
-	{NULL, "Environment", "get_TickCount", System_Environment_get_TickCount, TYPE_SYSTEM_INT32, 0},
-	{NULL, NULL         , "GetOSVersionString", System_Environment_GetOSVersionString, TYPE_SYSTEM_STRING, 0},
-	{NULL, NULL         , "get_Platform", System_Environment_get_Platform, TYPE_SYSTEM_PLATFORMID, 0},
+            new tInternalCall {nameSpace = null, type = new S("Array"), method = new S("Internal_GetValue"), fn = new H(SystemArray.Internal_GetValue), returnType = Type.TYPE_SYSTEM_OBJECT, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,    method = new S("Internal_SetValue"), fn = new H(SystemArray.Internal_SetValue), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,    method = new S("Clear"), fn = new H(SystemArray.Clear), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_NO_TYPE, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,    method = new S("Internal_Copy"), fn = new H(SystemArray.Internal_Copy), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 5, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_NO_TYPE, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_ARRAY_NO_TYPE, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,    method = new S("Resize"), fn = new H(SystemArray.Resize), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,    method = new S("Reverse"), fn = new H(SystemArray.Reverse), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_NO_TYPE, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32)},
+            new tInternalCall {nameSpace = null, type = null,    method = new S("CreateInstance"), fn = new H(SystemArray.CreateInstance), returnType = Type.TYPE_SYSTEM_ARRAY_NO_TYPE, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_TYPE, Type.TYPE_SYSTEM_INT32)},
 
-	{NULL, "Type", "GetTypeFromHandle", System_Type_GetTypeFromHandle, TYPE_SYSTEM_TYPE, 1, {TYPE_SYSTEM_RUNTIMETYPEHANDLE}},
-	{NULL, NULL,   "EnsureAssemblyLoaded", System_Type_EnsureAssemblyLoaded, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_STRING}},
-	{NULL, NULL,   "GetMethodInternal", System_Type_GetMethod, TYPE_SYSTEM_OBJECT, 1, {TYPE_SYSTEM_STRING}},
-	{NULL, NULL,   "GetProperties", System_Type_GetProperties, TYPE_SYSTEM_ARRAY_NO_TYPE, 0},
-	{NULL, NULL,   "GetType", System_Type_GetTypeFromName, TYPE_SYSTEM_TYPE, 3, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_STRING, TYPE_SYSTEM_STRING}},
-	{NULL, NULL,   "get_IsValueType", System_Type_get_IsValueType, TYPE_SYSTEM_BOOLEAN, 0},
+            /*{null, "Console", "Write", System_Console_Write, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_STRING}},
+            {null, null     , "Internal_ReadKey", System_Console_Internal_ReadKey, Type.TYPE_SYSTEM_INT32, 0},
+            {null, null     , "Internal_KeyAvailable", System_Console_Internal_KeyAvailable, Type.TYPE_SYSTEM_BOOLEAN, 0},
 
-	{NULL, "RuntimeType", "get_Name", System_RuntimeType_get_Name, TYPE_SYSTEM_STRING, 0},
-	{NULL, NULL,          "get_Namespace", System_RuntimeType_get_Namespace, TYPE_SYSTEM_STRING, 0},
-	{NULL, NULL,          "GetNestingParentType", System_RuntimeType_GetNestingParentType, TYPE_SYSTEM_RUNTIMETYPE, 0},
-	{NULL, NULL,          "get_BaseType", System_RuntimeType_get_BaseType, TYPE_SYSTEM_TYPE, 0},
-	{NULL, NULL,          "get_IsEnum", System_RuntimeType_get_IsEnum, TYPE_SYSTEM_BOOLEAN, 0},
-	{NULL, NULL,          "get_IsGenericType", System_RuntimeType_get_IsGenericType, TYPE_SYSTEM_BOOLEAN, 0},
-	{NULL, NULL,          "Internal_GetGenericTypeDefinition", System_RuntimeType_Internal_GetGenericTypeDefinition, TYPE_SYSTEM_RUNTIMETYPE, 0},
-	{NULL, NULL,          "GetGenericArguments", System_RuntimeType_GetGenericArguments, TYPE_SYSTEM_ARRAY_TYPE, 0},
-	{NULL, NULL,          "GetElementType", System_RuntimeType_GetElementType, TYPE_SYSTEM_TYPE, 0},
+            {null, "Environment", "get_TickCount", System_Environment_get_TickCount, Type.TYPE_SYSTEM_INT32, 0},
+            {null, null         , "GetOSVersionString", System_Environment_GetOSVersionString, Type.TYPE_SYSTEM_STRING, 0},
+            {null, null         , "get_Platform", System_Environment_get_Platform, Type.TYPE_SYSTEM_PLATFORMID, 0},
 
-	{NULL, "Char", "GetUnicodeCategory", System_Char_GetUnicodeCategory, TYPE_SYSTEM_GLOBALIZATION_UNICODECATEGORY, 1, {TYPE_SYSTEM_CHAR}},
-	{NULL, NULL  , "ToLowerInvariant", System_Char_ToLowerInvariant, TYPE_SYSTEM_CHAR, 1, {TYPE_SYSTEM_CHAR}},
-	{NULL, NULL  , "ToUpperInvariant", System_Char_ToUpperInvariant, TYPE_SYSTEM_CHAR, 1, {TYPE_SYSTEM_CHAR}},
+            {null, "Type", "GetTypeFromHandle", System_Type_GetTypeFromHandle, Type.TYPE_SYSTEM_TYPE, 1, {Type.TYPE_SYSTEM_RUNTIMETYPEHANDLE}},
+            {null, null,   "EnsureAssemblyLoaded", System_Type_EnsureAssemblyLoaded, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_STRING}},
+            {null, null,   "GetMethodInternal", System_Type_GetMethod, Type.TYPE_SYSTEM_OBJECT, 1, {Type.TYPE_SYSTEM_STRING}},
+            {null, null,   "GetProperties", System_Type_GetProperties, Type.TYPE_SYSTEM_ARRAY_NO_TYPE, 0},
+            {null, null,   "GetType", System_Type_GetTypeFromName, Type.TYPE_SYSTEM_TYPE, 3, {Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING}},
+            {null, null,   "get_IsValueType", System_Type_get_IsValueType, Type.TYPE_SYSTEM_BOOLEAN, 0},
+*/
+            new tInternalCall {nameSpace = null, type = new S("RuntimeType"), method = new S("get_Name"), fn = new H(SystemRuntimeType.get_Name), returnType = Type.TYPE_SYSTEM_STRING},
+            new tInternalCall {nameSpace = null, type = null, method = new S("get_Namespace"), fn = new H(SystemRuntimeType.get_Namespace), returnType = Type.TYPE_SYSTEM_STRING},
+            new tInternalCall {nameSpace = null, type = null, method = new S("GetNestingParentType"), fn = new H(SystemRuntimeType.GetNestingParentType), returnType = Type.TYPE_SYSTEM_RUNTIMETYPE},
+            new tInternalCall {nameSpace = null, type = null, method = new S("get_BaseType"), fn = new H(SystemRuntimeType.get_BaseType), returnType = Type.TYPE_SYSTEM_TYPE},
+            new tInternalCall {nameSpace = null, type = null, method = new S("get_IsEnum"), fn = new H(SystemRuntimeType.get_IsEnum), returnType = Type.TYPE_SYSTEM_BOOLEAN},
+            new tInternalCall {nameSpace = null, type = null, method = new S("get_IsGenericType"), fn = new H(SystemRuntimeType.get_IsGenericType), returnType = Type.TYPE_SYSTEM_BOOLEAN},
+            new tInternalCall {nameSpace = null, type = null, method = new S("Internal_GetGenericTypeDefinition"), fn = new H(SystemRuntimeType.Internal_GetGenericTypeDefinition), returnType = Type.TYPE_SYSTEM_RUNTIMETYPE},
+            new tInternalCall {nameSpace = null, type = null, method = new S("GetGenericArguments"), fn = new H(SystemRuntimeType.GetGenericArguments), returnType = Type.TYPE_SYSTEM_ARRAY_TYPE},
+            new tInternalCall {nameSpace = null, type = null, method = new S("GetElementType"), fn = new H(SystemRuntimeType.GetElementType), returnType = Type.TYPE_SYSTEM_TYPE},
 
-	{NULL, "GC", "Collect", System_GC_Collect, TYPE_SYSTEM_VOID, 0},
-	{NULL, NULL, "Internal_CollectionCount", System_GC_Internal_CollectionCount, TYPE_SYSTEM_INT32, 0},
-	{NULL, NULL, "GetTotalMemory", System_GC_GetTotalMemory, TYPE_SYSTEM_INT64, 1, {TYPE_SYSTEM_BOOLEAN}},
-	{NULL, NULL, "SuppressFinalize", System_GC_SuppressFinalize, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_OBJECT}},
+/*            {null, "Char", "GetUnicodeCategory", System_Char_GetUnicodeCategory, Type.TYPE_SYSTEM_GLOBALIZATION_UNICODECATEGORY, 1, {Type.TYPE_SYSTEM_CHAR}},
+            {null, null  , "ToLowerInvariant", System_Char_ToLowerInvariant, Type.TYPE_SYSTEM_CHAR, 1, {Type.TYPE_SYSTEM_CHAR}},
+            {null, null  , "ToUpperInvariant", System_Char_ToUpperInvariant, Type.TYPE_SYSTEM_CHAR, 1, {Type.TYPE_SYSTEM_CHAR}},
 
-	{NULL, "Enum", "Internal_GetValue", System_Enum_Internal_GetValue, TYPE_SYSTEM_INT32, 0},
-	{NULL, NULL,   "Internal_GetInfo", System_Enum_Internal_GetInfo, TYPE_SYSTEM_VOID, 3, {TYPE_SYSTEM_TYPE, TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_INTPTR}},
+            {null, "GC", "Collect", System_GC_Collect, Type.TYPE_SYSTEM_VOID, 0},
+            {null, null, "Internal_CollectionCount", System_GC_Internal_CollectionCount, Type.TYPE_SYSTEM_INT32, 0},
+            {null, null, "GetTotalMemory", System_GC_GetTotalMemory, Type.TYPE_SYSTEM_INT64, 1, {Type.TYPE_SYSTEM_BOOLEAN}},
+            {null, null, "SuppressFinalize", System_GC_SuppressFinalize, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_OBJECT}},
 
-	{NULL, "ValueType", "GetFields", System_ValueType_GetFields, TYPE_SYSTEM_ARRAY_NO_TYPE, 2, {TYPE_SYSTEM_OBJECT, TYPE_SYSTEM_OBJECT}},
+            {null, "Enum", "Internal_GetValue", System_Enum_Internal_GetValue, Type.TYPE_SYSTEM_INT32, 0},
+            {null, null,   "Internal_GetInfo", System_Enum_Internal_GetInfo, Type.TYPE_SYSTEM_VOID, 3, {Type.TYPE_SYSTEM_TYPE, Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INTPTR}},
 
-	{NULL, "WeakReference", "get_Target", System_WeakReference_get_Target, TYPE_SYSTEM_OBJECT, 0},
-	{NULL, NULL,            "set_Target", System_WeakReference_set_Target, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_OBJECT}},
+            {null, "ValueType", "GetFields", System_ValueType_GetFields, Type.TYPE_SYSTEM_ARRAY_NO_TYPE, 2, {Type.TYPE_SYSTEM_OBJECT, Type.TYPE_SYSTEM_OBJECT}},
 
-	{NULL, "DateTime", "InternalUtcNow", System_DateTime_InternalUtcNow, TYPE_SYSTEM_INT64, 0},
+            {null, "WeakReference", "get_Target", System_WeakReference_get_Target, Type.TYPE_SYSTEM_OBJECT, 0},
+            {null, null,            "set_Target", System_WeakReference_set_Target, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_OBJECT}},
 
-	{NULL, "Math", "Sin", System_Math_Sin, TYPE_SYSTEM_DOUBLE, 1, {TYPE_SYSTEM_DOUBLE}},
-	{NULL, NULL,   "Cos", System_Math_Cos, TYPE_SYSTEM_DOUBLE, 1, {TYPE_SYSTEM_DOUBLE}},
-	{NULL, NULL,   "Tan", System_Math_Tan, TYPE_SYSTEM_DOUBLE, 1, {TYPE_SYSTEM_DOUBLE}},
-	{NULL, NULL,   "Pow", System_Math_Pow, TYPE_SYSTEM_DOUBLE, 2, {TYPE_SYSTEM_DOUBLE, TYPE_SYSTEM_DOUBLE}},
-	{NULL, NULL,   "Sqrt", System_Math_Sqrt, TYPE_SYSTEM_DOUBLE, 1, {TYPE_SYSTEM_DOUBLE}},
+            {null, "DateTime", "InternalUtcNow", System_DateTime_InternalUtcNow, Type.TYPE_SYSTEM_INT64, 0},
 
-	{"System.Threading", "Thread", ".ctor", System_Threading_Thread_ctor, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_THREADING_THREADSTART}},
-	{NULL,               NULL,     ".ctor", System_Threading_Thread_ctorParam, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART}},
-	{NULL,               NULL,     "Start", System_Threading_Thread_Start, TYPE_SYSTEM_VOID, 0},
-	{NULL,               NULL,     "Sleep", System_Threading_Thread_Sleep, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_INT32}},
-	{NULL,               NULL,     "get_CurrentThread", System_Threading_Thread_get_CurrentThread, TYPE_SYSTEM_THREADING_THREAD, 0},
+            {null, "Math", "Sin", System_Math_Sin, Type.TYPE_SYSTEM_DOUBLE, 1, {Type.TYPE_SYSTEM_DOUBLE}},
+            {null, null,   "Cos", System_Math_Cos, Type.TYPE_SYSTEM_DOUBLE, 1, {Type.TYPE_SYSTEM_DOUBLE}},
+            {null, null,   "Tan", System_Math_Tan, Type.TYPE_SYSTEM_DOUBLE, 1, {Type.TYPE_SYSTEM_DOUBLE}},
+            {null, null,   "Pow", System_Math_Pow, Type.TYPE_SYSTEM_DOUBLE, 2, {Type.TYPE_SYSTEM_DOUBLE, Type.TYPE_SYSTEM_DOUBLE}},
+            {null, null,   "Sqrt", System_Math_Sqrt, Type.TYPE_SYSTEM_DOUBLE, 1, {Type.TYPE_SYSTEM_DOUBLE}},
 
-	{NULL, "Monitor", "Internal_TryEnter", System_Threading_Monitor_Internal_TryEnter, TYPE_SYSTEM_BOOLEAN, 2, {TYPE_SYSTEM_OBJECT, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,      "Internal_Exit", System_Threading_Monitor_Internal_Exit, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_OBJECT}},
+            {"System.Threading", "Thread", ".ctor", System_Threading_Thread_ctor, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_THREADING_THREADSTART}},
+            {null,               null,     ".ctor", System_Threading_Thread_ctorParam, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART}},
+            {null,               null,     "Start", System_Threading_Thread_Start, Type.TYPE_SYSTEM_VOID, 0},
+            {null,               null,     "Sleep", System_Threading_Thread_Sleep, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_INT32}},
+            {null,               null,     "get_CurrentThread", System_Threading_Thread_get_CurrentThread, Type.TYPE_SYSTEM_THREADING_THREAD, 0},
 
-	{NULL, "Interlocked", "CompareExchange", System_Threading_Interlocked_CompareExchange_Int32, TYPE_SYSTEM_INT32, 3, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,          "Increment", System_Threading_Interlocked_Increment_Int32, TYPE_SYSTEM_INT32, 1, {TYPE_SYSTEM_INTPTR}},
-	{NULL, NULL,          "Decrement", System_Threading_Interlocked_Decrement_Int32, TYPE_SYSTEM_INT32, 1, {TYPE_SYSTEM_INTPTR}},
-	{NULL, NULL,          "Add", System_Threading_Interlocked_Add_Int32, TYPE_SYSTEM_INT32, 2, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_INT32}},
-	{NULL, NULL,          "Exchange", System_Threading_Interlocked_Exchange_Int32, TYPE_SYSTEM_INT32, 2, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_INT32}},
+            {null, "Monitor", "Internal_TryEnter", System_Threading_Monitor_Internal_TryEnter, Type.TYPE_SYSTEM_BOOLEAN, 2, {Type.TYPE_SYSTEM_OBJECT, Type.TYPE_SYSTEM_INT32}},
+            {null, null,      "Internal_Exit", System_Threading_Monitor_Internal_Exit, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_OBJECT}},
 
-	{"System.IO", "FileInternal", "Open", System_IO_FileInternal_Open, TYPE_SYSTEM_INTPTR, 5, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_IO_FILEMODE, TYPE_SYSTEM_IO_FILEACCESS, TYPE_SYSTEM_IO_FILESHARE, TYPE_SYSTEM_INTPTR}},
-	{NULL,        NULL,           "Read", System_IO_FileInternal_Read, TYPE_SYSTEM_INT32, 5, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_ARRAY_BYTE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
-	{NULL,        NULL,           "Close", System_IO_FileInternal_Close, TYPE_SYSTEM_VOID, 2, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_INTPTR}},
-	{NULL,        NULL,           "GetCurrentDirectory", System_IO_FileInternal_GetCurrentDirectory, TYPE_SYSTEM_STRING, 1, {TYPE_SYSTEM_INTPTR}},
-	{NULL,        NULL,           "GetFileAttributes", System_IO_FileInternal_GetFileAttributes, TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, 2, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_INTPTR}},
-	{NULL,        NULL,           "GetFileSystemEntries", System_IO_FileInternal_GetFileSystemEntries, TYPE_SYSTEM_ARRAY_STRING, 5, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_STRING, TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, TYPE_SYSTEM_INTPTR}},
+            {null, "Interlocked", "CompareExchange", System_Threading_Interlocked_CompareExchange_Int32, Type.TYPE_SYSTEM_INT32, 3, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32}},
+            {null, null,          "Increment", System_Threading_Interlocked_Increment_Int32, Type.TYPE_SYSTEM_INT32, 1, {Type.TYPE_SYSTEM_INTPTR}},
+            {null, null,          "Decrement", System_Threading_Interlocked_Decrement_Int32, Type.TYPE_SYSTEM_INT32, 1, {Type.TYPE_SYSTEM_INTPTR}},
+            {null, null,          "Add", System_Threading_Interlocked_Add_Int32, Type.TYPE_SYSTEM_INT32, 2, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32}},
+            {null, null,          "Exchange", System_Threading_Interlocked_Exchange_Int32, Type.TYPE_SYSTEM_INT32, 2, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32}},
 
-	{"System.Runtime.CompilerServices", "RuntimeHelpers", "InitializeArray", System_Runtime_CompilerServices_InitializeArray, TYPE_SYSTEM_VOID, 2, {TYPE_SYSTEM_ARRAY_NO_TYPE, TYPE_SYSTEM_RUNTIMEFIELDHANDLE}},
+            {"System.IO", "FileInternal", "Open", System_IO_FileInternal_Open, Type.TYPE_SYSTEM_INTPTR, 5, {Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_IO_FILEMODE, Type.TYPE_SYSTEM_IO_FILEACCESS, Type.TYPE_SYSTEM_IO_FILESHARE, Type.TYPE_SYSTEM_INTPTR}},
+            {null,        null,           "Read", System_IO_FileInternal_Read, Type.TYPE_SYSTEM_INT32, 5, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_ARRAY_BYTE, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INTPTR}},
+            {null,        null,           "Close", System_IO_FileInternal_Close, Type.TYPE_SYSTEM_VOID, 2, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INTPTR}},
+            {null,        null,           "GetCurrentDirectory", System_IO_FileInternal_GetCurrentDirectory, Type.TYPE_SYSTEM_STRING, 1, {Type.TYPE_SYSTEM_INTPTR}},
+            {null,        null,           "GetFileAttributes", System_IO_FileInternal_GetFileAttributes, Type.TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, 2, {Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_INTPTR}},
+            {null,        null,           "GetFileSystemEntries", System_IO_FileInternal_GetFileSystemEntries, Type.TYPE_SYSTEM_ARRAY_STRING, 5, {Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, Type.TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, Type.TYPE_SYSTEM_INTPTR}},
 
-	{"System.Diagnostics", "Debugger", "Break", System_Diagnostics_Debugger_Break, TYPE_SYSTEM_VOID, 0},
+            {"System.Runtime.CompilerServices", "RuntimeHelpers", "InitializeArray", System_Runtime_CompilerServices_InitializeArray, Type.TYPE_SYSTEM_VOID, 2, {Type.TYPE_SYSTEM_ARRAY_NO_TYPE, Type.TYPE_SYSTEM_RUNTIMEFIELDHANDLE}},
 
-	{"System.Net", "Dns", "Internal_GetHostEnt", System_Net_Dns_Internal_GetHostEnt, TYPE_SYSTEM_ARRAY_INT32, 2, {TYPE_SYSTEM_STRING, TYPE_SYSTEM_INTPTR}},
+            {"System.Diagnostics", "Debugger", "Break", System_Diagnostics_Debugger_Break, Type.TYPE_SYSTEM_VOID, 0},
 
-	{"System.Net.Sockets", "Socket", "Internal_CreateSocket", System_Net_Sockets_Internal_CreateSocket, TYPE_SYSTEM_INTPTR, 4, {TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}}, 
-	{NULL,                 NULL,     "Internal_Bind", System_Net_Sockets_Internal_Bind, TYPE_SYSTEM_VOID, 4, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_UINT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
-	{NULL,                 NULL,     "Internal_Close", System_Net_Sockets_Internal_Close, TYPE_SYSTEM_VOID, 1, {TYPE_SYSTEM_INTPTR}},
-	{NULL,                 NULL,     "Internal_Listen", System_Net_Sockets_Internal_Listen, TYPE_SYSTEM_VOID, 3, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
-	{NULL,                 NULL,     "Internal_Accept", System_Net_Sockets_Internal_Accept, TYPE_SYSTEM_INTPTR, 2, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_INTPTR}},
-	{NULL,                 NULL,     "Internal_Connect", System_Net_Sockets_Internal_Connect, TYPE_SYSTEM_VOID, 4, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_UINT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
-	{NULL,                 NULL,     "Internal_Receive", System_Net_Sockets_Internal_Receive, TYPE_SYSTEM_INT32, 6, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_ARRAY_BYTE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
-	{NULL,                 NULL,     "Internal_Send", System_Net_Sockets_Internal_Send, TYPE_SYSTEM_INT32, 6, {TYPE_SYSTEM_INTPTR, TYPE_SYSTEM_ARRAY_BYTE, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INT32, TYPE_SYSTEM_INTPTR}},
+            {"System.Runtime.InteropServices",  "GCHandle",     "ToHeapRef", Framework_JSInterop_ToHeapRef, Type.TYPE_SYSTEM_INT32, 1, {Type.TYPE_SYSTEM_OBJECT}}, 
+            {null,                              null,           "FromHeapRef", Framework_JSInterop_FromHeapRefImpl, Type.TYPE_SYSTEM_OBJECT, 1, {Type.TYPE_SYSTEM_INT32}}, 
+*/
+        };
 
-	{"System.Runtime.InteropServices", 	"GCHandle", 	"ToHeapRef", Framework_JSInterop_ToHeapRef, TYPE_SYSTEM_INT32, 1, {TYPE_SYSTEM_OBJECT}}, 
-	{NULL, 								NULL, 			"FromHeapRef", Framework_JSInterop_FromHeapRefImpl, TYPE_SYSTEM_OBJECT, 1, {TYPE_SYSTEM_INT32}}, 
-	{NULL, NULL, NULL, NULL}
-};
+        static void* /*fnInternalCall*/ Map_Delegate(tMD_MethodDef *pMethod)
+        {
+//            // Note that it is not neccessary to check argument type here, as delegates are very tightly controlled
+//            if (S.strcmp(pMethod->name, ".ctor") == 0) {
+//                return ctor;
+//            }
 
-fnInternalCall InternalCall_Map(tMD_MethodDef *pMethod) {
-	tInternalCall *pCall;
-	STRING curNameSpace;
-	STRING curType;
+            return null;
+        }
 
-	if (pMethod->pParentType->pParent == types[TYPE_SYSTEM_MULTICASTDELEGATE]) {
-		// Special case to handle delegates
-		fnInternalCall fn = Map_Delegate(pMethod);
-		if (fn != NULL) {
-			return fn;
-		}
-	} else {
+        public static /*fnInternalCall*/void* InternalCall_Map(tMD_MethodDef *pMethod) 
+        {
+        	if (pMethod->pParentType->pParent == Type.types[Type.TYPE_SYSTEM_MULTICASTDELEGATE]) {
+        		// Special case to handle delegates
+                /*fnInternalCall*/ void* fn = Map_Delegate(pMethod);
+        		if (fn != null) {
+        			return fn;
+        		}
+        	} else {
 
-		for (pCall = internalCalls; pCall->method != NULL; pCall++) {
-			if (pCall->nameSpace != NULL) {
-				curNameSpace = pCall->nameSpace;
-			}
-			if (pCall->type != NULL) {
-				curType = pCall->type;
-			}
-			if (strcmp(pMethod->pParentType->nameSpace, curNameSpace) == 0) {
-				if (strcmp(pMethod->pParentType->name, curType) == 0) {
-					if (Type_IsMethod(pMethod, pCall->method, types[pCall->returnType], pCall->numParameters, pCall->parameterTypes)) {
-						return pCall->fn;
-					}
-				}
-			}
-		}
+                for (int i = 0; i < internalCalls.Length; i++) {
+                    fixed (tInternalCall *pCall = &internalCalls[i]) {
+                        /*STRING*/byte* curNameSpace = null;
+                        /*STRING*/byte* curType = null;
+            			if (pCall->nameSpace != null) {
+            				curNameSpace = pCall->nameSpace;
+            			}
+            			if (pCall->type != null) {
+            				curType = pCall->type;
+            			}
+            			if (S.strcmp(pMethod->pParentType->nameSpace, curNameSpace) == 0) {
+            				if (S.strcmp(pMethod->pParentType->name, curType) == 0) {
+            					if (Type.IsMethod(pMethod, pCall->method, Type.types[pCall->returnType], pCall->numParameters, pCall->parameterTypes) != 0) {
+            						return pCall->fn;
+            					}
+            				}
+            			}
+                    }
+        		}
 
-	}
-	Crash("InternalCall_Map(): Cannot map [%s]%s.%s", pMethod->pParentType->nameSpace, pMethod->pParentType->name, pMethod->name);
-	FAKE_RETURN;
+        	}
+            Sys.Crash("InternalCall_Map(): Cannot map [%s]%s.%s", (PTR)pMethod->pParentType->nameSpace, (PTR)pMethod->pParentType->name, (PTR)pMethod->name);
+            return null;
+        }
+
+    }
 }
-
-#endif
-

@@ -20,55 +20,55 @@
 
 #if NO
 
-tAsyncCall* System_Threading_Interlocked_CompareExchange_Int32(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 *pLoc = INTERNALCALL_PARAM(0, U32*);
-	U32 value = INTERNALCALL_PARAM(4, U32);
-	U32 comparand = INTERNALCALL_PARAM(8, U32);
+tAsyncCall* System_Threading_Interlocked_CompareExchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	uint *pLoc = (*((uint**)(pParams + 0)));
+	uint value = (*((uint*)(pParams + 4)));
+	uint comparand = (*((uint*)(pParams + 8)));
 
-	*(U32*)pReturnValue = *pLoc;
+	*(uint*)pReturnValue = *pLoc;
 	if (*pLoc == comparand) {
 		*pLoc = value;
 	}
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Threading_Interlocked_Increment_Int32(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	I32 *pLoc = INTERNALCALL_PARAM(0, I32*);
+tAsyncCall* System_Threading_Interlocked_Increment_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	int *pLoc = (*((int**)(pParams + 0)));
 
 	(*pLoc)++;
-	*(I32*)pReturnValue = *pLoc;
+	*(int*)pReturnValue = *pLoc;
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Threading_Interlocked_Decrement_Int32(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	I32 *pLoc = INTERNALCALL_PARAM(0, I32*);
+tAsyncCall* System_Threading_Interlocked_Decrement_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	int *pLoc = (*((int**)(pParams + 0)));
 
 	(*pLoc)--;
-	*(I32*)pReturnValue = *pLoc;
+	*(int*)pReturnValue = *pLoc;
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Threading_Interlocked_Add_Int32(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 *pLoc = INTERNALCALL_PARAM(0, U32*);
-	U32 value = INTERNALCALL_PARAM(4, U32);
+tAsyncCall* System_Threading_Interlocked_Add_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	uint *pLoc = (*((uint**)(pParams + 0)));
+	uint value = (*((uint*)(pParams + 4)));
 
 	*pLoc += value;
-	*(U32*)pReturnValue = *pLoc;
+	*(uint*)pReturnValue = *pLoc;
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Threading_Interlocked_Exchange_Int32(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	U32 *pLoc = INTERNALCALL_PARAM(0, U32*);
-	U32 value = INTERNALCALL_PARAM(4, U32);
+tAsyncCall* System_Threading_Interlocked_Exchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	uint *pLoc = (*((uint**)(pParams + 0)));
+	uint value = (*((uint*)(pParams + 4)));
 
-	*(U32*)pReturnValue = *pLoc;
+	*(uint*)pReturnValue = *pLoc;
 	*pLoc = value;
 
-	return NULL;
+	return null;
 }
 
 #endif

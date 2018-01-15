@@ -18,23 +18,27 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
 
-tAsyncCall* System_Runtime_CompilerServices_InitializeArray(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR pArray;
-	PTR pRawData;
-	tMD_TypeDef *pArrayTypeDef;
-	PTR pElements;
-	U32 arrayLength;
+    public unsafe static class SystemRuntimeCompilerServices
+    {
 
-	pArray = INTERNALCALL_PARAM(0, HEAP_PTR);
-	pRawData = INTERNALCALL_PARAM(S_PTR, PTR);
-	pArrayTypeDef = Heap_GetType(pArray);
-	arrayLength = SystemArray_GetLength(pArray);
-	pElements = SystemArray_GetElements(pArray);
-	memcpy(pElements, pRawData, pArrayTypeDef->pArrayElementType->arrayElementSize * arrayLength);
+        public static tAsyncCall* InitializeArray(byte* pThis_, byte* pParams, byte* pReturnValue) {
+        	/*HEAP_PTR*/byte* pArray;
+        	byte* pRawData;
+        	tMD_TypeDef *pArrayTypeDef;
+        	byte* pElements;
+        	uint arrayLength;
 
-	return NULL;
+        	pArray = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
+        	pRawData = (*((byte**)(pParams + Sys.S_PTR)));
+        	pArrayTypeDef = Heap.GetType(pArray);
+        	arrayLength = SystemArray.GetLength(pArray);
+        	pElements = SystemArray.GetElements(pArray);
+        	Mem.memcpy(pElements, pRawData, pArrayTypeDef->pArrayElementType->arrayElementSize * arrayLength);
+
+        	return null;
+        }
+    }
 }
-
-#endif

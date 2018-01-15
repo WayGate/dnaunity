@@ -53,9 +53,9 @@
 //#pragma warning(error:4013)
 //// convert warning to error about too many parameters to function call
 //#pragma warning(error:4020)
-//// convert warning to error about incompatible types
+//// convert warning to error about incompatible Type.types
 //#pragma warning(error:4133)
-//// convert warning to error about different types for parameters in function call
+//// convert warning to error about different type for parameters in function call
 //#pragma warning(error:4024)
 //// convert warning to error about different parameter lists
 //#pragma warning(error:4113)
@@ -72,12 +72,12 @@
 //
 //#include <stdlib.h>
 //#include <strings.h>
-//#include <sys/types.h>
+//#include <sys/Type.types.h>
 //#include <sys/uio.h>
 //#include <unistd.h>
 //#include <termios.h>
 //#include <sys/ioctl.h>
-//#include <sys/types.h>
+//#include <sys/Type.types.h>
 //// #include <dev/wscons/wsconsio.h>
 //#include <dlfcn.h>
 //#include <glob.h>
@@ -90,17 +90,17 @@
 //#endif // WIN32
 //
 //#if UINTPTR_MAX == 0xffffffff
-//const int _32BIT_
+//const int UNITY_WEBGL || DNA_32BIT
 //const int PTR_SIZE 4
 //#elif UINTPTR_MAX == 0xffffffffffffffff
-//const int _64BIT_
+//const int !(UNITY_WEBGL || DNA_32BIT)
 //const int PTR_SIZE 8
 //#else
 //#error "Unable to detect 32/64 bit"
 //#endif
 //
-//const int TMALLOC(t) (t*)malloc(sizeof(t))
-//const int TMALLOCFOREVER(t) (t*)mallocForever(sizeof(t))
+//const int ((t*)Mem.malloc(sizeof(t))) (t*)Mem.malloc(sizeof(t))
+//const int ((t*)Mem.malloc(sizeof(t))) (t*)Mem.mallocForever(sizeof(t))
 //
 //#endif
 

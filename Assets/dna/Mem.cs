@@ -1,4 +1,4 @@
-// Copyright (c) 2012 DotNetAnywhere
+﻿// Copyright (c) 2012 DotNetAnywhere
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,41 +22,46 @@ namespace DnaUnity
 {
     #if UNITY_WEBGL || DNA_32BIT
     using SIZE_T = System.UInt32;
-    using PTR = System.UInt32;
     #else
     using SIZE_T = System.UInt64;
-    using PTR = System.UInt64;
-    #endif  
+    #endif
 
-    public unsafe static class Finalizer
+    public static unsafe class Mem
     {
-
-        static /*HEAP_PTR*/byte* *ppToFinalize;
-        static int toFinalizeOfs, toFinalizeCapacity;
-
-        public static void Finalizer_Init() 
+        public static void* malloc(SIZE_T size)
         {
-        	toFinalizeCapacity = 4;
-            ppToFinalize = (/*HEAP_PTR*/byte**)Mem.malloc((SIZE_T)(toFinalizeCapacity * sizeof(void*)));
-        	toFinalizeOfs = 0;
+            throw new System.NotImplementedException();
         }
 
-        public static void AddFinalizer(/*HEAP_PTR*/byte* ptr) 
+        public static void* realloc(void* p, SIZE_T size)
         {
-        	if (toFinalizeOfs >= toFinalizeCapacity) {
-        		toFinalizeCapacity <<= 1;
-                ppToFinalize = (/*HEAP_PTR*/byte**)Mem.realloc(ppToFinalize, (SIZE_T)(toFinalizeCapacity * sizeof(void*)));
-        	}
-        	ppToFinalize[toFinalizeOfs++] = ptr;
+            throw new System.NotImplementedException();
         }
 
-        public static /*HEAP_PTR*/byte* GetNextFinalizer() 
+        public static void* mallocForever(SIZE_T size)
         {
-        	if (toFinalizeOfs == 0) {
-        		return null;
-        	}
-        	return ppToFinalize[--toFinalizeOfs];
+            throw new System.NotImplementedException();
         }
 
+        public static void free(void* p)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public static void memcpy(void* p1, void* p2, SIZE_T size)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public static void memset(void* p, int v, SIZE_T size)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public static int memcmp(void* a, void* b, SIZE_T size)
+        {
+            throw new System.NotImplementedException();
+        }
     }
+
 }

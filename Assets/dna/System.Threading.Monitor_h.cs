@@ -20,7 +20,7 @@
 
 #if NO
 
-tAsyncCall* System_Threading_Monitor_Internal_TryEnter(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Threading_Monitor_Internal_Exit(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_Threading_Monitor_Internal_TryEnter(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_Threading_Monitor_Internal_Exit(byte* pThis_, byte* pParams, byte* pReturnValue);
 
 #endif

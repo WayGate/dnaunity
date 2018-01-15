@@ -18,54 +18,83 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+using System.Runtime.InteropServices;
 
-tRVA* RVA() {
-	tRVA *pRet;
-	pRet = TMALLOC(tRVA);
-	return pRet;
+namespace DnaUnity
+{
+    #if UNITY_WEBGL || DNA_32BIT
+    using SIZE_T = System.UInt32;
+    using PTR = System.UInt32;
+    #else
+    using SIZE_T = System.UInt64;
+    using PTR = System.UInt64;
+    #endif
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct tRVA_Item 
+    {
+        public uint baseAddress;
+        public uint size;
+        public void *pData;
+
+        public tRVA_Item *pNext;
+    };
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct tRVA 
+    {
+        public tRVA_Item *pFirstRVA;
+    };
+
+    public unsafe static class RVA
+    {
+        public static tRVA* New() {
+        	tRVA *pRet;
+            pRet = ((tRVA*)Mem.malloc((SIZE_T)sizeof(tRVA)));
+        	return pRet;
+        }
+
+        public static tRVA_Item* Create(tRVA *pThis, void *pFile, void *pSectionHeader) {
+        	tRVA_Item* pRet;
+        	uint rawOfs;
+        	uint rawSize;
+
+            pRet = ((tRVA_Item*)Mem.malloc((SIZE_T)sizeof(tRVA_Item)));
+        	pRet->baseAddress = *(uint*)&((byte*)pSectionHeader)[12];
+        	pRet->size = *(uint*)&((byte*)pSectionHeader)[8];
+        	pRet->pData = Mem.malloc(pRet->size);
+        	Mem.memset(pRet->pData, 0, pRet->size);
+        	pRet->pNext = pThis->pFirstRVA;
+        	pThis->pFirstRVA = pRet;
+
+        	rawOfs = *(uint*)&((byte*)pSectionHeader)[20];
+        	rawSize = *(uint*)&((byte*)pSectionHeader)[16];
+        	if (rawOfs > 0) {
+        		if (rawSize > pRet->size) {
+        			rawSize = pRet->size;
+        		}
+        		Mem.memcpy(pRet->pData, ((byte*)pFile)+rawOfs, rawSize);
+        	}
+
+        	return pRet;
+        }
+
+        public static void* FindData(tRVA *pThis, uint rva) {
+        	tRVA_Item *pRVA;
+
+        	if (rva == 0) {
+        		return null;
+        	}
+
+        	pRVA = pThis->pFirstRVA;
+        	while (pRVA != null) {
+        		if (rva >= pRVA->baseAddress && rva < pRVA->baseAddress+pRVA->size) {
+        			return (byte*)(pRVA->pData) + (rva - pRVA->baseAddress);
+        		}
+        		pRVA = pRVA->pNext;
+        	}
+        	return null;
+        }
+
+    }
 }
-
-tRVA_Item* RVA_Create(tRVA *pThis, void *pFile, void *pSectionHeader) {
-	tRVA_Item* pRet;
-	unsigned int rawOfs;
-	unsigned int rawSize;
-
-	pRet = TMALLOC(tRVA_Item);
-	pRet->baseAddress = *(unsigned int*)&((char*)pSectionHeader)[12];
-	pRet->size = *(unsigned int*)&((char*)pSectionHeader)[8];
-	pRet->pData = malloc(pRet->size);
-	memset(pRet->pData, 0, pRet->size);
-	pRet->pNext = pThis->pFirstRVA;
-	pThis->pFirstRVA = pRet;
-
-	rawOfs = *(unsigned int*)&((char*)pSectionHeader)[20];
-	rawSize = *(unsigned int*)&((char*)pSectionHeader)[16];
-	if (rawOfs > 0) {
-		if (rawSize > pRet->size) {
-			rawSize = pRet->size;
-		}
-		memcpy(pRet->pData, ((char*)pFile)+rawOfs, rawSize);
-	}
-
-	return pRet;
-}
-
-void* RVA_FindData(tRVA *pThis, unsigned int rva) {
-	tRVA_Item *pRVA;
-
-	if (rva == 0) {
-		return NULL;
-	}
-
-	pRVA = pThis->pFirstRVA;
-	while (pRVA != NULL) {
-		if (rva >= pRVA->baseAddress && rva < pRVA->baseAddress+pRVA->size) {
-			return (char*)(pRVA->pData) + (rva - pRVA->baseAddress);
-		}
-		pRVA = pRVA->pNext;
-	}
-	return NULL;
-}
-
-#endif

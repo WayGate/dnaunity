@@ -21,6 +21,6 @@
 #if NO
 
 fnPInvoke PInvoke_GetFunction(tMetaData *pMetaData, tMD_ImplMap *pImplMap);
-U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread *pCallingThread);
+uint PInvoke_Call(tJITCallPInvoke *pCall, byte* pParams, byte* pReturnValue, tThread *pCallingThread);
 
 #endif

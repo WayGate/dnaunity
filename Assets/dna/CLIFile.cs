@@ -18,325 +18,371 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+using System.Runtime.InteropServices;
 
-// Is this exe/dll file for the .NET virtual machine?
-const int DOT_NET_MACHINE 0x14c
+namespace DnaUnity
+{
+    #if UNITY_WEBGL || DNA_32BIT
+    using SIZE_T = System.UInt32;
+    using PTR = System.UInt32;
+    #else
+    using SIZE_T = System.UInt64;
+    using PTR = System.UInt64;
+    #endif    
 
-struct tFilesLoaded {
-	tCLIFile *pCLIFile;
-	tFilesLoaded *pNext;
-};
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct tCLIFile 
+    {
+        // The filename
+        public /*char**/byte *pFileName;
+        // The RVA sections of this file
+        public tRVA *pRVA;
+        // null-terminated UTF8 string of file version
+        public byte *pVersion;
+        // The entry point token if this is executable, 0 if it isn't
+        public /*IDX_TABLE*/uint entryPoint;
 
-// In .NET Core, the core libraries are split over numerous assemblies. For simplicity,
-// the DNA corlib just puts them in one assembly
-static STRING assembliesMappedToDnaCorlib[] = {
-	"mscorlib",
-	"System.Collections",
-	"System.Console",
-	"System.IO",
-	"System.Linq",
-	"System.Net.Http",
-	"System.Private.CoreLib",
-	"System.Private.Uri",
-	"System.Reflection",
-	"System.Reflection.Extensions",
-	"System.Runtime",
-	"System.Runtime.Extensions",
-	"System.Runtime.InteropServices",
-	"System.Threading",
-	"System.Threading.Tasks"
-};
-static int numAssembliesMappedToDnaCorlib = sizeof(assembliesMappedToDnaCorlib)/sizeof(STRING);
+        public tMetaData *pMetaData;
+    };
 
-// Keep track of all the files currently loaded
-static tFilesLoaded *pFilesLoaded = NULL;
+    public unsafe static class CLIFile
+    {
+        // Is this exe/dll file for the .NET virtual machine?
+        const int DOT_NET_MACHINE = 0x14c;
 
-tMetaData* CLIFile_GetMetaDataForLoadedAssembly(unsigned char *pLoadedAssemblyName) {
-	tFilesLoaded *pFiles = pFilesLoaded;
+        private unsafe struct tFilesLoaded 
+        {
+        	public tCLIFile *pCLIFile;
+        	public tFilesLoaded *pNext;
+        };
 
-	while (pFiles != NULL) {
-		tCLIFile *pCLIFile = pFiles->pCLIFile;
-		tMD_Assembly *pThisAssembly = MetaData_GetTableRow(pCLIFile->pMetaData, MAKE_TABLE_INDEX(0x20, 1));
-		if (strcmp(pLoadedAssemblyName, pThisAssembly->name) == 0) {
-			// Found the correct assembly, so return its meta-data
-			return pCLIFile->pMetaData;
-		}
-		pFiles = pFiles->pNext;
-	}
+        // In .NET Core, the core libraries are split over numerous assemblies. For simplicity,
+        // the DNA corlib just puts them in one assembly
+        static /*char**/byte*[] assembliesMappedToDnaCorlib = {
+            new S("mscorlib"),
+            new S("System.Collections"),
+            new S("System.Console"),
+            new S("System.IO"),
+            new S("System.Linq"),
+            new S("System.Net.Http"),
+            new S("System.Private.CoreLib"),
+            new S("System.Private.Uri"),
+            new S("System.Reflection"),
+            new S("System.Reflection.Extensions"),
+            new S("System.Runtime"),
+            new S("System.Runtime.Extensions"),
+            new S("System.Runtime.InteropServices"),
+            new S("System.Threading"),
+            new S("System.Threading.Tasks")
+        };
 
-	Crash("Assembly %s is not loaded\n", pLoadedAssemblyName);
-	FAKE_RETURN;
+        // Keep track of all the files currently loaded
+        static tFilesLoaded *pFilesLoaded = null;
+
+        public static tMetaData* GetMetaDataForLoadedAssembly(byte *pLoadedAssemblyName) 
+        {
+        	tFilesLoaded *pFiles = pFilesLoaded;
+
+        	while (pFiles != null) {
+        		tCLIFile *pCLIFile = pFiles->pCLIFile;
+                tMD_Assembly *pThisAssembly = (tMD_Assembly*)MetaData.GetTableRow(pCLIFile->pMetaData, MetaData.MAKE_TABLE_INDEX(0x20, 1));
+        		if (S.strcmp(pLoadedAssemblyName, pThisAssembly->name) == 0) {
+        			// Found the correct assembly, so return its meta-data
+        			return pCLIFile->pMetaData;
+        		}
+        		pFiles = pFiles->pNext;
+        	}
+
+            Sys.Crash("Assembly %s is not loaded\n", (PTR)pLoadedAssemblyName);
+            return null;
+        }
+
+        static byte* scCorlib;
+        static byte* scSDll;
+
+        public static tMetaData* GetMetaDataForAssembly(byte *pAssemblyName) 
+        {
+        	tFilesLoaded *pFiles;
+
+        	// Where applicable, redirect this assembly lookup into DNA's corlib
+        	// (e.g., mscorlib, System.Runtime, etc.)
+        	for (int i = 0; i < assembliesMappedToDnaCorlib.Length; i++) {
+        		if (S.strcmp(pAssemblyName, assembliesMappedToDnaCorlib[i]) == 0) {
+                    pAssemblyName = new S(ref scCorlib, "corlib");
+        			break;
+        		}
+        	}
+
+        	// Look in already-loaded files first
+        	pFiles = pFilesLoaded;
+        	while (pFiles != null) {
+        		tCLIFile *pCLIFile;
+        		tMD_Assembly *pThisAssembly;
+
+        		pCLIFile = pFiles->pCLIFile;
+        		// Get the assembly info - there is only ever one of these in the each file's metadata
+                pThisAssembly = (tMD_Assembly*)MetaData.GetTableRow(pCLIFile->pMetaData, MetaData.MAKE_TABLE_INDEX(0x20, 1));
+        		if (S.strcmp(pAssemblyName, pThisAssembly->name) == 0) {
+        			// Found the correct assembly, so return its meta-data
+        			return pCLIFile->pMetaData;
+        		}
+        		pFiles = pFiles->pNext;
+        	}
+
+        	// Assembly not loaded, so load it if possible
+        	{
+        		tCLIFile *pCLIFile;
+                byte* fileName = stackalloc byte[128];
+                S.sprintf(fileName, "%s.dll", (PTR)pAssemblyName);
+        		pCLIFile = CLIFile.Load(fileName);
+        		if (pCLIFile == null) {
+                    Sys.Crash("Cannot load required assembly file: %s", (PTR)fileName);
+        		}
+        		return pCLIFile->pMetaData;
+        	}
+        }
+
+        public static tMD_TypeDef* FindTypeInAllLoadedAssemblies(/*STRING*/byte* nameSpace, /*STRING*/byte* name) 
+        {
+        	tFilesLoaded *pFiles = pFilesLoaded;
+        	while (pFiles != null) {
+        		tCLIFile *pCLIFile = pFiles->pCLIFile;
+
+        		tMD_TypeDef* typeDef = MetaData.GetTypeDefFromName(pCLIFile->pMetaData, nameSpace, name, null, /* assertExists */ 0);
+        		if (typeDef != null) {
+        			return typeDef;
+        		}
+
+        		pFiles = pFiles->pNext;
+        	}
+
+            Sys.Crash("CLIFile_FindTypeInAllLoadedAssemblies(): Cannot find type %s.%s", (PTR)nameSpace, (PTR)name);
+        	return null;
+        }
+
+        private static void* LoadFileFromDisk(/*char**/byte *pFileName) 
+        {
+            throw new System.NotImplementedException();
+/*        	int f;
+        	void *pData = null;
+
+        	f = open(pFileName, O_RDONLY|O_BINARY);
+        	if (f >= 0) {
+        		int len;
+        		len = lseek(f, 0, SEEK_END);
+        		lseek(f, 0, SEEK_SET);
+        		// TODO: Change to use mmap() or windows equivilent
+        		pData = Mem.mallocForever(len);
+        		if (pData != null) {
+        			int r = read(f, pData, len);
+        			if (r != len) {
+        				Mem.free(pData);
+        				pData = null;
+        			}
+        		}
+        		close(f);
+        	}
+
+        	return pData;*/
+        }
+
+        private static tCLIFile* LoadPEFile(void *pData) 
+        {
+            tCLIFile *pRet = ((tCLIFile*)Mem.malloc((SIZE_T)sizeof(tCLIFile)));
+
+        	byte *pMSDOSHeader = (byte*)&(((byte*)pData)[0]);
+        	byte *pPEHeader;
+        	byte *pPEOptionalHeader;
+        	byte *pPESectionHeaders;
+        	byte *pCLIHeader;
+        	byte *pRawMetaData;
+
+        	int i;
+        	uint lfanew;
+        	ushort machine;
+        	int numSections;
+        	uint imageBase;
+        	int fileAlignment;
+        	uint cliHeaderRVA, cliHeaderSize;
+        	uint metaDataRVA, metaDataSize;
+        	tMetaData *pMetaData;
+
+        	pRet->pRVA = RVA.New();
+        	pRet->pMetaData = pMetaData = MetaData.New();
+
+        	lfanew = *(uint*)&(pMSDOSHeader[0x3c]);
+        	pPEHeader = pMSDOSHeader + lfanew + 4;
+        	pPEOptionalHeader = pPEHeader + 20;
+        	pPESectionHeaders = pPEOptionalHeader + 224;
+
+        	machine = *(ushort*)&(pPEHeader[0]);
+        	if (machine != DOT_NET_MACHINE) {
+        		return null;
+        	}
+        	numSections = *(ushort*)&(pPEHeader[2]);
+
+        	imageBase = *(uint*)&(pPEOptionalHeader[28]);
+        	fileAlignment = *(int*)&(pPEOptionalHeader[36]);
+
+        	for (i=0; i<numSections; i++) {
+        		byte *pSection = pPESectionHeaders + i * 40;
+        		RVA.Create(pRet->pRVA, pData, pSection);
+        	}
+
+        	cliHeaderRVA = *(uint*)&(pPEOptionalHeader[208]);
+        	cliHeaderSize = *(uint*)&(pPEOptionalHeader[212]);
+
+            pCLIHeader = (byte*)RVA.FindData(pRet->pRVA, cliHeaderRVA);
+
+        	metaDataRVA = *(uint*)&(pCLIHeader[8]);
+        	metaDataSize = *(uint*)&(pCLIHeader[12]);
+        	pRet->entryPoint = *(uint*)&(pCLIHeader[20]);
+            pRawMetaData = (byte*)RVA.FindData(pRet->pRVA, metaDataRVA);
+
+        	// Load all metadata
+        	{
+        		uint versionLen = *(uint*)&(pRawMetaData[12]);
+        		uint ofs, numberOfStreams;
+        		void *pTableStream = null;
+        		uint tableStreamSize = 0;
+        		pRet->pVersion = &(pRawMetaData[16]);
+                Sys.log_f(1, "CLI version: %s\n", (PTR)pRet->pVersion);
+        		ofs = 16 + versionLen;
+        		numberOfStreams = *(ushort*)&(pRawMetaData[ofs + 2]);
+        		ofs += 4;
+
+        		for (i=0; i<(int)numberOfStreams; i++) {
+        			uint streamOffset = *(uint*)&pRawMetaData[ofs];
+        			uint streamSize = *(uint*)&pRawMetaData[ofs+4];
+        			byte *pStreamName = &pRawMetaData[ofs+8];
+        			void *pStream = pRawMetaData + streamOffset;
+        			ofs += (uint)((S.strlen(pStreamName)+4) & (~0x3)) + 8;
+                    if (S.strcasecmp(pStreamName, new S("#Strings")) == 0) {
+        				MetaData.LoadStrings(pMetaData, pStream, streamSize);
+                    } else if (S.strcasecmp(pStreamName, new S("#US")) == 0) {
+        				MetaData.LoadUserStrings(pMetaData, pStream, streamSize);
+                    } else if (S.strcasecmp(pStreamName, new S("#Blob")) == 0) {
+        				MetaData.LoadBlobs(pMetaData, pStream, streamSize);
+                    } else if (S.strcasecmp(pStreamName, new S("#GUID")) == 0) {
+        				MetaData.LoadGUIDs(pMetaData, pStream, streamSize);
+                    } else if (S.strcasecmp(pStreamName, new S("#~")) == 0) {
+        				pTableStream = pStream;
+        				tableStreamSize = streamSize;
+        			}
+        		}
+        		// Must load tables last
+        		if (pTableStream != null) {
+                    MetaData.LoadTables(pMetaData, pRet->pRVA, pTableStream, (uint)tableStreamSize);
+        		}
+        	}
+
+        	// Mark all generic definition type and methods as such
+            for (i=(int)pMetaData->tables.numRows[MetaDataTable.MD_TABLE_GENERICPARAM]; i>0; i--) {
+        		tMD_GenericParam *pGenericParam;
+        		/*IDX_TABLE*/uint ownerIdx;
+
+        		pGenericParam = (tMD_GenericParam*)MetaData.GetTableRow
+                    (pMetaData, MetaData.MAKE_TABLE_INDEX(MetaDataTable.MD_TABLE_GENERICPARAM, (uint)i));
+        		ownerIdx = pGenericParam->owner;
+        		switch (MetaData.TABLE_ID(ownerIdx)) {
+        			case MetaDataTable.MD_TABLE_TYPEDEF:
+        				{
+        					tMD_TypeDef *pTypeDef = (tMD_TypeDef*)MetaData.GetTableRow(pMetaData, ownerIdx);
+        					pTypeDef->isGenericDefinition = 1;
+        				}
+        				break;
+        			case MetaDataTable.MD_TABLE_METHODDEF:
+        				{
+        					tMD_MethodDef *pMethodDef = (tMD_MethodDef*)MetaData.GetTableRow(pMetaData, ownerIdx);
+        					pMethodDef->isGenericDefinition = 1;
+        				}
+        				break;
+        			default:
+        				Sys.Crash("Wrong generic parameter owner: 0x%08x", ownerIdx);
+                        break;
+        		}
+        	}
+
+        	// Mark all nested classes as such
+            for (i=(int)pMetaData->tables.numRows[MetaDataTable.MD_TABLE_NESTEDCLASS]; i>0; i--) {
+        		tMD_NestedClass *pNested;
+                tMD_TypeDef *pParent;
+                tMD_TypeDef *pChild;
+
+                pNested = (tMD_NestedClass*)MetaData.GetTableRow(pMetaData, MetaData.MAKE_TABLE_INDEX(MetaDataTable.MD_TABLE_NESTEDCLASS, (uint)i));
+        		pParent = (tMD_TypeDef*)MetaData.GetTableRow(pMetaData, pNested->enclosingClass);
+        		pChild = (tMD_TypeDef*)MetaData.GetTableRow(pMetaData, pNested->nestedClass);
+        		pChild->pNestedIn = pParent;
+        	}
+
+        	return pRet;
+        }
+
+        public static tCLIFile* Load(/*char**/byte *pFileName) 
+        {
+        	void *pRawFile;
+        	tCLIFile *pRet;
+        	tFilesLoaded *pNewFile;
+
+        	pRawFile = LoadFileFromDisk(pFileName);
+
+        	if (pRawFile == null) {
+                Sys.Crash("Cannot load file: %s", (PTR)pFileName);
+        	}
+
+            Sys.log_f(1, "\nLoading file: %s\n", (PTR)pFileName);
+
+        	pRet = LoadPEFile(pRawFile);
+        	pRet->pFileName = (byte*)Mem.mallocForever((uint)S.strlen(pFileName) + 1);
+        	S.strcpy(pRet->pFileName, pFileName);
+
+        	// Record that we've loaded this file
+            pNewFile = ((tFilesLoaded*)Mem.mallocForever((SIZE_T)sizeof(tFilesLoaded)));
+        	pNewFile->pCLIFile = pRet;
+        	pNewFile->pNext = pFilesLoaded;
+        	pFilesLoaded = pNewFile;
+
+        	return pRet;
+        }
+
+        public static int Execute(tCLIFile *pThis, int argc, /*char**/byte **argp) 
+        {
+            throw new System.NotImplementedException();
+
+            #if NO
+
+        	tThread *pThread;
+        	/*HEAP_PTR*/byte* args;
+        	int i;
+
+        	// Create a string array for the program arguments
+        	// Don't include the argument that is the program name.
+        	argc--;
+        	argp++;
+            args = new string[argc];
+        	Heap.MakeUndeletable(args);
+        	for (i = 0; i < argc; i++) {
+        		/*HEAP_PTR*/byte* arg = SystemString.FromCharPtrASCII(argp[i]);
+        		SystemArray.StoreElement(args, i, (byte*)&arg);
+        	}
+
+        	// Create the main application thread
+        	pThread = Thread();
+        	Thread.SetEntryPoint(pThread, pThis->pMetaData, pThis->entryPoint, (byte*)&args, sizeof(void*));
+
+        	return Thread.Execute();
+            #endif
+        }
+
+        public static void GetHeapRoots(tHeapRoots *pHeapRoots) 
+        {
+        	tFilesLoaded *pFile;
+
+        	pFile = pFilesLoaded;
+        	while (pFile != null) {
+        		MetaData.GetHeapRoots(pHeapRoots, pFile->pCLIFile->pMetaData);
+        		pFile = pFile->pNext;
+        	}
+        }
+    }
 }
-
-tMetaData* CLIFile_GetMetaDataForAssembly(unsigned char *pAssemblyName) {
-	tFilesLoaded *pFiles;
-
-	// Where applicable, redirect this assembly lookup into DNA's corlib
-	// (e.g., mscorlib, System.Runtime, etc.)
-	for (int i = 0; i < numAssembliesMappedToDnaCorlib; i++) {
-		if (strcmp(pAssemblyName, assembliesMappedToDnaCorlib[i]) == 0) {
-			pAssemblyName = "corlib";
-			break;
-		}
-	}
-
-	// Look in already-loaded files first
-	pFiles = pFilesLoaded;
-	while (pFiles != NULL) {
-		tCLIFile *pCLIFile;
-		tMD_Assembly *pThisAssembly;
-
-		pCLIFile = pFiles->pCLIFile;
-		// Get the assembly info - there is only ever one of these in the each file's metadata
-		pThisAssembly = MetaData_GetTableRow(pCLIFile->pMetaData, MAKE_TABLE_INDEX(0x20, 1));
-		if (strcmp(pAssemblyName, pThisAssembly->name) == 0) {
-			// Found the correct assembly, so return its meta-data
-			return pCLIFile->pMetaData;
-		}
-		pFiles = pFiles->pNext;
-	}
-
-	// Assembly not loaded, so load it if possible
-	{
-		tCLIFile *pCLIFile;
-		unsigned char fileName[128];
-		sprintf(fileName, "%s.dll", pAssemblyName);
-		pCLIFile = CLIFile_Load(fileName);
-		if (pCLIFile == NULL) {
-			Crash("Cannot load required assembly file: %s", fileName);
-		}
-		return pCLIFile->pMetaData;
-	}
-}
-
-tMD_TypeDef* CLIFile_FindTypeInAllLoadedAssemblies(STRING nameSpace, STRING name) {
-	tFilesLoaded *pFiles = pFilesLoaded;
-	while (pFiles != NULL) {
-		tCLIFile *pCLIFile = pFiles->pCLIFile;
-
-		tMD_TypeDef* typeDef = MetaData_GetTypeDefFromName(pCLIFile->pMetaData, nameSpace, name, NULL, /* assertExists */ 0);
-		if (typeDef != NULL) {
-			return typeDef;
-		}
-
-		pFiles = pFiles->pNext;
-	}
-
-	Crash("CLIFile_FindTypeInAllLoadedAssemblies(): Cannot find type %s.%s", nameSpace, name);
-	return NULL;
-}
-
-static void* LoadFileFromDisk(char *pFileName) {
-	int f;
-	void *pData = NULL;
-
-	f = open(pFileName, O_RDONLY|O_BINARY);
-	if (f >= 0) {
-		int len;
-		len = lseek(f, 0, SEEK_END);
-		lseek(f, 0, SEEK_SET);
-		// TODO: Change to use mmap() or windows equivilent
-		pData = mallocForever(len);
-		if (pData != NULL) {
-			int r = read(f, pData, len);
-			if (r != len) {
-				free(pData);
-				pData = NULL;
-			}
-		}
-		close(f);
-	}
-
-	return pData;
-}
-
-static tCLIFile* LoadPEFile(void *pData) {
-	tCLIFile *pRet = TMALLOC(tCLIFile);
-
-	unsigned char *pMSDOSHeader = (unsigned char*)&(((unsigned char*)pData)[0]);
-	unsigned char *pPEHeader;
-	unsigned char *pPEOptionalHeader;
-	unsigned char *pPESectionHeaders;
-	unsigned char *pCLIHeader;
-	unsigned char *pRawMetaData;
-
-	int i;
-	unsigned int lfanew;
-	unsigned short machine;
-	int numSections;
-	unsigned int imageBase;
-	int fileAlignment;
-	unsigned int cliHeaderRVA, cliHeaderSize;
-	unsigned int metaDataRVA, metaDataSize;
-	tMetaData *pMetaData;
-
-	pRet->pRVA = RVA();
-	pRet->pMetaData = pMetaData = MetaData();
-
-	lfanew = *(unsigned int*)&(pMSDOSHeader[0x3c]);
-	pPEHeader = pMSDOSHeader + lfanew + 4;
-	pPEOptionalHeader = pPEHeader + 20;
-	pPESectionHeaders = pPEOptionalHeader + 224;
-
-	machine = *(unsigned short*)&(pPEHeader[0]);
-	if (machine != DOT_NET_MACHINE) {
-		return NULL;
-	}
-	numSections = *(unsigned short*)&(pPEHeader[2]);
-
-	imageBase = *(unsigned int*)&(pPEOptionalHeader[28]);
-	fileAlignment = *(int*)&(pPEOptionalHeader[36]);
-
-	for (i=0; i<numSections; i++) {
-		unsigned char *pSection = pPESectionHeaders + i * 40;
-		RVA_Create(pRet->pRVA, pData, pSection);
-	}
-
-	cliHeaderRVA = *(unsigned int*)&(pPEOptionalHeader[208]);
-	cliHeaderSize = *(unsigned int*)&(pPEOptionalHeader[212]);
-
-	pCLIHeader = RVA_FindData(pRet->pRVA, cliHeaderRVA);
-
-	metaDataRVA = *(unsigned int*)&(pCLIHeader[8]);
-	metaDataSize = *(unsigned int*)&(pCLIHeader[12]);
-	pRet->entryPoint = *(unsigned int*)&(pCLIHeader[20]);
-	pRawMetaData = RVA_FindData(pRet->pRVA, metaDataRVA);
-
-	// Load all metadata
-	{
-		unsigned int versionLen = *(unsigned int*)&(pRawMetaData[12]);
-		unsigned int ofs, numberOfStreams;
-		void *pTableStream = NULL;
-		unsigned int tableStreamSize;
-		pRet->pVersion = &(pRawMetaData[16]);
-		log_f(1, "CLI version: %s\n", pRet->pVersion);
-		ofs = 16 + versionLen;
-		numberOfStreams = *(unsigned short*)&(pRawMetaData[ofs + 2]);
-		ofs += 4;
-
-		for (i=0; i<(signed)numberOfStreams; i++) {
-			unsigned int streamOffset = *(unsigned int*)&pRawMetaData[ofs];
-			unsigned int streamSize = *(unsigned int*)&pRawMetaData[ofs+4];
-			unsigned char *pStreamName = &pRawMetaData[ofs+8];
-			void *pStream = pRawMetaData + streamOffset;
-			ofs += (unsigned int)((strlen(pStreamName)+4) & (~0x3)) + 8;
-			if (strcasecmp(pStreamName, "#Strings") == 0) {
-				MetaData_LoadStrings(pMetaData, pStream, streamSize);
-			} else if (strcasecmp(pStreamName, "#US") == 0) {
-				MetaData_LoadUserStrings(pMetaData, pStream, streamSize);
-			} else if (strcasecmp(pStreamName, "#Blob") == 0) {
-				MetaData_LoadBlobs(pMetaData, pStream, streamSize);
-			} else if (strcasecmp(pStreamName, "#GUID") == 0) {
-				MetaData_LoadGUIDs(pMetaData, pStream, streamSize);
-			} else if (strcasecmp(pStreamName, "#~") == 0) {
-				pTableStream = pStream;
-				tableStreamSize = streamSize;
-			}
-		}
-		// Must load tables last
-		if (pTableStream != NULL) {
-			MetaData_LoadTables(pMetaData, pRet->pRVA, pTableStream, tableStreamSize);
-		}
-	}
-
-	// Mark all generic definition types and methods as such
-	for (i=pMetaData->tables.numRows[MD_TABLE_GENERICPARAM]; i>0; i--) {
-		tMD_GenericParam *pGenericParam;
-		IDX_TABLE ownerIdx;
-
-		pGenericParam = (tMD_GenericParam*)MetaData_GetTableRow
-			(pMetaData, MAKE_TABLE_INDEX(MD_TABLE_GENERICPARAM, i));
-		ownerIdx = pGenericParam->owner;
-		switch (TABLE_ID(ownerIdx)) {
-			case MD_TABLE_TYPEDEF:
-				{
-					tMD_TypeDef *pTypeDef = (tMD_TypeDef*)MetaData_GetTableRow(pMetaData, ownerIdx);
-					pTypeDef->isGenericDefinition = 1;
-				}
-				break;
-			case MD_TABLE_METHODDEF:
-				{
-					tMD_MethodDef *pMethodDef = (tMD_MethodDef*)MetaData_GetTableRow(pMetaData, ownerIdx);
-					pMethodDef->isGenericDefinition = 1;
-				}
-				break;
-			default:
-				Crash("Wrong generic parameter owner: 0x%08x", ownerIdx);
-		}
-	}
-
-	// Mark all nested classes as such
-	for (i=pMetaData->tables.numRows[MD_TABLE_NESTEDCLASS]; i>0; i--) {
-		tMD_NestedClass *pNested;
-		tMD_TypeDef *pParent, *pChild;
-
-		pNested = (tMD_NestedClass*)MetaData_GetTableRow(pMetaData, MAKE_TABLE_INDEX(MD_TABLE_NESTEDCLASS, i));
-		pParent = (tMD_TypeDef*)MetaData_GetTableRow(pMetaData, pNested->enclosingClass);
-		pChild = (tMD_TypeDef*)MetaData_GetTableRow(pMetaData, pNested->nestedClass);
-		pChild->pNestedIn = pParent;
-	}
-
-	return pRet;
-}
-
-tCLIFile* CLIFile_Load(char *pFileName) {
-	void *pRawFile;
-	tCLIFile *pRet;
-	tFilesLoaded *pNewFile;
-
-	pRawFile = LoadFileFromDisk(pFileName);
-
-	if (pRawFile == NULL) {
-		Crash("Cannot load file: %s", pFileName);
-	}
-
-	log_f(1, "\nLoading file: %s\n", pFileName);
-
-	pRet = LoadPEFile(pRawFile);
-	pRet->pFileName = (char*)mallocForever((U32)strlen(pFileName) + 1);
-	strcpy(pRet->pFileName, pFileName);
-
-	// Record that we've loaded this file
-	pNewFile = TMALLOCFOREVER(tFilesLoaded);
-	pNewFile->pCLIFile = pRet;
-	pNewFile->pNext = pFilesLoaded;
-	pFilesLoaded = pNewFile;
-
-	return pRet;
-}
-
-I32 CLIFile_Execute(tCLIFile *pThis, int argc, char **argp) {
-	tThread *pThread;
-	HEAP_PTR args;
-	int i;
-
-	// Create a string array for the program arguments
-	// Don't include the argument that is the program name.
-	argc--;
-	argp++;
-	args = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_STRING], argc);
-	Heap_MakeUndeletable(args);
-	for (i = 0; i < argc; i++) {
-		HEAP_PTR arg = SystemString_FromCharPtrASCII(argp[i]);
-		SystemArray_StoreElement(args, i, (PTR)&arg);
-	}
-
-	// Create the main application thread
-	pThread = Thread();
-	Thread_SetEntryPoint(pThread, pThis->pMetaData, pThis->entryPoint, (PTR)&args, sizeof(void*));
-
-	return Thread_Execute();
-}
-
-void CLIFile_GetHeapRoots(tHeapRoots *pHeapRoots) {
-	tFilesLoaded *pFile;
-
-	pFile = pFilesLoaded;
-	while (pFile != NULL) {
-		MetaData_GetHeapRoots(pHeapRoots, pFile->pCLIFile->pMetaData);
-		pFile = pFile->pNext;
-	}
-}
-
-#endif

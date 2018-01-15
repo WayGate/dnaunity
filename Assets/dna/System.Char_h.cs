@@ -20,8 +20,8 @@
 
 #if NO
 
-tAsyncCall* System_Char_GetUnicodeCategory(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Char_ToLowerInvariant(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Char_ToUpperInvariant(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_Char_GetUnicodeCategory(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_Char_ToLowerInvariant(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_Char_ToUpperInvariant(byte* pThis_, byte* pParams, byte* pReturnValue);
 
 #endif

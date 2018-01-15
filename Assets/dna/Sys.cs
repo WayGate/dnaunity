@@ -18,148 +18,95 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
 
-void Crash(char *pMsg, ...) {
-	va_list va;
+    public unsafe static class Sys
+    {
+        public static uint INTERNALCALL_RESULT_U32(void* r, uint val)
+        {
+            return *(uint*)r = (val); 
+        }
 
-	printf("\n\n*** CRASH ***\n");
+        public static int INTERNALCALL_RESULT_I32(void* r, int val) 
+        { 
+            return *(int*)r = (val); 
+        }
 
-	va_start(va, pMsg);
+        public static void* INTERNALCALL_RESULT_PTR(void* r, void* val) 
+        { 
+            return *(void**)r = (void*)(val); 
+        }
 
-	vprintf(pMsg, va);
+        #if UNITY_WEBGL || DNA_32BIT
+        public const int S_PTR = 4;
+        #else
+        public const int S_PTR = 8;
+        #endif 
+        public const int S_INT = 4;
 
-	va_end(va);
+        public static uint logLevel;
 
-	printf("\n\n");
+        public static void log_f(uint level, string pMsg, params object[] args)
+        {
+            throw new System.NotImplementedException();
+        }
 
-#if WIN32
-	{
-		// Cause a delibrate exception, to get into debugger
-		__debugbreak();
-	}
-#endif
+        public static void Crash(string pMsg, params object[] args) 
+        {
+            throw new System.NotImplementedException();
+        #if NO
+        	va_list va;
 
-	exit(1);
-}
+        	printf("\n\n*** CRASH ***\n");
 
-U32 logLevel = 0;
+        	va_start(va, pMsg);
 
-typedef void (*LOG_CALLBACK)(char*);
+        	vprintf(pMsg, va);
 
-LOG_CALLBACK logCallback;
-char logBuf[256];
+        	va_end(va);
 
-void set_log_cb(LOG_CALLBACK cb) {
-    logCallback = cb;
-    if (cb != NULL) {
-        log_f(1, "Log callback successfully set!");
+        	printf("\n\n");
+
+        #if WIN32
+        	{
+        		// Cause a delibrate exception, to get into debugger
+        		__debugbreak();
+        	}
+        #endif
+
+        	exit(1);
+        #endif
+        }
+
+  
+        public static /*char*/byte* GetMethodDesc(tMD_MethodDef *pMethod) 
+        {
+            throw new System.NotImplementedException();
+            #if NO
+        	uint i;
+
+            S.sprintf(methodName, new S("%s.%s.%s("), pMethod->pParentType->nameSpace, pMethod->pParentType->name, pMethod->name);
+        	for (i=MetaData.METHOD_ISSTATIC(pMethod)?0:1; i<pMethod->numberOfParameters; i++) {
+        		if (i > (uint)(MetaData.MetaData.METHOD_ISSTATIC(pMethod)?0:1)) {
+        			S.sprintf(S.strchr(methodName, 0), ",");
+        		}
+                tParameter *param = &(pMethod->pParams[i]);
+                S.sprintf(S.strchr(methodName, 0), new S("%s"), param->pTypeDef->name);
+        	}
+        	S.sprintf(S.strchr(methodName, 0), ")");
+        	return methodName;
+            #endif
+        }
+
+        public static ulong msTime() 
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public static void SleepMS(uint ms) 
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }
-
-void set_log_level(U32 level) {
-    logLevel = level;
-}
-
-void log_f(U32 level, char *pMsg, ...) {
-	va_list va;
-
-	if (logLevel >= level) {
-		va_start(va, pMsg);
-		vprintf(pMsg, va);
-		va_end(va);
-        if (logCallback != NULL) {
-            va_start(va, pMsg);
-            vsnprintf(logBuf, 256, pMsg, va);
-            va_end(va);
-            logCallback(logBuf);
-        }
-	}
-}
-
-static char methodName[2048];
-char* Sys_GetMethodDesc(tMD_MethodDef *pMethod) {
-	U32 i;
-
-	sprintf(methodName, "%s.%s.%s(", pMethod->pParentType->nameSpace, pMethod->pParentType->name, pMethod->name);
-	for (i=METHOD_ISSTATIC(pMethod)?0:1; i<pMethod->numberOfParameters; i++) {
-		if (i > (U32)(METHOD_ISSTATIC(pMethod)?0:1)) {
-			sprintf(strchr(methodName, 0), ",");
-		}
-        tParameter *param = &(pMethod->pParams[i]);
-		sprintf(strchr(methodName, 0), "%s", param->pTypeDef->name);
-	}
-	sprintf(strchr(methodName, 0), ")");
-	return methodName;
-}
-
-static U32 mallocForeverSize = 0;
-// malloc() some memory that will never need to be resized or freed.
-void* mallocForever(U32 size) {
-	mallocForeverSize += size;
-log_f(3, "--- mallocForever: TotalSize %d\n", mallocForeverSize);
-	return malloc(size);
-}
-
-/*
-#if _DEBUG
-void* mallocTrace(int s, char *pFile, int line) {
-	//printf("MALLOC: %s:%d %d\n", pFile, line, s);
-#undef malloc
-	return malloc(s);
-}
-#endif
-*/
-
-U64 msTime() {
-#if WIN32
-	static LARGE_INTEGER freq = {0,0};
-	LARGE_INTEGER time;
-	if (freq.QuadPart == 0) {
-		QueryPerformanceFrequency(&freq);
-	}
-	QueryPerformanceCounter(&time);
-	return (time.QuadPart * 1000) / freq.QuadPart;
-#else
-	struct timeval tp;
-	U64 ms;
-	gettimeofday(&tp,NULL);
-	ms = tp.tv_sec;
-	ms *= 1000;
-	ms += ((U64)tp.tv_usec)/((U64)1000);
-	return ms;
-#endif
-}
-
-#if DIAG_METHOD_CALLS || DIAG_OPCODE_TIMES || DIAG_GC || DIAG_TOTAL_TIME
-U64 microTime() {
-#if WIN32
-	static LARGE_INTEGER freq = {0,0};
-	LARGE_INTEGER time;
-	if (freq.QuadPart == 0) {
-		QueryPerformanceFrequency(&freq);
-	}
-	QueryPerformanceCounter(&time);
-	return (time.QuadPart * 1000000) / freq.QuadPart;
-#else
-	struct timeval tp;
-	U64 ms;
-	gettimeofday(&tp,NULL);
-	ms = tp.tv_sec;
-	ms *= 1000000;
-	ms += ((U64)tp.tv_usec);
-	return ms;
-#endif
-}
-#endif
-
-void SleepMS(U32 ms) {
-#if WIN32
-	Sleep(ms);
-#else
-	sleep(ms / 1000);
-	usleep((ms % 1000) * 1000);
-#endif
-}
-
-#endif

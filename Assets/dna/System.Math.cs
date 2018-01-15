@@ -20,34 +20,34 @@
 
 #if NO
 
-tAsyncCall* System_Math_Sin(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(double*)pReturnValue = sin(INTERNALCALL_PARAM(0, double));
+tAsyncCall* System_Math_Sin(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	*(double*)pReturnValue = sin((*((double*)(pParams + 0))));
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Math_Cos(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(double*)pReturnValue = cos(INTERNALCALL_PARAM(0, double));
+tAsyncCall* System_Math_Cos(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	*(double*)pReturnValue = cos((*((double*)(pParams + 0))));
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Math_Tan(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(double*)pReturnValue = tan(INTERNALCALL_PARAM(0, double));
+tAsyncCall* System_Math_Tan(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	*(double*)pReturnValue = tan((*((double*)(pParams + 0))));
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Math_Pow(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(double*)pReturnValue = pow(INTERNALCALL_PARAM(0, double), INTERNALCALL_PARAM(8, double));
+tAsyncCall* System_Math_Pow(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	*(double*)pReturnValue = pow((*((double*)(pParams + 0))), (*((double*)(pParams + 8))));
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Math_Sqrt(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(double*)pReturnValue = sqrt(INTERNALCALL_PARAM(0, double));
+tAsyncCall* System_Math_Sqrt(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	*(double*)pReturnValue = sqrt((*((double*)(pParams + 0))));
 
-	return NULL;
+	return null;
 }
 
 #endif

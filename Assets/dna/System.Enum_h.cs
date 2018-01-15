@@ -20,7 +20,7 @@
 
 #if NO
 
-tAsyncCall* System_Enum_Internal_GetValue(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Enum_Internal_GetInfo(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_Enum_Internal_GetValue(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_Enum_Internal_GetInfo(byte* pThis_, byte* pParams, byte* pReturnValue);
 
 #endif

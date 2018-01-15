@@ -20,56 +20,56 @@
 
 #if NO
 
-// Get all the fields in the value-types in the parameters.
-// If the 2nd parameter is NULL, then don't include it!
+// Get all the fields in the value-Type.types in the parameters.
+// If the 2nd parameter is null, then don't include it!
 // The type of the objects will always be identical.
-tAsyncCall* System_ValueType_GetFields(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	HEAP_PTR o1,o2, ret;
+tAsyncCall* System_ValueType_GetFields(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	/*HEAP_PTR*/byte* o1,o2, ret;
 	tMD_TypeDef *pType;
 	tMetaData *pMetaData;
-	U32 i, retOfs, numInstanceFields;
+	uint i, retOfs, numInstanceFields;
 
-	o1 = ((HEAP_PTR*)pParams)[0];
-	o2 = ((HEAP_PTR*)pParams)[1];
-	pType = Heap_GetType(o1);
+	o1 = ((/*HEAP_PTR*/byte**)pParams)[0];
+	o2 = ((/*HEAP_PTR*/byte**)pParams)[1];
+	pType = Heap.GetType(o1);
 	pMetaData = pType->pMetaData;
 
 	numInstanceFields = 0;
 	for (i=0; i<pType->numFields; i++) {
-		if (!FIELD_ISSTATIC(pType->ppFields[i])) {
+		if (!MetaData.MetaData.FIELD_ISSTATIC(pType->ppFields[i])) {
 			numInstanceFields++;
 		}
 	}
 
-	ret = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_OBJECT], numInstanceFields << ((o2 == NULL)?0:1));
+	ret = SystemArray.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_OBJECT], numInstanceFields << ((o2 == null)?0:1));
 
 	retOfs = 0;
 	for (i=0; i<pType->numFields; i++) {
 		tMD_FieldDef *pField;
 
 		pField = pType->ppFields[i];
-		if (!FIELD_ISSTATIC(pField)) {
+		if (!MetaData.MetaData.FIELD_ISSTATIC(pField)) {
 			if (pField->pType->isValueType) {
-				HEAP_PTR boxed;
+				/*HEAP_PTR*/byte* boxed;
 
 				boxed = Heap_Box(pField->pType, o1 + pField->memOffset);
-				SystemArray_StoreElement(ret, retOfs++, (PTR)&boxed);
-				if (o2 != NULL) {
+				SystemArray.StoreElement(ret, retOfs++, (byte*)&boxed);
+				if (o2 != null) {
 					boxed = Heap_Box(pField->pType, o2 + pField->memOffset);
-					SystemArray_StoreElement(ret, retOfs++, (PTR)&boxed);
+					SystemArray.StoreElement(ret, retOfs++, (byte*)&boxed);
 				}
 			} else {
-				SystemArray_StoreElement(ret, retOfs++, o1 + pField->memOffset);
-				if (o2 != NULL) {
-					SystemArray_StoreElement(ret, retOfs++, o2 + pField->memOffset);
+				SystemArray.StoreElement(ret, retOfs++, o1 + pField->memOffset);
+				if (o2 != null) {
+					SystemArray.StoreElement(ret, retOfs++, o2 + pField->memOffset);
 				}
 			}
 		}
 	}
 
-	*(HEAP_PTR*)pReturnValue = ret;
+	*(/*HEAP_PTR*/byte**)pReturnValue = ret;
 
-	return NULL;
+	return null;
 }
 
 #endif

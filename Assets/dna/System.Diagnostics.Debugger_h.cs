@@ -21,6 +21,6 @@
 #if NO
 
 
-tAsyncCall* System_Diagnostics_Debugger_Break(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_Diagnostics_Debugger_Break(byte* pThis_, byte* pParams, byte* pReturnValue);
 
 #endif

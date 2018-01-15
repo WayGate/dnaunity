@@ -25,7 +25,7 @@ const int TicksPerMicroSecond 10L
 const int TicksAtUnixEpoch 621355968000000000L
 const int TicksAtFileTimeEpoch 504911232000000000L
 
-tAsyncCall* System_DateTime_InternalUtcNow(PTR pThis_, PTR pParams, PTR pReturnValue) {
+tAsyncCall* System_DateTime_InternalUtcNow(byte* pThis_, byte* pParams, byte* pReturnValue) {
 
 #if WIN32
 
@@ -33,20 +33,20 @@ tAsyncCall* System_DateTime_InternalUtcNow(PTR pThis_, PTR pParams, PTR pReturnV
 
 	GetSystemTimeAsFileTime(&ft);
 
-	*(U64*)pReturnValue = ((U64)ft.dwHighDateTime) * 0x100000000L + ((U64)ft.dwLowDateTime) + TicksAtFileTimeEpoch;
+	*(ulong*)pReturnValue = ((ulong)ft.dwHighDateTime) * 0x100000000L + ((ulong)ft.dwLowDateTime) + TicksAtFileTimeEpoch;
 
 #else
 
 	struct timeval tp;
 
-	gettimeofday(&tp, NULL);
+	gettimeofday(&tp, null);
 
-	*(U64*)pReturnValue = ((U64)tp.tv_sec) * TicksPerSecond + ((U64)tp.tv_usec) * TicksPerMicroSecond
+	*(ulong*)pReturnValue = ((ulong)tp.tv_sec) * TicksPerSecond + ((ulong)tp.tv_usec) * TicksPerMicroSecond
 		+ TicksAtUnixEpoch;
 
 #endif
 
-	return NULL;
+	return null;
 }
 
 #endif

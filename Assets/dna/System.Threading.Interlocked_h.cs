@@ -20,10 +20,10 @@
 
 #if NO
 
-tAsyncCall* System_Threading_Interlocked_CompareExchange_Int32(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Threading_Interlocked_Increment_Int32(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Threading_Interlocked_Decrement_Int32(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Threading_Interlocked_Add_Int32(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Threading_Interlocked_Exchange_Int32(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_Threading_Interlocked_CompareExchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_Threading_Interlocked_Increment_Int32(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_Threading_Interlocked_Decrement_Int32(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_Threading_Interlocked_Add_Int32(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_Threading_Interlocked_Exchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue);
 
 #endif

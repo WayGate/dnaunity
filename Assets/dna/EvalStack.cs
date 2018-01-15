@@ -18,17 +18,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
+    public static class EvalStack
+    {
+        public const int EVALSTACK_INT64       = 0;
+        public const int EVALSTACK_INT32       = 1;
+        public const int EVALSTACK_INTNATIVE   = 2;
+        //const int EVALSTACK_F                 = 3;
+        public const int EVALSTACK_F64         = 3;
+        public const int EVALSTACK_PTR         = 4;
+        public const int EVALSTACK_O           = 5;
+        //const int EVALSTACK_TRANSPTR          = 6;
+        public const int EVALSTACK_F32         = 6;
+        public const int EVALSTACK_VALUETYPE   = 7;
 
-void Socket_Init();
-
-tAsyncCall* System_Net_Sockets_Internal_CreateSocket(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Net_Sockets_Internal_Bind(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Net_Sockets_Internal_Close(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Net_Sockets_Internal_Listen(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Net_Sockets_Internal_Accept(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Net_Sockets_Internal_Connect(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Net_Sockets_Internal_Receive(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Net_Sockets_Internal_Send(PTR pThis_, PTR pParams, PTR pReturnValue);
-
-#endif
+        // dummy value used for methods that return nothing (void)
+        public const int EVALSTACK_VOID        = 0xff;
+    }
+}

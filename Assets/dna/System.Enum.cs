@@ -20,41 +20,41 @@
 
 #if NO
 
-tAsyncCall* System_Enum_Internal_GetValue(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	*(U32*)pReturnValue = *(U32*)pThis_;
+tAsyncCall* System_Enum_Internal_GetValue(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	*(uint*)pReturnValue = *(uint*)pThis_;
 
-	return NULL;
+	return null;
 }
 
-tAsyncCall* System_Enum_Internal_GetInfo(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tMD_TypeDef *pEnumType = RuntimeType_DeRef((PTR)((tMD_TypeDef**)pParams)[0]);
-	U32 i, retIndex;
-	HEAP_PTR names, values;
+tAsyncCall* System_Enum_Internal_GetInfo(byte* pThis_, byte* pParams, byte* pReturnValue) {
+	tMD_TypeDef *pEnumType = RuntimeType.DeRef((byte*)((tMD_TypeDef**)pParams)[0]);
+	uint i, retIndex;
+	/*HEAP_PTR*/byte* names, values;
 
 	// An enum type always has just one non-literal field, with all other fields being the values.
-	names = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_STRING], pEnumType->numFields - 1);
-	values = SystemArray_NewVector(types[TYPE_SYSTEM_ARRAY_INT32], pEnumType->numFields - 1);
+	names = SystemArray.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_STRING], pEnumType->numFields - 1);
+	values = SystemArray.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_INT32], pEnumType->numFields - 1);
 	
 	for (i=0, retIndex=0; i<pEnumType->numFields; i++) {
 		tMD_FieldDef *pField = pEnumType->ppFields[i];
-		HEAP_PTR name;
-		I32 value;
+		/*HEAP_PTR*/byte* name;
+		int value;
 
-		if (!FIELD_ISLITERAL(pField)) {
+		if (!MetaData.MetaData.FIELD_ISLITERAL(pField)) {
 			continue;
 		}
 
-		name = SystemString_FromCharPtrASCII(pField->name);
-		SystemArray_StoreElement(names, retIndex, (PTR)&name);
-		MetaData_GetConstant(pField->pMetaData, pField->tableIndex, (PTR)&value);
-		SystemArray_StoreElement(values, retIndex, (PTR)&value);
+		name = SystemString.FromCharPtrASCII(pField->name);
+		SystemArray.StoreElement(names, retIndex, (byte*)&name);
+		MetaData.GetConstant(pField->pMetaData, pField->tableIndex, (byte*)&value);
+		SystemArray.StoreElement(values, retIndex, (byte*)&value);
 		retIndex++;
 	}
 
-	*(((HEAP_PTR**)pParams)[1]) = names;
-	*(((HEAP_PTR**)pParams)[2]) = values;
+	*(((/*HEAP_PTR*/byte***)pParams)[1]) = names;
+	*(((/*HEAP_PTR*/byte***)pParams)[2]) = values;
 
-	return NULL;
+	return null;
 }
 
 #endif

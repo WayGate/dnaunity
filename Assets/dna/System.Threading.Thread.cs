@@ -18,64 +18,82 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
+    #if UNITY_WEBGL || DNA_32BIT
+    using SIZE_T = System.UInt32;
+    using PTR = System.UInt32;
+    #else
+    using SIZE_T = System.UInt64;
+    using PTR = System.UInt64;
+    #endif 
 
-tAsyncCall* System_Threading_Thread_ctor(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tThread *pThread = Thread();
-	pThread->startDelegate = ((PTR*)pParams)[0];
-	*(HEAP_PTR*)pReturnValue = (HEAP_PTR)pThread;
-	return NULL;
+    public unsafe static class SystemThreadingThread
+    {
+
+        public static tAsyncCall* ctor(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	tThread *pThread = Thread.New();
+        	pThread->startDelegate = ((byte**)pParams)[0];
+        	*(/*HEAP_PTR*/byte**)pReturnValue = (/*HEAP_PTR*/byte*)pThread;
+        	return null;
+        }
+
+        public static tAsyncCall* ctorParam(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	tThread *pThread = Thread.New();
+        	pThread->startDelegate = ((byte**)pParams)[0];
+        	*(/*HEAP_PTR*/byte**)pReturnValue = (/*HEAP_PTR*/byte*)pThread;
+        	pThread->hasParam = 1;
+        	return null;
+        }
+
+        public static tAsyncCall* Start(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	tThread *pThread = (tThread*)pThis_;
+        	tMD_MethodDef *pStartMethod;
+        	/*HEAP_PTR*/byte* pStartObj;
+            byte** _params = stackalloc byte*[2];
+        	uint paramBytes = 0;
+
+        	// This selects the RUNNING state (=0), without changing the IsBackground bit
+        	pThread->state &= Thread.THREADSTATE_BACKGROUND;
+
+        	pStartMethod = Delegate.GetMethodAndStore(pThread->startDelegate, &pStartObj, null);
+
+        	if (pStartObj != null) {
+        		// If this method is not static, so it has a start object, then make it the first parameter
+        		_params[0] = (byte*)pStartObj;
+                paramBytes = (uint)sizeof(void*);
+        	}
+        	if (pThread->hasParam != 0) {
+        		// If this method has an object parameter (ParameterizedThreadStart)
+        		_params[paramBytes] = (byte*)pThread->param;
+                paramBytes += (uint)sizeof(void*);
+        	}
+
+        	Thread.SetEntryPoint(pThread, pStartMethod->pMetaData, pStartMethod->tableIndex, (byte*)&_params, paramBytes);
+
+        	return null;
+        }
+
+        public static tAsyncCall* Sleep(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+            tAsyncCall *pAsync = ((tAsyncCall*)Mem.malloc((SIZE_T)sizeof(tAsyncCall)));
+
+        	pAsync->sleepTime = ((int*)pParams)[0];
+
+        	return pAsync;
+        }
+
+        public static tAsyncCall* get_CurrentThread(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	tThread *pThread = Thread.GetCurrent();
+        	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pThread);
+
+        	return null;
+        }
+
+    }
+
 }
-
-tAsyncCall* System_Threading_Thread_ctorParam(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tThread *pThread = Thread();
-	pThread->startDelegate = ((PTR*)pParams)[0];
-	*(HEAP_PTR*)pReturnValue = (HEAP_PTR)pThread;
-	pThread->hasParam = 1;
-	return NULL;
-}
-
-tAsyncCall* System_Threading_Thread_Start(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tThread *pThread = (tThread*)pThis_;
-	tMD_MethodDef *pStartMethod;
-	HEAP_PTR pStartObj;
-	PTR params[2];
-	U32 paramBytes = 0;
-
-	// This selects the RUNNING state (=0), without changing the IsBackground bit
-	pThread->state &= THREADSTATE_BACKGROUND;
-
-	pStartMethod = Delegate_GetMethodAndStore(pThread->startDelegate, &pStartObj, NULL);
-
-	if (pStartObj != NULL) {
-		// If this method is not static, so it has a start object, then make it the first parameter
-		params[0] = (PTR)pStartObj;
-		paramBytes = sizeof(void*);
-	}
-	if (pThread->hasParam) {
-		// If this method has an object parameter (ParameterizedThreadStart)
-		params[paramBytes] = (PTR)pThread->param;
-		paramBytes += sizeof(void*);
-	}
-
-	Thread_SetEntryPoint(pThread, pStartMethod->pMetaData, pStartMethod->tableIndex, (PTR)&params, paramBytes);
-
-	return NULL;
-}
-
-tAsyncCall* System_Threading_Thread_Sleep(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tAsyncCall *pAsync = TMALLOC(tAsyncCall);
-
-	pAsync->sleepTime = ((I32*)pParams)[0];
-
-	return pAsync;
-}
-
-tAsyncCall* System_Threading_Thread_get_CurrentThread(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	tThread *pThread = Thread_GetCurrent();
-	INTERNALCALL_RETURN_PTR(pThread);
-
-	return NULL;
-}
-
-#endif

@@ -20,9 +20,9 @@
 
 #if NO
 
-tAsyncCall* System_GC_Collect(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_GC_Internal_CollectionCount(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_GC_GetTotalMemory(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_GC_SuppressFinalize(PTR pThis_, PTR pParams, PTR pReturnValue);
+tAsyncCall* System_GC_Collect(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_GC_Internal_CollectionCount(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_GC_GetTotalMemory(byte* pThis_, byte* pParams, byte* pReturnValue);
+tAsyncCall* System_GC_SuppressFinalize(byte* pThis_, byte* pParams, byte* pReturnValue);
 
 #endif

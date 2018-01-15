@@ -18,59 +18,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
+    // Note that care is needed to ensure the target object refered to in the delegate is not accidently
+    // garbage collected.
+    // Because a non-precise GC is currently used, this just happens automatically.
+    // The /*HEAP_PTR*/byte* targetObj keeps the target object alive.
 
-// Note that care is needed to ensure the target object refered to in the delegate is not accidently
-// garbage collected.
-// Because a non-precise GC is currently used, this just happens automatically.
-// The HEAP_PTR targetObj keeps the target object alive.
+    public unsafe struct tDelegate 
+    {
+        // These must match the definition in Delegate.cs
+        // The target object, null if calling a static method
+        public /*HEAP_PTR*/byte* targetObj;
+        // The target method
+        public tMD_MethodDef *pTargetMethod;
+        // The next delegate in a multicast delegate
+        public tDelegate *pNext;
+    }
 
-typedef struct tDelegate_ tDelegate;
-struct tDelegate_ {
-	// These must match the definition in Delegate.cs
-	// The target object, null if calling a static method
-	HEAP_PTR targetObj;
-	// The target method
-	tMD_MethodDef *pTargetMethod;
-	// The next delegate in a multicast delegate
-	tDelegate *pNext;
-};
+    public unsafe static class Delegate
+    {
 
-tMD_MethodDef* Delegate_GetMethod(void *pThis_) {
-	tDelegate *pThis = (tDelegate*)pThis_;
+        public static tMD_MethodDef* GetMethod(void *pThis_) 
+        {
+        	tDelegate *pThis = (tDelegate*)pThis_;
 
-	return pThis->pTargetMethod;
+        	return pThis->pTargetMethod;
+        }
+
+        public static tMD_MethodDef* GetMethodAndStore(void *pThis_, /*HEAP_PTR*/byte* *pTargetObj, void **ppNextDelegate) 
+        {
+        	tDelegate *pThis = (tDelegate*)pThis_;
+
+        	*pTargetObj = pThis->targetObj;
+        	if (ppNextDelegate != null) {
+        		*ppNextDelegate = pThis->pNext;
+        	}
+        	return pThis->pTargetMethod;
+        }
+
+        static tAsyncCall* ctor(byte* pThis_, byte* pParams, byte* pReturnValue) {
+        	// Note that the 'this' object is already allocated because this method is not
+        	// marked as 'InternalMethod' - it is marked as 'runtime'
+        	tDelegate *pThis = (tDelegate*)pThis_;
+
+        	pThis->targetObj = ((/*HEAP_PTR*/byte**)pParams)[0];
+        	pThis->pTargetMethod = ((tMD_MethodDef**)pParams)[1];
+        	pThis->pNext = null;
+
+        	return null;
+        }
+
+    }
 }
-
-tMD_MethodDef* Delegate_GetMethodAndStore(void *pThis_, HEAP_PTR *pTargetObj, void **ppNextDelegate) {
-	tDelegate *pThis = (tDelegate*)pThis_;
-
-	*pTargetObj = pThis->targetObj;
-	if (ppNextDelegate != NULL) {
-		*ppNextDelegate = pThis->pNext;
-	}
-	return pThis->pTargetMethod;
-}
-
-static tAsyncCall* ctor(PTR pThis_, PTR pParams, PTR pReturnValue) {
-	// Note that the 'this' object is already allocated because this method is not
-	// marked as 'InternalMethod' - it is marked as 'runtime'
-	tDelegate *pThis = (tDelegate*)pThis_;
-
-	pThis->targetObj = ((HEAP_PTR*)pParams)[0];
-	pThis->pTargetMethod = ((tMD_MethodDef**)pParams)[1];
-	pThis->pNext = NULL;
-
-	return NULL;
-}
-
-fnInternalCall Map_Delegate(tMD_MethodDef *pMethod) {
-	// Note that it is not neccessary to check argument types here, as delegates are very tightly controlled
-	if (strcmp(pMethod->name, ".ctor") == 0) {
-		return ctor;
-	}
-
-	return NULL;
-}
-
-#endif

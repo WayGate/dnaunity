@@ -23,55 +23,55 @@
 typedef struct tLoadedLib_ tLoadedLib;
 struct tLoadedLib_ {
 	// The name of the library - this is the name as specified in the .NET assembly
-	STRING name;
+	/*STRING*/byte* name;
 	// The library
 	void *pLib;
 
 	tLoadedLib *pNext;
 };
 
-static tLoadedLib *pLoadedLibs = NULL;
+static tLoadedLib *pLoadedLibs = null;
 
-static tLoadedLib* GetLib(STRING name) {
+static tLoadedLib* GetLib(/*STRING*/byte* name) {
 	// See if it's already loaded
 	tLoadedLib *pLib = pLoadedLibs;
 	char libName[256];
 	void *pNativeLib;
 
-	while (pLib != NULL) {
-		if (strcmp(name, pLib->name) == 0) {
+	while (pLib != null) {
+		if (S.strcmp(name, pLib->name) == 0) {
 			return pLib;
 		}
 	}
-	sprintf(libName, "%s%s", LIB_PREFIX, name);
-	if (strlen(libName) >= 4) {
-		if (strcmp(".dll", libName + strlen(libName) - 4) == 0) {
+	S.sprintf(libName, "%s%s", LIB_PREFIX, name);
+	if (S.strlen(libName) >= 4) {
+		if (S.strcmp(".dll", libName + S.strlen(libName) - 4) == 0) {
 			// Cut off the ".dll" suffix if it's there
-			libName[strlen(libName) - 4] = 0;
+			libName[S.strlen(libName) - 4] = 0;
 		}
 	}
 	// Not loaded, so load it
-	sprintf(strchr(libName, 0), ".%s", LIB_SUFFIX);
+	S.sprintf(S.strchr(libName, 0), ".%s", LIB_SUFFIX);
 #if WIN32
 	pNativeLib = LoadLibraryA(libName);
 #else
 	pNativeLib = dlopen(libName, RTLD_LAZY); //DL_LAZY);
 #endif
-	if (pNativeLib == NULL) {
+	if (pNativeLib == null) {
 		// Failed to load library
 		printf("Failed to load library: %s\n", libName);
 #if !WIN32
 		{
-			char *pError;
+			/*char**/byte *pError;
 			pError = dlerror();
 			if (pError) {
 				printf("dlopen() Error: '%s'",pError);
 			}
 		}
 #endif
-		return NULL;
+		return null;
 	}
-	pLib = TMALLOCFOREVER(tLoadedLib);
+	pLib = ((tLoadedLib*)Mem.mallocForever(sizeof(tLoadedLib)));
 	pLib->pNext = pLoadedLibs;
 	pLoadedLibs = pLib;
 	pLib->name = name;
@@ -80,9 +80,9 @@ static tLoadedLib* GetLib(STRING name) {
 }
 
 #if TARGET_EMCRIPTEN
-extern char* invokeJsFunc(STRING libName, STRING funcName, STRING arg0);
+extern /*char*/byte* invokeJsFunc(/*STRING*/byte* libName, /*STRING*/byte* funcName, /*STRING*/byte* arg0);
 #else
-char* invokeJsFunc(STRING libName, STRING funcName, STRING arg0)
+/*char*/byte* invokeJsFunc(/*STRING*/byte* libName, /*STRING*/byte* funcName, /*STRING*/byte* arg0)
 {
     return 0;
 }
@@ -90,18 +90,18 @@ char* invokeJsFunc(STRING libName, STRING funcName, STRING arg0)
 
 fnPInvoke PInvoke_GetFunction(tMetaData *pMetaData, tMD_ImplMap *pImplMap) {
 	tLoadedLib *pLib;
-	STRING libName;
+	/*STRING*/byte* libName;
 	void *pProc;
 
-	libName = MetaData_GetModuleRefName(pMetaData, pImplMap->importScope);
+	libName = MetaData.GetModuleRefName(pMetaData, pImplMap->importScope);
 
 	return (fnPInvoke)invokeJsFunc;
 
 	/*
 	pLib = GetLib(libName);
-	if (pLib == NULL) {
+	if (pLib == null) {
 		// Library not found, so we can't find the function
-		return NULL;
+		return null;
 	}
 
 #if WIN32
@@ -113,33 +113,33 @@ fnPInvoke PInvoke_GetFunction(tMetaData *pMetaData, tMD_ImplMap *pImplMap) {
 	*/
 }
 
-static void* ConvertStringToANSI(HEAP_PTR pHeapEntry) {
-	U32 strLen, i;
-	STRING2 str = SystemString_GetString(pHeapEntry, &strLen);
-	unsigned char *pAnsi = (unsigned char*)malloc(strLen+1);
+static void* ConvertStringToANSI(/*HEAP_PTR*/byte* pHeapEntry) {
+	uint strLen, i;
+	/*STRING2*/ushort* str = SystemString.GetString(pHeapEntry, &strLen);
+	byte *pAnsi = (byte*)Mem.malloc(strLen+1);
 	for (i=0; i<strLen; i++) {
-		pAnsi[i] = (unsigned char)str[i];
+		pAnsi[i] = (byte)str[i];
 	}
 	pAnsi[i] = 0;
 	return pAnsi;
 }
 
 // This function is needed to maintain string immutability, and to add a null-terminator
-static void* ConvertStringToUnicode(HEAP_PTR pHeapEntry) {
-	U32 strLen;
-	STRING2 str = SystemString_GetString(pHeapEntry, &strLen);
-	unsigned short *pUnicode = (unsigned short*)malloc((strLen+1) << 1);
-	memcpy(pUnicode, str, strLen << 1);
+static void* ConvertStringToUnicode(/*HEAP_PTR*/byte* pHeapEntry) {
+	uint strLen;
+	/*STRING2*/ushort* str = SystemString.GetString(pHeapEntry, &strLen);
+	ushort *pUnicode = (ushort*)Mem.malloc((strLen+1) << 1);
+	Mem.memcpy(pUnicode, str, strLen << 1);
 	pUnicode[strLen] = 0;
 	return pUnicode;
 }
 
-typedef U64    (STDCALL *_uCuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4);
-typedef U64    (STDCALL *_uCuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5);
-typedef U64    (STDCALL *_uCuuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5, U32 _6);
-typedef U64    (STDCALL *_uCuuuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5, U32 _6, U32 _7);
-typedef U64    (STDCALL *_uCuuuuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5, U32 _6, U32 _7, U32 _8);
-typedef U64    (STDCALL *_uCuuuuuuuuuu)(U32 _0, U32 _1, U32 _2, U32 _3, U32 _4, U32 _5, U32 _6, U32 _7, U32 _8, U32 _9);
+typedef ulong    (STDCALL *_uCuuuuu)(uint _0, uint _1, uint _2, uint _3, uint _4);
+typedef ulong    (STDCALL *_uCuuuuuu)(uint _0, uint _1, uint _2, uint _3, uint _4, uint _5);
+typedef ulong    (STDCALL *_uCuuuuuuu)(uint _0, uint _1, uint _2, uint _3, uint _4, uint _5, uint _6);
+typedef ulong    (STDCALL *_uCuuuuuuuu)(uint _0, uint _1, uint _2, uint _3, uint _4, uint _5, uint _6, uint _7);
+typedef ulong    (STDCALL *_uCuuuuuuuuu)(uint _0, uint _1, uint _2, uint _3, uint _4, uint _5, uint _6, uint _7, uint _8);
+typedef ulong    (STDCALL *_uCuuuuuuuuuu)(uint _0, uint _1, uint _2, uint _3, uint _4, uint _5, uint _6, uint _7, uint _8, uint _9);
 
 const int CALL0(returnType) (returnType)
 const int CALL1(returnType, t0) ((returnType) | ((t0)<<2))
@@ -161,20 +161,20 @@ const int DEFAULT 3
 const int SET_ARG_TYPE(paramNum, type) funcParams |= (type << ((paramNum+1) << 1))
 
 const int MAX_ARGS 16
-U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread *pCallingThread) {
-	U32 _args[MAX_ARGS];
+uint PInvoke_Call(tJITCallPInvoke *pCall, byte* pParams, byte* pReturnValue, tThread *pCallingThread) {
+	uint _args[MAX_ARGS];
 	double _argsd[MAX_ARGS];
 	void* _pTempMem[MAX_ARGS];
-	U32 numParams, param, paramTypeNum;
+	uint numParams, param, paramTypeNum;
 	tMD_MethodDef *pMethod = pCall->pMethod;
 	tMD_TypeDef *pReturnType = pMethod->pReturnType;
 	tMD_ImplMap *pImplMap = pCall->pImplMap;
 	fnPInvoke pFn = pCall->fn;
-	U32 _argOfs = 0, _argdOfs = 0, paramOfs = 0;
-	U32 _tempMemOfs = 0;
-	U32 i;
-	U32 funcParams = DEFAULT;
-	U64 u64Ret;
+	uint _argOfs = 0, _argdOfs = 0, paramOfs = 0;
+	uint _tempMemOfs = 0;
+	uint i;
+	uint funcParams = DEFAULT;
+	ulong u64Ret;
 	float fRet;
 	double dRet;
 
@@ -184,13 +184,13 @@ U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread 
 	// each thread's execution, it tries to resume any other nonbackground thread). If we don't do this,
 	// then you wouldn't be able to call back into .NET code while inside a pInvoke call because the calling
 	// thread would go into an infinite loop.
-	U32 originalCallingThreadState = pCallingThread->state;
+	uint originalCallingThreadState = pCallingThread->state;
 	pCallingThread->state |= THREADSTATE_SUSPENDED;
 
-	if (pReturnType != NULL) {
-		if (pReturnType == types[TYPE_SYSTEM_SINGLE]) {
+	if (pReturnType != null) {
+		if (pReturnType == Type.types[Type.TYPE_SYSTEM_SINGLE]) {
 			funcParams = SINGLE;
-		} else if (pReturnType == types[TYPE_SYSTEM_DOUBLE]) {
+		} else if (pReturnType == Type.types[Type.TYPE_SYSTEM_DOUBLE]) {
 			funcParams = DOUBLE;
 		}
 	}
@@ -198,7 +198,7 @@ U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread 
 	// Prepend the 'libName' and 'funcName' strings to the set of arguments
 	// NOTE: These aren't currently used in js-interop.js, but they would be if I found a way
 	// to pass an arbitrary set of args without declaring the C func type in advance
-	_args[0] = MetaData_GetModuleRefName(pCall->pMethod->pMetaData, pCall->pImplMap->importScope);
+	_args[0] = MetaData.GetModuleRefName(pCall->pMethod->pMetaData, pCall->pImplMap->importScope);
 	_args[1] = pCall->pMethod->name;
 	_argOfs += 2;
 	SET_ARG_TYPE(0, DEFAULT);
@@ -208,44 +208,44 @@ U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread 
 	for (param = 0, paramTypeNum = 0; param<numParams; param++, paramTypeNum++) {
 		tParameter *pParam = &(pMethod->pParams[param]);
 		tMD_TypeDef *pParamType = pParam->pTypeDef;
-		U32 paramType = DEFAULT;
+		uint paramType = DEFAULT;
 
-		if (pParamType->stackType == EVALSTACK_INT32) {
-			_args[_argOfs] = *(U32*)(pParams + paramOfs);
+		if (pParamType->stackType == EvalStack.EVALSTACK_INT32) {
+			_args[_argOfs] = *(uint*)(pParams + paramOfs);
 			_argOfs++;
 			paramOfs += 4;
-		} else if (pParamType == types[TYPE_SYSTEM_STRING]) {
+		} else if (pParamType == Type.types[Type.TYPE_SYSTEM_STRING]) {
 			// Allocate a temp bit of memory for the string that's been converted.
 			void *pString;
-			if (IMPLMAP_ISCHARSET_ANSI(pImplMap) || IMPLMAP_ISCHARSET_AUTO(pImplMap) || IMPLMAP_ISCHARSET_NOTSPEC(pImplMap)) {
-				pString = ConvertStringToANSI(*(HEAP_PTR*)(pParams + paramOfs));
-			} else if (IMPLMAP_ISCHARSET_UNICODE(pImplMap)) {
-				pString = ConvertStringToUnicode(*(HEAP_PTR*)(pParams + paramOfs));
+			if (MetaData.IMPLMAP_ISCHARSET_ANSI(pImplMap) || MetaData.IMPLMAP_ISCHARSET_AUTO(pImplMap) || MetaData.IMPLMAP_ISCHARSET_NOTSPEC(pImplMap)) {
+				pString = ConvertStringToANSI(*(/*HEAP_PTR*/byte**)(pParams + paramOfs));
+			} else if (MetaData.IMPLMAP_ISCHARSET_UNICODE(pImplMap)) {
+				pString = ConvertStringToUnicode(*(/*HEAP_PTR*/byte**)(pParams + paramOfs));
 			} else {
-				Crash("PInvoke_Call() Cannot handle string marshalling of given type");
+				Sys.Crash("PInvoke_Call() Cannot handle string marshalling of given type");
 			}
 			_pTempMem[_tempMemOfs] = pString;
 			_tempMemOfs++;
-			_args[_argOfs] = (U32)pString;
+			_args[_argOfs] = (uint)pString;
 			_argOfs++;
 			paramOfs += 4;
-		} else if (pParamType == types[TYPE_SYSTEM_INTPTR]) {
+		} else if (pParamType == Type.types[Type.TYPE_SYSTEM_INTPTR]) {
 			// Only works for 32-bit
-			_args[_argOfs] = *(U32*)(pParams + paramOfs);
+			_args[_argOfs] = *(uint*)(pParams + paramOfs);
 			_argOfs++;
 			paramOfs += 4;
-		} else if (pParamType == types[TYPE_SYSTEM_SINGLE]) {
+		} else if (pParamType == Type.types[Type.TYPE_SYSTEM_SINGLE]) {
 			_argsd[_argdOfs] = *(float*)(pParams + paramOfs);
 			_argdOfs++;
 			paramOfs += 4;
 			paramType = SINGLE;
-		} else if (pParamType == types[TYPE_SYSTEM_DOUBLE]) {
+		} else if (pParamType == Type.types[Type.TYPE_SYSTEM_DOUBLE]) {
 			_argsd[_argdOfs] = *(double*)(pParams + paramOfs);
 			_argdOfs++;
 			paramOfs += 8;
 			paramType = DOUBLE;
 		} else {
-			Crash("PInvoke_Call() Cannot handle parameter of type: %s", pParamType->name);
+			Sys.Crash("PInvoke_Call() Cannot handle parameter of type: %s", pParamType->name);
 		}
 		SET_ARG_TYPE(paramTypeNum + 2, paramType);
 	}
@@ -254,10 +254,10 @@ U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread 
 	// Emscripten's function pointer limitations.
 	// See the longer comment in JIT.h for details.
 	if (funcParams != 255) {
-		Crash("PInvoke_Call() currently only supports calls of type 255; you tried to make a call of type %i.\n", funcParams);
+		Sys.Crash("PInvoke_Call() currently only supports calls of type 255; you tried to make a call of type %i.\n", funcParams);
 	}
 	int intRet = pFn(_args[0], _args[1], _args[2]);
-	u64Ret = (U64)intRet;
+	u64Ret = (ulong)intRet;
 
 	/*
 	switch (funcParams) {
@@ -288,48 +288,48 @@ U32 PInvoke_Call(tJITCallPInvoke *pCall, PTR pParams, PTR pReturnValue, tThread 
 		break;
 
 	default:
-		Crash("PInvoke_Call() Cannot handle the function parameters: 0x%08x", funcParams);
+		Sys.Crash("PInvoke_Call() Cannot handle the function parameters: 0x%08x", funcParams);
 	}
 	*/
 
 	for (i=0; i<_tempMemOfs; i++) {
-		free(_pTempMem[i]);
+		Mem.free(_pTempMem[i]);
 	}
 
 	// [Steve edit] Restore previous thread state
 	pCallingThread->state = originalCallingThreadState;
 
-	if (pReturnType == NULL) {
+	if (pReturnType == null) {
 		return 0;
 	}
-	if (pReturnType->stackType == EVALSTACK_INT32) {
-		*(U32*)pReturnValue = (U32)u64Ret;
+	if (pReturnType->stackType == EvalStack.EVALSTACK_INT32) {
+		*(uint*)pReturnValue = (uint)u64Ret;
 		return 4;
 	}
-	if (pReturnType == types[TYPE_SYSTEM_STRING]) {
-		if (IMPLMAP_ISCHARSET_ANSI(pImplMap) || IMPLMAP_ISCHARSET_AUTO(pImplMap) || IMPLMAP_ISCHARSET_NOTSPEC(pImplMap)) {
-			*(HEAP_PTR*)pReturnValue = SystemString_FromCharPtrASCII((U8*)(U32)u64Ret);
-		} else if (IMPLMAP_ISCHARSET_UNICODE(pImplMap)) {
-			*(HEAP_PTR*)pReturnValue = SystemString_FromCharPtrUTF16((U16*)(U32)u64Ret);
+	if (pReturnType == Type.types[Type.TYPE_SYSTEM_STRING]) {
+		if (MetaData.IMPLMAP_ISCHARSET_ANSI(pImplMap) || MetaData.IMPLMAP_ISCHARSET_AUTO(pImplMap) || MetaData.IMPLMAP_ISCHARSET_NOTSPEC(pImplMap)) {
+			*(/*HEAP_PTR*/byte**)pReturnValue = SystemString.FromCharPtrASCII((byte*)(uint)u64Ret);
+		} else if (MetaData.IMPLMAP_ISCHARSET_UNICODE(pImplMap)) {
+			*(/*HEAP_PTR*/byte**)pReturnValue = SystemString.FromCharPtrUTF16((ushort*)(uint)u64Ret);
 		} else {
-			Crash("PInvoke_Call() Cannot handle return string in specified format");
+			Sys.Crash("PInvoke_Call() Cannot handle return string in specified format");
 		}
 		return sizeof(void*);
 	}
-	if (pReturnType == types[TYPE_SYSTEM_INTPTR]) {
-		*(void**)pReturnValue = (void*)(U32)u64Ret;
+	if (pReturnType == Type.types[Type.TYPE_SYSTEM_INTPTR]) {
+		*(void**)pReturnValue = (void*)(uint)u64Ret;
 		return sizeof(void*);
 	}
-	if (pReturnType == types[TYPE_SYSTEM_SINGLE]) {
+	if (pReturnType == Type.types[Type.TYPE_SYSTEM_SINGLE]) {
 		*(double*)pReturnValue = (double)fRet;
 		return 8;
 	}
-	if (pReturnType == types[TYPE_SYSTEM_DOUBLE]) {
+	if (pReturnType == Type.types[Type.TYPE_SYSTEM_DOUBLE]) {
 		*(double*)pReturnValue = dRet;
 		return 8;
 	}
 
-	Crash("PInvoke_Call() Cannot handle return type: %s", pReturnType->name);
+	Sys.Crash("PInvoke_Call() Cannot handle return type: %s", pReturnType->name);
 	FAKE_RETURN;
 }
 

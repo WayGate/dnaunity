@@ -25,18 +25,18 @@ static void ShowUsage() {
 	printf("\tdna [-v] <.Net executable to execute> [.Net executable arguments]\n");
 	printf("\n");
 	printf("\t-v  : Verbose output of files loaded and GC statistics\n");
-	printf("\t-vv : More verbose output, including methods JITted and types/arrays/generics use\n");
+	printf("\t-vv : More verbose output, including methods JITted and Type.types/arrays/generics use\n");
 	printf("\n");
 	exit(1);
 }
 
-int main(int argc, char **argp) {
+int main(int argc, /*char**/byte **argp) {
 	tCLIFile *pCLIFile;
-	char *pFileName;
-	U32 i;
-	I32 retValue;
+	/*char**/byte *pFileName;
+	uint i;
+	int retValue;
 #if DIAG_TOTAL_TIME
-	U64 startTime;
+	ulong startTime;
 #endif
 
 	if (argc < 2) {
@@ -44,9 +44,9 @@ int main(int argc, char **argp) {
 	}
 
 	// Read any flags passed in
-	for (i=1; i < (U32)argc; i++) {
+	for (i=1; i < (uint)argc; i++) {
 		if (argp[i][0] == '-') {
-			U32 j;
+			uint j;
 
 			for (j=1; ; j++) {
 				switch (argp[i][j]) {
@@ -56,7 +56,7 @@ int main(int argc, char **argp) {
 						logLevel++;
 						break;
 					default:
-						Crash("Invalid argument: -%c", argp[i][1]);
+						Sys.Crash("Invalid argument: -%c", argp[i][1]);
 				}
 			}
 doneArgs:;
@@ -66,24 +66,18 @@ doneArgs:;
 	}
 
 	JIT_Execute_Init();
-	MetaData_Init();
+	MetaData.Init();
 	Type_Init();
 	Heap_Init();
 	Finalizer_Init();
 	Socket_Init();
 
 #if DIAG_OPCODE_TIMES
-#if WIN32
-	{
-		HANDLE hProcess = GetCurrentProcess();
-		SetProcessAffinityMask(hProcess, 1);
-	}
-#endif
-	memset(opcodeTimes, 0, sizeof(opcodeTimes));
+	Mem.memset(opcodeTimes, 0, sizeof(opcodeTimes));
 #endif
 
 #if DIAG_OPCODE_USE
-	memset(opcodeNumUses, 0, sizeof(opcodeNumUses));
+	Mem.memset(opcodeNumUses, 0, sizeof(opcodeNumUses));
 #endif
 
 	pFileName = argp[i];
@@ -106,54 +100,54 @@ doneArgs:;
 #endif
 
 #if DIAG_GC
-	printf("Total GC time = %d ms\n", (int)(gcTotalTime / 1000));
+	printf("Total GC time = %d ms\n", (int)(Heap.gcTotalTime / 1000));
 #endif
 
 #if DIAG_METHOD_CALLS
 	{
-		U32 numMethods, i;
-		I32 howMany = 25;
+		uint numMethods, i;
+		int howMany = 25;
 		tMetaData *pCorLib;
 		// Report on most-used methods
 		pCorLib = CLIFile_GetMetaDataForAssembly("mscorlib");
-		numMethods = pCorLib->tables.numRows[MD_TABLE_METHODDEF];
+		numMethods = pCorLib->tables.numRows[MetaDataTable.MD_TABLE_METHODDEF];
 		printf("\nCorLib method usage:\n");
 		for (; howMany > 0; howMany--) {
 			tMD_MethodDef *pMethod;
-			U32 maxCount = 0, maxIndex = 0;
+			uint maxCount = 0, maxIndex = 0;
 			for (i=1; i<=numMethods; i++) {
-				pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, i));
+				pMethod = (tMD_MethodDef*)MetaData.GetTableRow(pCorLib, MetaData.MAKE_TABLE_INDEX(MetaDataTable.MD_TABLE_METHODDEF, i));
 				if (pMethod->callCount > maxCount) {
 					maxCount = pMethod->callCount;
 					maxIndex = i;
 				}
 			}
-			pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, maxIndex));
+			pMethod = (tMD_MethodDef*)MetaData.GetTableRow(pCorLib, MetaData.MAKE_TABLE_INDEX(MetaDataTable.MD_TABLE_METHODDEF, maxIndex));
 			printf("%d: %s (%d)\n", (int)pMethod->callCount, Sys_GetMethodDesc(pMethod), (int)(pMethod->totalTime/1000));
 			pMethod->callCount = 0;
 		}
 		printf("\n");
 	}
 	{
-		U32 numMethods, i;
-		I32 howMany = 25;
+		uint numMethods, i;
+		int howMany = 25;
 		tMetaData *pCorLib;
 		// Report on most-used methods
 		pCorLib = CLIFile_GetMetaDataForAssembly("mscorlib");
-		numMethods = pCorLib->tables.numRows[MD_TABLE_METHODDEF];
+		numMethods = pCorLib->tables.numRows[MetaDataTable.MD_TABLE_METHODDEF];
 		printf("\nCorLib method execution time:\n");
 		for (; howMany > 0; howMany--) {
 			tMD_MethodDef *pMethod;
-			U64 maxTime = 0;
-			U32 maxIndex = 0;
+			ulong maxTime = 0;
+			uint maxIndex = 0;
 			for (i=1; i<=numMethods; i++) {
-				pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, i));
+				pMethod = (tMD_MethodDef*)MetaData.GetTableRow(pCorLib, MetaData.MAKE_TABLE_INDEX(MetaDataTable.MD_TABLE_METHODDEF, i));
 				if (pMethod->totalTime > maxTime) {
 					maxTime = pMethod->totalTime;
 					maxIndex = i;
 				}
 			}
-			pMethod = (tMD_MethodDef*)MetaData_GetTableRow(pCorLib, MAKE_TABLE_INDEX(MD_TABLE_METHODDEF, maxIndex));
+			pMethod = (tMD_MethodDef*)MetaData.GetTableRow(pCorLib, MetaData.MAKE_TABLE_INDEX(MetaDataTable.MD_TABLE_METHODDEF, maxIndex));
 			printf("%d: %s (%d)\n", (int)pMethod->callCount, Sys_GetMethodDesc(pMethod), (int)(pMethod->totalTime/1000));
 			pMethod->totalTime = 0;
 		}
@@ -162,12 +156,12 @@ doneArgs:;
 #endif
 #if DIAG_OPCODE_TIMES
 	{
-		I32 howMany = 25;
-		U32 i;
+		int howMany = 25;
+		uint i;
 		printf("\nOpCodes execution time:\n");
 		for (; howMany > 0; howMany--) {
-			U64 maxTime = 0;
-			U32 maxIndex = 0;
+			ulong maxTime = 0;
+			uint maxIndex = 0;
 			for (i=0; i<JIT_OPCODE_MAXNUM; i++) {
 				if (opcodeTimes[i] > maxTime) {
 					maxTime = opcodeTimes[i];
@@ -182,12 +176,12 @@ doneArgs:;
 #endif
 #if DIAG_OPCODE_USE
 	{
-		I32 howMany = 25;
-		U32 i, j;
+		int howMany = 25;
+		uint i, j;
 		printf("\nOpcode use:\n");
 		for (j=1; howMany>0; howMany--, j++) {
-			U32 maxUse = 0;
-			U32 maxIndex = 0;
+			uint maxUse = 0;
+			uint maxIndex = 0;
 			for (i=0; i<JIT_OPCODE_MAXNUM; i++) {
 				if (opcodeNumUses[i] > maxUse) {
 					maxUse = opcodeNumUses[i];
@@ -200,7 +194,7 @@ doneArgs:;
 	}
 #endif
 
-	//Crash("FINISHED!!!");
+	//Sys.Crash("FINISHED!!!");
 
 	return retValue;
 }

@@ -18,13 +18,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+using System.Runtime.InteropServices;
 
-tAsyncCall* System_Type_GetTypeFromHandle(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Type_get_IsValueType(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Type_GetTypeFromName(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Type_EnsureAssemblyLoaded(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Type_GetProperties(PTR pThis_, PTR pParams, PTR pReturnValue);
-tAsyncCall* System_Type_GetMethod(PTR pThis_, PTR pParams, PTR pReturnValue);
+namespace DnaUnity
+{
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct tMethodBase
+    {
+        // Keep in sync with MethodBase class in .NET corlib code
+        public /*HEAP_PTR*/byte* ownerType;
+        public /*HEAP_PTR*/byte* name;
+        public tMD_MethodDef *methodDef; // Not accessed from .NET code
+    }
 
-#endif
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct tMethodInfo 
+    {
+        public tMethodBase methodBase;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct tPropertyInfo
+    {
+        // Keep in sync with System.Reflection.PropertyInfo.cs
+        public /*HEAP_PTR*/byte* ownerType;
+        public /*HEAP_PTR*/byte* name;
+        public /*HEAP_PTR*/byte* propertyType;
+    }
+
+}
