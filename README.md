@@ -2,11 +2,28 @@
 
 *Current status: WIP*
 
+[x] All C code converted to C#
+[x] Builds in Unity
+[ ] Stub functions (memory, string, gchandle, sprintf, printf, etc.) minimally working (no NotImplementedExceptions)
+[ ] CLIFile load works loading a HelloWorld assembly.
+[ ] Basic metadata tests pass.
+[ ] String, Array, Type, other basic internal .NET types switched to Mono versions.
+[ ] Simple "HelloWorld" prints to console.
+[ ] Wrapping of basic external classes and structs works (COW value types works)
+[ ] Fastcall and slowcall to Mono/Unity methods works.
+[ ] Basic mapping of Mono/Unity API's works for both fast/slow calling.
+[ ] 32 bit and 64 bit mode works
+[ ] Basic unit test suite runs
+[ ] More extensive unit test suite runs
+[ ] Utility to convert existing scenes/prefabs to scenes/prefabs which interface with loadable scripts working.
+[ ] Full unit test suite runs
+[ ] Production ready
+ 
 DotNetAnywhere interpreter ported to C#/Unity to run well with either Mono or IL2CPP.  Allows .NET assemblies
 to be loaded dynamically from files or as asset bundles on the fly without having to be compiled into the 
 original executable.
 
-Some details:
+Details:
 
 - Unlike original DNA, supports both 32 bit (WebGL) and 64 bit (iOS, Android, Windows, Mac) mem models.
 

@@ -43,15 +43,6 @@ namespace DnaUnity
     //typedef int(*fnPInvoke)(/*STRING*/byte* libName, /*STRING*/byte* funcName, /*STRING*/byte* arg0);
 
 
-    #if GEN_COMBINED_OPCODES
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct tCombinedOpcodesMem
-    {
-        public void *pMem;
-        public tCombinedOpcodesMem *pNext;
-    };
-    #endif
-
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct tJITted
     {
@@ -65,13 +56,6 @@ namespace DnaUnity
         public uint numExceptionHandlers;
         // Pointer to the exception handler headers (null if none)
         public tJITExceptionHeader *pExceptionHeaders;
-        #if GEN_COMBINED_OPCODES
-        // The number of bytes used by this JITted method - to include ALL bytes:
-        // The size of the opcodes, plus the size of the combined opcodes.
-        public uint opsMemSize;
-        // Store all memory used to store combined opcodes, so they can be Mem.free()d later
-        public tCombinedOpcodesMem *pCombinedOpcodesMem;
-        #endif
     }
 
 
@@ -208,123 +192,56 @@ namespace DnaUnity
         	}
         } */
 
-        #if GEN_COMBINED_OPCODES
+        static void PushU32(uint v)
+        {
+            PushU32_(ref ops, (uint)(v));
+        }
 
-            static void PushU32(uint v) 
+        static void PushI32(int v)
+        {
+            PushU32_(ref ops, (uint)(v));
+        }
+
+        static void PushFloat(float v) 
+        {
+            convFloat.f = (float)(v); 
+            PushU32_(ref ops, convFloat.u32);
+        }
+
+        static void PushDouble(double v)
+        {
+            convDouble.d = (double)(v);
+            PushU32_(ref ops, convDouble.u32a); 
+            PushU32_(ref ops, convDouble.u32b);
+        }
+
+        #if UNITY_WEBGL || DNA_32BIT
+
+            static void PushPTR(void* ptr)
             {
-                PushU32_(ref ops, (uint)(v)); 
-                PushU32_(ref isDynamic, 0);
-            }
-
-            static void PushI32(int v)
-            {
-                PushU32_(ref ops, (uint)(v)); 
-                PushU32_(ref isDynamic, 0);
-            }
-
-            static void PushFloat(float v)
-            {
-                convFloat.f=(float)(v); 
-                PushU32_(ref ops, convFloat.u32); 
-                PushU32_(ref isDynamic, 0);
-            }
-
-            static void PushDouble(v)
-            {
-                convDouble.d=(double)(v); 
-                PushU32_(ref ops, convDouble.u32a); 
-                PushU32_(ref ops, convDouble.u32b); 
-                PushU32_(ref isDynamic, 0); 
-                PushU32_(ref isDynamic, 0);
-            }
-
-            #if UNITY_WEBGL || DNA_32BIT
-
-                static void PushPTR(void* ptr) 
-                {
-                    PushU32_(ref ops, (uint)((PTR)ptr));
-                    PushU32_(ref isDynamic, 0);
-                }
-
-            #else
-            
-                static void PushPTR(void* ptr) 
-                {
-                    PushU32_(ref ops, (uint)((PTR)ptr)); 
-                    PushU32_(ref isDynamic, 0); 
-                    PushU32_(ref ops, (uint)((ulong)((PTR)ptr) >> 32)); 
-                    PushU32_(ref isDynamic, 0);
-                }
-            
-            #endif
-
-            static void PushOp(uint op) 
-            {
-                PushU32_(ref ops, (uint)(op)); 
-                PushU32_(ref isDynamic, (uint)(op));
-            }
-
-            static void PushOpParam(uint op, uint param) 
-            {
-                PushOp(op); 
-                PushU32_(ref ops, (uint)(param)); 
-                PushU32_(ref isDynamic, 0);
+                PushU32_(ref ops, (uint)((PTR)ptr));
             }
 
         #else
 
-            static void PushU32(uint v)
+            static void PushPTR(void* ptr)
             {
-                PushU32_(ref ops, (uint)(v));
-            }
-
-            static void PushI32(int v)
-            {
-                PushU32_(ref ops, (uint)(v));
-            }
-
-            static void PushFloat(float v) 
-            {
-                convFloat.f = (float)(v); 
-                PushU32_(ref ops, convFloat.u32);
-            }
-
-            static void PushDouble(double v)
-            {
-                convDouble.d = (double)(v);
-                PushU32_(ref ops, convDouble.u32a); 
-                PushU32_(ref ops, convDouble.u32b);
-            }
-
-            #if UNITY_WEBGL || DNA_32BIT
-
-                static void PushPTR(void* ptr)
-                {
-                    PushU32_(ref ops, (uint)((PTR)ptr));
-                }
-
-            #else
-
-                static void PushPTR(void* ptr)
-                {
-                    PushU32_(ref ops, (uint)((PTR)ptr)); 
-                    PushU32_(ref ops, (uint)((PTR)(ptr) >> 32));
-                }
-
-            #endif
-
-            static void PushOp(uint op)
-            {
-                PushU32_(ref ops, (uint)(op));
-            }
-
-            static void PushOpParam(uint op, uint param)
-            {
-                PushOp(op); 
-                PushU32_(ref ops, (uint)(param));
+                PushU32_(ref ops, (uint)((PTR)ptr)); 
+                PushU32_(ref ops, (uint)((PTR)(ptr) >> 32));
             }
 
         #endif
+
+        static void PushOp(uint op)
+        {
+            PushU32_(ref ops, (uint)(op));
+        }
+
+        static void PushOpParam(uint op, uint param)
+        {
+            PushOp(op); 
+            PushU32_(ref ops, (uint)(param));
+        }
 
         static void PushBranch()
         {
@@ -426,74 +343,9 @@ namespace DnaUnity
         	}
         }
 
-        #if GEN_COMBINED_OPCODES
-        static uint FindOpCode(void *pAddr) {
-        	uint i;
-        	for (i=0; i<JitOps.JIT_OPCODE_MAXNUM; i++) {
-        		if (jitCodeInfo[i].pStart == pAddr) {
-        			return i;
-        		}
-        	}
-        	Sys.Crash("Cannot find opcode for address: 0x%08x", (uint)pAddr);
-        	FAKE_RETURN;
-        }
-
-        static uint combinedMemSize = 0;
-        static uint GenCombined(tOps *pOps, tOps *pIsDynamic, uint startOfs, uint count, uint *pCombinedSize, void **ppMem) {
-        	uint memSize;
-        	uint ofs;
-        	void *pCombined;
-        	uint opCopyToOfs;
-        	uint shrinkOpsBy;
-        	uint goNextSize = (uint)((byte*)jitCodeGoNext.pEnd - (byte*)jitCodeGoNext.pStart);
-
-        	// Get length of final combined code chunk
-        	memSize = 0;
-        	for (ofs=0; ofs < count; ofs++) {
-        		uint opcode = FindOpCode((void*)pOps->p[startOfs + ofs]);
-        		uint size = (uint)((byte*)jitCodeInfo[opcode].pEnd - (byte*)jitCodeInfo[opcode].pStart);
-        		memSize += size;
-        		ofs += (pIsDynamic->p[startOfs + ofs] & DYNAMIC_BYTE_COUNT_MASK) >> 2;
-        	}
-        	// Add length of GoNext code
-        	memSize += goNextSize;
-
-        	pCombined = Mem.malloc(memSize);
-        	*ppMem = pCombined;
-        	combinedMemSize += memSize;
-        	*pCombinedSize = memSize;
-        	//Sys.log_f(0, "Combined JIT size: %d\n", combinedMemSize);
-
-        	// Copy the bits of code into place
-        	memSize = 0;
-        	opCopyToOfs = 1;
-        	for (ofs=0; ofs < count; ofs++) {
-        		uint extraOpBytes;
-        		uint opcode = FindOpCode((void*)pOps->p[startOfs + ofs]);
-        		uint size = (uint)((byte*)jitCodeInfo[opcode].pEnd - (byte*)jitCodeInfo[opcode].pStart);
-        		Mem.memcpy((byte*)pCombined + memSize, jitCodeInfo[opcode].pStart, size);
-        		memSize += size;
-        		extraOpBytes = pIsDynamic->p[startOfs + ofs] & DYNAMIC_BYTE_COUNT_MASK;
-        		memmove(&pOps->p[startOfs + opCopyToOfs], &pOps->p[startOfs + ofs + 1], extraOpBytes);
-        		opCopyToOfs += extraOpBytes >> 2;
-        		ofs += extraOpBytes >> 2;
-        	}
-        	shrinkOpsBy = ofs - opCopyToOfs;
-        	// Add GoNext code
-        	Mem.memcpy((byte*)pCombined + memSize, jitCodeGoNext.pStart, goNextSize);
-        	pOps->p[startOfs] = (uint)pCombined;
-
-        	return shrinkOpsBy;
-        }
-        #endif
-
         static uint* JITit(tMD_MethodDef *pMethodDef, byte *pCIL, uint codeSize, tParameter *pLocals, tJITted *pJITted, uint genCombinedOpcodes) {
         	maxStack = pJITted->maxStack;
         	uint i;
-
-        #if GEN_COMBINED_OPCODES
-        	tOps isDynamic;
-        #endif
 
         	int i32Value;
         	uint u32Value, u32Value2, ofs;
@@ -532,9 +384,6 @@ namespace DnaUnity
 
         	InitOps(ref ops, 32);
         	InitOps(ref branchOffsets, 16);
-        #if GEN_COMBINED_OPCODES
-        	InitOps(isDynamic, 32);
-        #endif
 
         	cilOfs = 0;
 
@@ -1744,87 +1593,7 @@ cilCallVirtConstrained:
         		pEx->tryStart = pJITOffsets[pEx->tryStart];
         		pEx->handlerEnd = pJITOffsets[pEx->handlerStart + pEx->handlerEnd];
         		pEx->handlerStart = pJITOffsets[pEx->handlerStart];
-        #if GEN_COMBINED_OPCODES
-        		isDynamic.p[pEx->tryStart] |= DYNAMIC_EX_START | DYNAMIC_JUMP_TARGET;
-        		isDynamic.p[pEx->tryEnd] |= DYNAMIC_EX_END | DYNAMIC_JUMP_TARGET;
-        		isDynamic.p[pEx->handlerStart] |= DYNAMIC_EX_START | DYNAMIC_JUMP_TARGET;
-        		isDynamic.p[pEx->handlerEnd] |= DYNAMIC_EX_END | DYNAMIC_JUMP_TARGET;
-        #endif
         	}
-
-        #if GEN_COMBINED_OPCODES
-        	// Find any candidates for instruction combining
-        	if (genCombinedOpcodes) {
-        		uint inst0 = 0;
-        		while (inst0 < ops.ofs) {
-        			uint opCodeCount = 0;
-        			uint instCount = 0;
-        			uint shrinkOpsBy;
-        			uint isFirstInst;
-        			while (!(isDynamic.p[inst0] & DYNAMIC_OK)) {
-        				inst0++;
-        				if (inst0 >= ops.ofs) {
-        					goto combineDone;
-        				}
-        			}
-        			isFirstInst = 1;
-        			while (isDynamic.p[inst0 + instCount] & DYNAMIC_OK) {
-        				if (isFirstInst) {
-        					isFirstInst = 0;
-        				} else {
-        					if (isDynamic.p[inst0 + instCount] & DYNAMIC_JUMP_TARGET) {
-        						// Cannot span a jump target
-        						break;
-        					}
-        				}
-        				instCount += 1 + ((isDynamic.p[inst0 + instCount] & DYNAMIC_BYTE_COUNT_MASK) >> 2);
-        				opCodeCount++;
-        			}
-        			shrinkOpsBy = 0;
-        			if (opCodeCount > 1) {
-        				uint combinedSize;
-        				tCombinedOpcodesMem *pCOMem = ((tCombinedOpcodesMem*)Mem.malloc(sizeof(tCombinedOpcodesMem)));
-        				shrinkOpsBy = GenCombined(&ops, &isDynamic, inst0, instCount, &combinedSize, &pCOMem->pMem);
-        				pCOMem->pNext = pJITted->pCombinedOpcodesMem;
-        				pJITted->pCombinedOpcodesMem = pCOMem;
-        				pJITted->opsMemSize += combinedSize;
-        				memmove(&ops.p[inst0 + instCount - shrinkOpsBy], &ops.p[inst0 + instCount], (ops.ofs - inst0 - instCount) << 2);
-        				memmove(&isDynamic.p[inst0 + instCount - shrinkOpsBy], &isDynamic.p[inst0 + instCount], (ops.ofs - inst0 - instCount) << 2);
-        				ops.ofs -= shrinkOpsBy;
-        				isDynamic.ofs -= shrinkOpsBy;
-        				for (i=0; i<branchOffsets.ofs; i++) {
-        					uint ofs;
-        					if (branchOffsets.p[i] > inst0) {
-        						branchOffsets.p[i] -= shrinkOpsBy;
-        					}
-        					ofs = branchOffsets.p[i];
-        					if (ops.p[ofs] > inst0) {
-        						ops.p[ofs] -= shrinkOpsBy;
-        					}
-        				}
-        				for (i=0; i<pJITted->numExceptionHandlers; i++) {
-        					tExceptionHeader *pEx;
-
-        					pEx = &pJITted->pExceptionHeaders[i];
-        					if (pEx->tryStart > inst0) {
-        						pEx->tryStart -= shrinkOpsBy;
-        					}
-        					if (pEx->tryEnd > inst0) {
-        						pEx->tryEnd -= shrinkOpsBy;
-        					}
-        					if (pEx->handlerStart > inst0) {
-        						pEx->handlerStart -= shrinkOpsBy;
-        					}
-        					if (pEx->handlerEnd > inst0) {
-        						pEx->handlerEnd -= shrinkOpsBy;
-        					}
-        				}
-        			}
-        			inst0 += instCount - shrinkOpsBy;
-        		}
-        	}
-        combineDone:
-        #endif
 
         	// Change maxStack to indicate the number of bytes needed on the evaluation stack.
         	// This is the largest number of bytes needed by all objects/value-Type.types on the stack,
@@ -1847,10 +1616,6 @@ cilCallVirtConstrained:
             pFinalOps = genCombinedOpcodes != 0 ? (uint*)Mem.malloc(u32Value) : (uint*)Mem.mallocForever(u32Value);
         	Mem.memcpy(pFinalOps, ops.p, u32Value);
         	DeleteOps(ref ops);
-        #if GEN_COMBINED_OPCODES
-        	pJITted->opsMemSize += u32Value;
-        	DeleteOps(isDynamic);
-        #endif
 
         	return pFinalOps;
         }

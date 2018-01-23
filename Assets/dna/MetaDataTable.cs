@@ -284,21 +284,6 @@ namespace DnaUnity
     	// If this is a generic core method, then store type instances here.
         public tGenericMethodInstance *pGenericMethodInstances;
 
-    #if GEN_COMBINED_OPCODES
-    	// The number of times this method is on the call stack of all threads
-        public uint callStackCount;
-        // Padding
-        public uint padding4;
-    	// The number of times this method has been called
-        public ulong genCallCount;
-    	// Pointer to the method that has the next highest number of calls
-        public tMD_MethodDef *pNextHighestCalls;
-    	// Pointer to the method that has the prev highest number of calls
-        public tMD_MethodDef *pPrevHighestCalls;
-    	// If this method currently has a combined opcode JIT version, then point to it here.
-        public tJITted *pJITtedCombined;
-    #endif
-
     #if DIAG_METHOD_CALLS
     	// Number of times this method has been called
         public uint callCount;

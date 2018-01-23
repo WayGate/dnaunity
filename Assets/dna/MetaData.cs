@@ -347,9 +347,6 @@ namespace DnaUnity
         	null,
         	// 0x06
             new S("x*m*^*ssssxiS*B*\x08ixix*xixix*xixix*x*Iixix*x*")
-        #if GEN_COMBINED_OPCODES
-            new S("xixix*x*x*x*")
-        #endif
         #if DIAG_METHOD_CALLS
             new S("xixix*")
         #endif
