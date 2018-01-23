@@ -378,8 +378,8 @@ namespace DnaUnity
         public static uint Execute(tThread *pThread, uint numInst) 
         {
             JIT_Execute.pThread = pThread;
-            uint op;
-            uint u32Value;
+            uint op = 0;
+            uint u32Value = 0;
 
             if (pThread == null) {
                 return 0;
@@ -761,7 +761,7 @@ namespace DnaUnity
 //                    res = PInvoke.Call(pCallPInvoke, pParamsLocals, pCurrentMethodState->pEvalStack, pThread);
 //                    pCurrentMethodState->stackOfs = res;
                 }
-                goto JIT_RETURN_start;
+                //goto JIT_RETURN_start;
 
             case JitOps.JIT_CALL_NATIVE:
                 OPCODE_USE(JitOps.JIT_CALL_NATIVE);
