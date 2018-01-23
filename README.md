@@ -2,6 +2,7 @@
 
 *Current status: WIP*
 
+- [x] C version modified to run in 32/64 bit mode correctly
 - [x] All C code converted to C#
 - [x] Builds in Unity
 - [ ] Stub functions (memory, string, gchandle, sprintf, printf, etc.) minimally working (no NotImplementedExceptions)
