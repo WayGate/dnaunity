@@ -18,57 +18,75 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
+    #if UNITY_WEBGL || DNA_32BIT
+    using SIZE_T = System.UInt32;
+    using PTR = System.UInt32;
+    #else
+    using SIZE_T = System.UInt64;
+    using PTR = System.UInt64;
+    #endif 
 
-tAsyncCall* System_Threading_Interlocked_CompareExchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	uint *pLoc = (*((uint**)(pParams + 0)));
-	uint value = (*((uint*)(pParams + 4)));
-	uint comparand = (*((uint*)(pParams + 8)));
+    public unsafe static class System_Threading_Interlocked
+    {
 
-	*(uint*)pReturnValue = *pLoc;
-	if (*pLoc == comparand) {
-		*pLoc = value;
-	}
+        public static tAsyncCall* CompareExchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	uint *pLoc = (*((uint**)(pParams + 0)));
+        	uint value = (*((uint*)(pParams + 4)));
+        	uint comparand = (*((uint*)(pParams + 8)));
 
-	return null;
+        	*(uint*)pReturnValue = *pLoc;
+        	if (*pLoc == comparand) {
+        		*pLoc = value;
+        	}
+
+        	return null;
+        }
+
+        public static tAsyncCall* Increment_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	int *pLoc = (*((int**)(pParams + 0)));
+
+        	(*pLoc)++;
+        	*(int*)pReturnValue = *pLoc;
+
+        	return null;
+        }
+
+        public static tAsyncCall* Decrement_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	int *pLoc = (*((int**)(pParams + 0)));
+
+        	(*pLoc)--;
+        	*(int*)pReturnValue = *pLoc;
+
+        	return null;
+        }
+
+        public static tAsyncCall* Add_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	uint *pLoc = (*((uint**)(pParams + 0)));
+        	uint value = (*((uint*)(pParams + 4)));
+
+        	*pLoc += value;
+        	*(uint*)pReturnValue = *pLoc;
+
+        	return null;
+        }
+
+        public static tAsyncCall* Exchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	uint *pLoc = (*((uint**)(pParams + 0)));
+        	uint value = (*((uint*)(pParams + 4)));
+
+        	*(uint*)pReturnValue = *pLoc;
+        	*pLoc = value;
+
+        	return null;
+        }
+
+    }
+
 }
-
-tAsyncCall* System_Threading_Interlocked_Increment_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	int *pLoc = (*((int**)(pParams + 0)));
-
-	(*pLoc)++;
-	*(int*)pReturnValue = *pLoc;
-
-	return null;
-}
-
-tAsyncCall* System_Threading_Interlocked_Decrement_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	int *pLoc = (*((int**)(pParams + 0)));
-
-	(*pLoc)--;
-	*(int*)pReturnValue = *pLoc;
-
-	return null;
-}
-
-tAsyncCall* System_Threading_Interlocked_Add_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	uint *pLoc = (*((uint**)(pParams + 0)));
-	uint value = (*((uint*)(pParams + 4)));
-
-	*pLoc += value;
-	*(uint*)pReturnValue = *pLoc;
-
-	return null;
-}
-
-tAsyncCall* System_Threading_Interlocked_Exchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	uint *pLoc = (*((uint**)(pParams + 0)));
-	uint value = (*((uint*)(pParams + 4)));
-
-	*(uint*)pReturnValue = *pLoc;
-	*pLoc = value;
-
-	return null;
-}
-
-#endif

@@ -53,6 +53,11 @@ namespace DnaUnity
             throw new System.NotImplementedException();
         }
 
+        public static void memmove(void* p1, void* p2, SIZE_T size)
+        {
+            throw new System.NotImplementedException();
+        }
+
         public static void memset(void* p, int v, SIZE_T size)
         {
             throw new System.NotImplementedException();

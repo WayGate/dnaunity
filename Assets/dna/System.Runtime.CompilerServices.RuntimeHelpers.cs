@@ -34,8 +34,8 @@ namespace DnaUnity
         	pArray = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
         	pRawData = (*((byte**)(pParams + Sys.S_PTR)));
         	pArrayTypeDef = Heap.GetType(pArray);
-        	arrayLength = SystemArray.GetLength(pArray);
-        	pElements = SystemArray.GetElements(pArray);
+        	arrayLength = System_Array.GetLength(pArray);
+        	pElements = System_Array.GetElements(pArray);
         	Mem.memcpy(pElements, pRawData, pArrayTypeDef->pArrayElementType->arrayElementSize * arrayLength);
 
         	return null;

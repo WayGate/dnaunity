@@ -18,35 +18,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
+    public unsafe static class System_DateTime
+    {
 
-const int TicksPerSecond 10000000L
-const int TicksPerMicroSecond 10L
-const int TicksAtUnixEpoch 621355968000000000L
-const int TicksAtFileTimeEpoch 504911232000000000L
+        public const long TicksPerSecond = 10000000L;
+        public const long TicksPerMicroSecond = 10L;
+        public const long TicksAtUnixEpoch = 621355968000000000L;
+        public const long TicksAtFileTimeEpoch = 504911232000000000L;
 
-tAsyncCall* System_DateTime_InternalUtcNow(byte* pThis_, byte* pParams, byte* pReturnValue) {
+        public static tAsyncCall* System_DateTime_InternalUtcNow(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+            *(ulong*)pReturnValue = (ulong)System.DateTime.UtcNow.Ticks;
 
-#if WIN32
+        	return null;
+        }
 
-	FILETIME ft;
+    }
 
-	GetSystemTimeAsFileTime(&ft);
-
-	*(ulong*)pReturnValue = ((ulong)ft.dwHighDateTime) * 0x100000000L + ((ulong)ft.dwLowDateTime) + TicksAtFileTimeEpoch;
-
-#else
-
-	struct timeval tp;
-
-	gettimeofday(&tp, null);
-
-	*(ulong*)pReturnValue = ((ulong)tp.tv_sec) * TicksPerSecond + ((ulong)tp.tv_usec) * TicksPerMicroSecond
-		+ TicksAtUnixEpoch;
-
-#endif
-
-	return null;
 }
-
-#endif

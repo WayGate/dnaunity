@@ -18,16 +18,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
 
-//tAsyncCall* System_Diagnostics_Debugger_Break(byte* pThis_, byte* pParams, byte* pReturnValue) {
-//	printf("BREAK\n");
-//#if defined(WIN32) && defined(_DEBUG)
-//	__debugbreak();
-//#elif __APPLE__
-//    __asm__("int $3");
-//#endif
-//	return null;
-//}
+    public unsafe static class System_Diagnostics_Debugger
+    {
 
-#endif
+        public static tAsyncCall* Break(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+            System.Diagnostics.Debugger.Break();
+
+            return null;
+        }
+
+    }
+}

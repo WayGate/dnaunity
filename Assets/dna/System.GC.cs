@@ -18,30 +18,39 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
 
-tAsyncCall* System_GC_Collect(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	Heap_GarbageCollect();
-	return null;
+    public unsafe static class System_GC
+    {
+        
+        public static tAsyncCall* Collect(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	Heap.GarbageCollect();
+        	return null;
+        }
+
+        public static tAsyncCall* Internal_CollectionCount(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	*(uint*)pReturnValue = Heap.NumCollections();
+        	return null;
+        }
+
+        public static tAsyncCall* GetTotalMemory(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	if (*(uint*)pParams != 0) {
+        		Heap.GarbageCollect();
+        	}
+        	*(ulong*)pReturnValue = Heap.GetTotalMemory();
+        	return null;
+        }
+
+        public static tAsyncCall* SuppressFinalize(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	/*HEAP_PTR*/byte* obj = ((/*HEAP_PTR*/byte**)pParams)[0];
+        	Heap.UnmarkFinalizer(obj);
+        	return null;
+        }
+
+    }
 }
-
-tAsyncCall* System_GC_Internal_CollectionCount(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	*(uint*)pReturnValue = Heap_NumCollections();
-	return null;
-}
-
-tAsyncCall* System_GC_GetTotalMemory(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	if (*(uint*)pParams) {
-		Heap_GarbageCollect();
-	}
-	*(ulong*)pReturnValue = Heap_GetTotalMemory();
-	return null;
-}
-
-tAsyncCall* System_GC_SuppressFinalize(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	/*HEAP_PTR*/byte* obj = ((/*HEAP_PTR*/byte**)pParams)[0];
-	Heap_UnmarkFinalizer(obj);
-	return null;
-}
-
-#endif

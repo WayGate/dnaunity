@@ -18,58 +18,65 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#if NO
+namespace DnaUnity
+{
 
-// Get all the fields in the value-Type.types in the parameters.
-// If the 2nd parameter is null, then don't include it!
-// The type of the objects will always be identical.
-tAsyncCall* System_ValueType_GetFields(byte* pThis_, byte* pParams, byte* pReturnValue) {
-	/*HEAP_PTR*/byte* o1,o2, ret;
-	tMD_TypeDef *pType;
-	tMetaData *pMetaData;
-	uint i, retOfs, numInstanceFields;
+    public unsafe static class System_ValueType
+    {
 
-	o1 = ((/*HEAP_PTR*/byte**)pParams)[0];
-	o2 = ((/*HEAP_PTR*/byte**)pParams)[1];
-	pType = Heap.GetType(o1);
-	pMetaData = pType->pMetaData;
+        // Get all the fields in the value-Type.types in the parameters.
+        // If the 2nd parameter is null, then don't include it!
+        // The type of the objects will always be identical.
+        public static tAsyncCall* GetFields(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
+        	/*HEAP_PTR*/byte* o1,o2, ret;
+        	tMD_TypeDef *pType;
+        	tMetaData *pMetaData;
+        	uint i, retOfs, numInstanceFields;
 
-	numInstanceFields = 0;
-	for (i=0; i<pType->numFields; i++) {
-		if (!MetaData.MetaData.FIELD_ISSTATIC(pType->ppFields[i])) {
-			numInstanceFields++;
-		}
-	}
+        	o1 = ((/*HEAP_PTR*/byte**)pParams)[0];
+        	o2 = ((/*HEAP_PTR*/byte**)pParams)[1];
+        	pType = Heap.GetType(o1);
+        	pMetaData = pType->pMetaData;
 
-	ret = SystemArray.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_OBJECT], numInstanceFields << ((o2 == null)?0:1));
+        	numInstanceFields = 0;
+        	for (i=0; i<pType->numFields; i++) {
+        		if (!MetaData.FIELD_ISSTATIC(pType->ppFields[i])) {
+        			numInstanceFields++;
+        		}
+        	}
 
-	retOfs = 0;
-	for (i=0; i<pType->numFields; i++) {
-		tMD_FieldDef *pField;
+        	ret = System_Array.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_OBJECT], numInstanceFields << ((o2 == null)?0:1));
 
-		pField = pType->ppFields[i];
-		if (!MetaData.MetaData.FIELD_ISSTATIC(pField)) {
-			if (pField->pType->isValueType) {
-				/*HEAP_PTR*/byte* boxed;
+        	retOfs = 0;
+        	for (i=0; i<pType->numFields; i++) {
+        		tMD_FieldDef *pField;
 
-				boxed = Heap_Box(pField->pType, o1 + pField->memOffset);
-				SystemArray.StoreElement(ret, retOfs++, (byte*)&boxed);
-				if (o2 != null) {
-					boxed = Heap_Box(pField->pType, o2 + pField->memOffset);
-					SystemArray.StoreElement(ret, retOfs++, (byte*)&boxed);
-				}
-			} else {
-				SystemArray.StoreElement(ret, retOfs++, o1 + pField->memOffset);
-				if (o2 != null) {
-					SystemArray.StoreElement(ret, retOfs++, o2 + pField->memOffset);
-				}
-			}
-		}
-	}
+        		pField = pType->ppFields[i];
+        		if (!MetaData.FIELD_ISSTATIC(pField)) {
+        			if (pField->pType->isValueType != 0) {
+        				/*HEAP_PTR*/byte* boxed;
 
-	*(/*HEAP_PTR*/byte**)pReturnValue = ret;
+        				boxed = Heap.Box(pField->pType, o1 + pField->memOffset);
+        				System_Array.StoreElement(ret, retOfs++, (byte*)&boxed);
+        				if (o2 != null) {
+        					boxed = Heap.Box(pField->pType, o2 + pField->memOffset);
+        					System_Array.StoreElement(ret, retOfs++, (byte*)&boxed);
+        				}
+        			} else {
+        				System_Array.StoreElement(ret, retOfs++, o1 + pField->memOffset);
+        				if (o2 != null) {
+        					System_Array.StoreElement(ret, retOfs++, o2 + pField->memOffset);
+        				}
+        			}
+        		}
+        	}
 
-	return null;
+        	*(/*HEAP_PTR*/byte**)pReturnValue = ret;
+
+        	return null;
+        }
+
+    }
+
 }
-
-#endif

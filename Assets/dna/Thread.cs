@@ -226,13 +226,13 @@ namespace DnaUnity
                 uint minSleepTime = 0xffffffff;
                 int threadExitValue;
                 
-                status = JIT.Execute(pThread, maxInstr);
+                status = JIT_Execute.Execute(pThread, maxInstr);
                 switch (status) {
                     case Thread.THREAD_STATUS_EXIT:
                         threadExitValue = pThread->threadExitValue;
                         Sys.log_f(1, "Thread ID#%d exited. Return value: %d\n", (int)pThread->threadID, (int)threadExitValue);
                         // Remove the current thread from the running threads list.
-                        // Note that this list may have changed since before the call to JIT_Execute().
+                        // Note that this list may have changed since before the call to JitOps.JIT_Execute().
                         {
                             if (pAllThreads == pThread) {
                                 pAllThreads = pAllThreads->pNextThread;
@@ -399,7 +399,7 @@ namespace DnaUnity
             
             status = THREAD_STATUS_RUNNING;
             while (status == THREAD_STATUS_RUNNING) {
-                status = JIT.Execute(pThread, 1000000);
+                status = JIT_Execute.Execute(pThread, 1000000);
                 switch (status) {
                     case Thread.THREAD_STATUS_EXIT:
                         if (pReturnValue != null) {

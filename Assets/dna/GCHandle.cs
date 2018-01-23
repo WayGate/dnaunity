@@ -42,6 +42,11 @@ namespace DnaUnity
             _p = System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal).AddrOfPinnedObject();
         }
 
+        public H(fnInternalCallCheck o)
+        {
+            _p = System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal).AddrOfPinnedObject();
+        }
+
         public H(ref void* p, object o)
         {
             if (p != null)

@@ -144,11 +144,11 @@ namespace DnaUnity
         	tMD_TypeDef *pType = pHeapEntry->pTypeDef;
         	if (pType == Type.types[Type.TYPE_SYSTEM_STRING]) {
         		// If it's a string, return the string length in bytes
-        		return SystemString.GetNumBytes((/*HEAP_PTR*/byte*)(pHeapEntry + 1));
+        		return System_String.GetNumBytes((/*HEAP_PTR*/byte*)(pHeapEntry + 1));
         	}
         	if (MetaData.TYPE_ISARRAY(pType)) {
         		// If it's an array, return the array length * array element size
-        		return SystemArray.GetNumBytes((/*HEAP_PTR*/byte*)(pHeapEntry + 1), pType->pArrayElementType);
+        		return System_Array.GetNumBytes((/*HEAP_PTR*/byte*)(pHeapEntry + 1), pType->pArrayElementType);
         	}
         	// If it's not string or array, just return the instance memory size
         	return pType->instanceMemSize;
@@ -607,7 +607,7 @@ namespace DnaUnity
         }
 
         static void RemoveWeakRefTarget(tHeapEntry *pTarget, uint removeLongRefs) {
-        	SystemWeakReference.TargetGone(&pTarget->pSync->weakRef, removeLongRefs);
+        	System_WeakReference.TargetGone(&pTarget->pSync->weakRef, removeLongRefs);
         }
 
         // Returns the previous first weak-ref in target targetted by weakref

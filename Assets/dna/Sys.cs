@@ -108,5 +108,10 @@ namespace DnaUnity
         {
             throw new System.NotImplementedException();
         }
+
+        public static void printf(string format, params object[] args)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

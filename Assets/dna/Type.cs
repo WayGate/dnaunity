@@ -187,8 +187,6 @@ namespace DnaUnity
 
         static void CreateNewArrayType(tMD_TypeDef *pNewArrayType, tMD_TypeDef *pElementType, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
         {
-            throw new System.NotImplementedException();
-            #if NO
         	MetaData.Fill_TypeDef(types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], null, null);
 
             Mem.memcpy(pNewArrayType, types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], (SIZE_T)sizeof(tMD_TypeDef));
@@ -209,48 +207,47 @@ namespace DnaUnity
 
         		orgNumInterfaces = pNewArrayType->numInterfaces;
         		pNewArrayType->numInterfaces += 3;
-        		pAllIMs = (tInterfaceMap*)Mem.mallocForever(pNewArrayType->numInterfaces * sizeof(tInterfaceMap));
-        		Mem.memcpy(pAllIMs, pNewArrayType->pInterfaceMaps, orgNumInterfaces * sizeof(tInterfaceMap));
+                pAllIMs = (tInterfaceMap*)Mem.mallocForever((SIZE_T)(pNewArrayType->numInterfaces * sizeof(tInterfaceMap)));
+                Mem.memcpy(pAllIMs, pNewArrayType->pInterfaceMaps, (SIZE_T)(orgNumInterfaces * sizeof(tInterfaceMap)));
         		pNewArrayType->pInterfaceMaps = pAllIMs;
 
         		// Get the IEnumerable<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 0];
-        		pInterfaceT = Generics_GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_IENUMERABLE_T], 1, &pElementType);
+        		pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_IENUMERABLE_T], 1, &pElementType);
         		pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
-        		pInterfaceMap->ppMethodVLookup = Mem.mallocForever(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*));
-        		pMethod = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GetGenericEnumerator], pNewArrayType, 1, &pElementType);
+                pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
+        		pMethod = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GetGenericEnumerator], pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[0] = pMethod;
 
         		// Get the ICollection<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 1];
-        		pInterfaceT = Generics_GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ICOLLECTION_T], 1, &pElementType);
+        		pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ICOLLECTION_T], 1, &pElementType);
         		pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
-        		pInterfaceMap->ppMethodVLookup = Mem.mallocForever(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*));
+                pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
         		pInterfaceMap->ppMethodVLookup[0] = ppGenericArrayMethods[GENERICARRAYMETHODS_get_Length];
         		pInterfaceMap->ppMethodVLookup[1] = ppGenericArrayMethods[GENERICARRAYMETHODS_get_IsReadOnly];
-        		pInterfaceMap->ppMethodVLookup[2] = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericAdd], pNewArrayType, 1, &pElementType);
+        		pInterfaceMap->ppMethodVLookup[2] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericAdd], pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[3] = ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericClear];
-        		pInterfaceMap->ppMethodVLookup[4] = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericContains], pNewArrayType, 1, &pElementType);
-        		pInterfaceMap->ppMethodVLookup[5] = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericCopyTo], pNewArrayType, 1, &pElementType);
-        		pInterfaceMap->ppMethodVLookup[6] = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericRemove], pNewArrayType, 1, &pElementType);
+        		pInterfaceMap->ppMethodVLookup[4] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericContains], pNewArrayType, 1, &pElementType);
+        		pInterfaceMap->ppMethodVLookup[5] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericCopyTo], pNewArrayType, 1, &pElementType);
+        		pInterfaceMap->ppMethodVLookup[6] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericRemove], pNewArrayType, 1, &pElementType);
 
         		// Get the IList<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 2];
-        		pInterfaceT = Generics_GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ILIST_T], 1, &pElementType); //, ppClassTypeArgs, ppMethodTypeArgs);
+        		pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ILIST_T], 1, &pElementType); //, ppClassTypeArgs, ppMethodTypeArgs);
         		pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
-        		pInterfaceMap->ppMethodVLookup = Mem.mallocForever(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*));
-        		pInterfaceMap->ppMethodVLookup[0] = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericIndexOf], pNewArrayType, 1, &pElementType);
-        		pInterfaceMap->ppMethodVLookup[1] = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericInsert], pNewArrayType, 1, &pElementType);
+                pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
+        		pInterfaceMap->ppMethodVLookup[0] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericIndexOf], pNewArrayType, 1, &pElementType);
+        		pInterfaceMap->ppMethodVLookup[1] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericInsert], pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[2] = ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericRemoveAt];
-        		pInterfaceMap->ppMethodVLookup[3] = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericGetItem], pNewArrayType, 1, &pElementType);
-        		pInterfaceMap->ppMethodVLookup[4] = Generics_GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericSetItem], pNewArrayType, 1, &pElementType);
+        		pInterfaceMap->ppMethodVLookup[3] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericGetItem], pNewArrayType, 1, &pElementType);
+        		pInterfaceMap->ppMethodVLookup[4] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericSetItem], pNewArrayType, 1, &pElementType);
         	}
 
-        	Sys.log_f(2, "Array: Array[%s.%s]\n", pElementType->nameSpace, pElementType->name);
-            #endif
+            Sys.log_f(2, "Array: Array[%s.%s]\n", (PTR)pElementType->nameSpace, (PTR)pElementType->name);
         }
 
         // Returns a TypeDef for an array to the given element type
@@ -622,7 +619,7 @@ namespace DnaUnity
 
         public static /*HEAP_PTR*/byte* GetTypeObject(tMD_TypeDef *pTypeDef) {
         	if (pTypeDef->typeObject == null) {
-        		pTypeDef->typeObject = SystemRuntimeType.New(pTypeDef);
+        		pTypeDef->typeObject = System_RuntimeType.New(pTypeDef);
         	}
         	return pTypeDef->typeObject;
         }

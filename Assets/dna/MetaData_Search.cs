@@ -413,7 +413,7 @@ namespace DnaUnity
         // 0 - tMD_TypeDef
         // 1 - tMD_MethodDef
         // 2 - tMD_FieldDef
-        // (These link up with the JIT_LOADTOKEN_* opcodes)
+        // (These link up with the JitOps.JIT_LOADTOKEN_* opcodes)
         public static byte* GetTypeMethodField(tMetaData *pMetaData, /*IDX_TABLE*/uint token, uint *pObjectType, 
             tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
         {

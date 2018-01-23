@@ -27,7 +27,7 @@ namespace DnaUnity
         public tMD_TypeDef *pTypeDef;
     }
 
-    public unsafe static class SystemRuntimeType
+    public unsafe static class System_RuntimeType
     {
 
         public static /*HEAP_PTR*/byte* New(tMD_TypeDef *pTypeDef)
@@ -46,7 +46,7 @@ namespace DnaUnity
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
         	/*HEAP_PTR*/byte* strResult;
 
-        	strResult = SystemString.FromCharPtrASCII(pRuntimeType->pTypeDef->name);
+        	strResult = System_String.FromCharPtrASCII(pRuntimeType->pTypeDef->name);
         	*(/*HEAP_PTR*/byte**)pReturnValue = strResult;
 
         	return null;
@@ -57,7 +57,7 @@ namespace DnaUnity
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
         	/*HEAP_PTR*/byte* strResult;
 
-        	strResult = SystemString.FromCharPtrASCII(pRuntimeType->pTypeDef->nameSpace);
+        	strResult = System_String.FromCharPtrASCII(pRuntimeType->pTypeDef->nameSpace);
         	*(/*HEAP_PTR*/byte**)pReturnValue = strResult;
 
         	return null;
@@ -143,13 +143,13 @@ namespace DnaUnity
         		}
         	}
 
-        	ret = SystemArray.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_TYPE], argCount);
+        	ret = System_Array.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_TYPE], argCount);
         	// Allocate to return value straight away, so it cannot be GCed
         	*(/*HEAP_PTR*/byte**)pReturnValue = ret;
 
         	for (i=0; i<argCount; i++) {
         		/*HEAP_PTR*/byte* argType = Type.GetTypeObject(pType->ppClassTypeArgs[i]);
-        		SystemArray.StoreElement(ret, i, (byte*)&argType);
+        		System_Array.StoreElement(ret, i, (byte*)&argType);
         	}
 
         	return null;

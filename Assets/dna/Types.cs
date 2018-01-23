@@ -18,8 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System.Runtime.InteropServices;
+
 namespace DnaUnity
 {
+    #if UNITY_WEBGL || DNA_32BIT
+    using _SIZE_T = System.UInt32;
+    using _PTR = System.UInt32;
+    #else
+    using _SIZE_T = System.UInt64;
+    using _PTR = System.UInt64;
+    #endif   
 
 #if NO
 
@@ -43,7 +52,7 @@ typedef byte* /*BLOB_*/byte*;
 typedef byte* /*GUID_*/byte*;
 
 // Int Type.types
-typedef long long I64;
+typedef long long long;
 typedef unsigned long long ulong;
 
 //#if WIN32
@@ -57,31 +66,31 @@ typedef byte byte;
 
 //#endif // WIN32
 
-typedef union uConvDouble_ uConvDouble;
-union uConvDouble_ {
-	double d;
-	ulong u64;
-	struct {
-		uint a;
-		uint b;
-	} u32;
-};
 
-typedef union uConvFloat_ uConvFloat;
-union uConvFloat_ {
-	float f;
-	uint u32;
-};
 
 #endif
 
-    #if UNITY_WEBGL || DNA_32BIT
-    using _SIZE_T = System.UInt32;
-    using _PTR = System.UInt32;
-    #else
-    using _SIZE_T = System.UInt64;
-    using _PTR = System.UInt64;
-    #endif   
+    [StructLayout(LayoutKind.Explicit)]
+    public struct uConvDouble 
+    {
+        [FieldOffset(0)]
+        public double d;
+        [FieldOffset(0)]
+        public ulong u64;
+        [FieldOffset(0)]
+        public uint u32a;
+        [FieldOffset(4)]
+        public uint u32b;
+    };
+
+    [StructLayout(LayoutKind.Explicit)]
+    public struct uConvFloat
+    {
+        [FieldOffset(0)]
+        public float f;
+        [FieldOffset(0)]
+        public uint u32;
+    };
 
     // Native function call
     public unsafe delegate tAsyncCall* fnInternalCall(byte* pThis_, byte* pParams, byte* pReturnValue);

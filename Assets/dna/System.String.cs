@@ -43,7 +43,7 @@ namespace DnaUnity
     };
 
 
-    public unsafe static class SystemString
+    public unsafe static class System_String
     {
         // length in characters, not bytes
         static tSystemString* CreateStringHeapObj(uint len)
@@ -88,7 +88,7 @@ namespace DnaUnity
             startIndex = (*((uint*)(pParams + Sys.S_PTR)));
             length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT)));
 
-        	charElements = SystemArray.GetElements(charArray);
+        	charElements = System_Array.GetElements(charArray);
         	pSystemString = CreateStringHeapObj(length);
             pChars = tSystemString.GetChars(pSystemString);
             Mem.memcpy(pChars, charElements + (startIndex << 1), (SIZE_T)(length << 1));
@@ -160,8 +160,8 @@ namespace DnaUnity
 
         	pWhiteChars = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
         	trimType = (*((uint*)(pParams + Sys.S_PTR)));
-        	pCheckChars = (ushort*)SystemArray.GetElements(pWhiteChars);
-        	checkCharsLen = SystemArray.GetLength(pWhiteChars);
+        	pCheckChars = (ushort*)System_Array.GetElements(pWhiteChars);
+        	checkCharsLen = System_Array.GetLength(pWhiteChars);
 
         	ofsStart = 0;
         	ofsEnd = pThis->length;
@@ -359,8 +359,8 @@ namespace DnaUnity
         	uint forwards = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT + Sys.S_INT)));
             char* pChars = tSystemString.GetChars(pThis);
 
-        	byte* valueChars = SystemArray.GetElements(valueArray);
-        	uint numValueChars = SystemArray.GetLength(valueArray);
+        	byte* valueChars = System_Array.GetElements(valueArray);
+        	uint numValueChars = System_Array.GetLength(valueArray);
 
         	int lastIndex;
         	int inc;

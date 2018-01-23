@@ -65,7 +65,7 @@ doneArgs:;
 		}
 	}
 
-	JIT_Execute_Init();
+	JIT.Execute_Init();
 	MetaData.Init();
 	Type_Init();
 	Heap_Init();
@@ -162,7 +162,7 @@ doneArgs:;
 		for (; howMany > 0; howMany--) {
 			ulong maxTime = 0;
 			uint maxIndex = 0;
-			for (i=0; i<JIT_OPCODE_MAXNUM; i++) {
+			for (i=0; i<JitOps.JIT_OPCODE_MAXNUM; i++) {
 				if (opcodeTimes[i] > maxTime) {
 					maxTime = opcodeTimes[i];
 					maxIndex = i;
@@ -182,7 +182,7 @@ doneArgs:;
 		for (j=1; howMany>0; howMany--, j++) {
 			uint maxUse = 0;
 			uint maxIndex = 0;
-			for (i=0; i<JIT_OPCODE_MAXNUM; i++) {
+			for (i=0; i<JitOps.JIT_OPCODE_MAXNUM; i++) {
 				if (opcodeNumUses[i] > maxUse) {
 					maxUse = opcodeNumUses[i];
 					maxIndex = i;

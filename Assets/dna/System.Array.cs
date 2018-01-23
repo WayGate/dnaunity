@@ -41,7 +41,7 @@ namespace DnaUnity
         }
     };
 
-    public unsafe class SystemArray
+    public unsafe class System_Array
     {
         public static byte* GetElements(void* pArray)
         {
@@ -233,7 +233,7 @@ namespace DnaUnity
         	}
 
         	pArrayTypeDef = Heap.GetType(*ppArray_);
-            pHeap = (byte**)SystemArray.NewVector(pArrayTypeDef, newSize);
+            pHeap = (byte**)System_Array.NewVector(pArrayTypeDef, newSize);
         	pNewArray = (tSystemArray*)pHeap;
             *ppArray_ = (byte*)pHeap;
             pOldElements = tSystemArray.GetElements(pOldArray);
@@ -372,10 +372,10 @@ namespace DnaUnity
         public static tAsyncCall* CreateInstance(byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             tRuntimeType* pRuntimeType = (*((tRuntimeType**)(pParams + 0)));
-            tMD_TypeDef *pElementType = SystemRuntimeType.DeRef((byte*)pRuntimeType);
+            tMD_TypeDef *pElementType = System_RuntimeType.DeRef((byte*)pRuntimeType);
         	tMD_TypeDef *pArrayType = Type.GetArrayTypeDef(pElementType, null, null);
             uint length = (*((uint*)(pParams + Sys.S_PTR)));
-        	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, SystemArray.NewVector(pArrayType, length));
+        	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, System_Array.NewVector(pArrayType, length));
         	return null;
         }
 

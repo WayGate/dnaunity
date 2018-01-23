@@ -33,7 +33,7 @@ namespace DnaUnity
         public tWeakRef *pNextWeakRef;
     }
 
-    public unsafe static class SystemWeakReference
+    public unsafe static class System_WeakReference
     {
 
         public static tAsyncCall* get_Target(byte* pThis_, byte* pParams, byte* pReturnValue) 

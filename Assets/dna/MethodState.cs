@@ -163,7 +163,7 @@ namespace DnaUnity
         }
 
         static void AddCombinedJIT(tMD_MethodDef *pMethod) {
-        	JIT_Prepare(pMethod, 1);
+        	JitOps.JIT_Prepare(pMethod, 1);
         	combinedJITSize += pMethod->pJITtedCombined->opsMemSize;
         	Sys.log_f(1, "Creating Combined JIT: %s\n", Sys_GetMethodDesc(pMethod));
         }
@@ -207,7 +207,7 @@ namespace DnaUnity
         	/*if (combinedJITSize < GEN_COMBINED_OPCODES_MAX_MEMORY) {
         		if (pMethod->genCallCount > GEN_COMBINED_OPCODES_CALL_TRIGGER) {
         			if (pMethod->pJITtedCombined == null) {
-        				JIT_Prepare(pMethod, 1);
+        				JitOps.JIT_Prepare(pMethod, 1);
         				combinedJITSize += pMethod->pJITtedCombined->opsMemSize;
         			}
         		}
@@ -274,9 +274,9 @@ namespace DnaUnity
             }
         }
 
-        public static void Delete(tThread *pThread, tMethodState **ppMethodState) 
+        public static void Delete(tThread *pThread, ref tMethodState *pMethodState) 
         {
-        	tMethodState *pThis = *ppMethodState;
+        	tMethodState *pThis = pMethodState;
 
 
         #if GEN_COMBINED_OPCODES
@@ -309,7 +309,7 @@ namespace DnaUnity
         	// needs to be Mem.free'd, as this function just sets the current allocation offset to the address given.
         	Thread.StackFree(pThread, pThis);
 
-        	*ppMethodState = null;
+        	pMethodState = null;
         }
 
     }

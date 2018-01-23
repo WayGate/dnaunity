@@ -113,29 +113,29 @@ namespace DnaUnity
     {
         public const int MAX_TABLES = 48;
 
-        const uint TYPEATTRIBUTES_INTERFACE                 = 0x20;
+        public const uint TYPEATTRIBUTES_INTERFACE                 = 0x20;
 
-        const uint METHODATTRIBUTES_STATIC                  = 0x10;
-        const uint METHODATTRIBUTES_VIRTUAL                 = 0x40;
-        const uint METHODATTRIBUTES_NEWSLOT                 = 0x100;
-        const uint METHODATTRIBUTES_PINVOKEIMPL             = 0x2000;
+        public const uint METHODATTRIBUTES_STATIC                  = 0x10;
+        public const uint METHODATTRIBUTES_VIRTUAL                 = 0x40;
+        public const uint METHODATTRIBUTES_NEWSLOT                 = 0x100;
+        public const uint METHODATTRIBUTES_PINVOKEIMPL             = 0x2000;
 
-        const uint METHODIMPLATTRIBUTES_CODETYPE_MASK       = 0x3;
-        const uint METHODIMPLATTRIBUTES_CODETYPE_RUNTIME    = 0x3;
-        const uint METHODIMPLATTRIBUTES_INTERNALCALL        = 0x1000;
+        public const uint METHODIMPLATTRIBUTES_CODETYPE_MASK       = 0x3;
+        public const uint METHODIMPLATTRIBUTES_CODETYPE_RUNTIME    = 0x3;
+        public const uint METHODIMPLATTRIBUTES_INTERNALCALL        = 0x1000;
 
-        const uint FIELDATTRIBUTES_STATIC                   = 0x10;
-        const uint FIELDATTRIBUTES_LITERAL                  = 0x40; // compile-time constant
-        const uint FIELDATTRIBUTES_HASFIELDRVA              = 0x100;
+        public const uint FIELDATTRIBUTES_STATIC                   = 0x10;
+        public const uint FIELDATTRIBUTES_LITERAL                  = 0x40; // compile-time constant
+        public const uint FIELDATTRIBUTES_HASFIELDRVA              = 0x100;
 
-        public const uint SIG_METHODDEF_GENERIC             = 0x10;
-        const uint SIG_METHODDEF_HASTHIS                    = 0x20;
+        public const uint SIG_METHODDEF_GENERIC                    = 0x10;
+        public const uint SIG_METHODDEF_HASTHIS                    = 0x20;
 
-        const uint IMPLMAP_FLAGS_CHARSETMASK                = 0x0006;
-        const uint IMPLMAP_FLAGS_CHARSETNOTSPEC             = 0x0000;
-        const uint IMPLMAP_FLAGS_CHARSETANSI                = 0x0002;
-        const uint IMPLMAP_FLAGS_CHARSETUNICODE             = 0x0004;
-        const uint IMPLMAP_FLAGS_CHARSETAUTO                = 0x0006;
+        public const uint IMPLMAP_FLAGS_CHARSETMASK                = 0x0006;
+        public const uint IMPLMAP_FLAGS_CHARSETNOTSPEC             = 0x0000;
+        public const uint IMPLMAP_FLAGS_CHARSETANSI                = 0x0002;
+        public const uint IMPLMAP_FLAGS_CHARSETUNICODE             = 0x0004;
+        public const uint IMPLMAP_FLAGS_CHARSETAUTO                = 0x0006;
 
         public static bool TYPE_ISARRAY(tMD_TypeDef* pType) 
         { 

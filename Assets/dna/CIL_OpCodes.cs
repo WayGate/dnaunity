@@ -21,7 +21,7 @@
 namespace DnaUnity
 {
 
-    public static class CIL
+    public static class OpCodes
     {
         public const int NOP           = 0x00;
 

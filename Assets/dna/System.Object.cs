@@ -21,7 +21,7 @@
 namespace DnaUnity
 {
 
-    public unsafe static class SystemObject
+    public unsafe static class System_Object
     {
 
         public static tAsyncCall* Equals(byte* pThis_, byte* pParams, byte* pReturnValue) 
@@ -49,7 +49,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* System_Object_GetType(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetType(byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	/*HEAP_PTR*/byte* typeObject;
         	tMD_TypeDef *pTypeDef;
