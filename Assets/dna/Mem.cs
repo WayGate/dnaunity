@@ -20,7 +20,7 @@
 
 namespace DnaUnity
 {
-    #if UNITY_WEBGL || DNA_32BIT
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
     using SIZE_T = System.UInt32;
     #else
     using SIZE_T = System.UInt64;
@@ -28,44 +28,121 @@ namespace DnaUnity
 
     public static unsafe class Mem
     {
+        const SIZE_T DEFAULT_SIZE = 128 * 1024; // 128K
+
+        static byte* pMem;
+        static int memSize;
+        static int memUsed;
+
+        public static void Init(SIZE_T size)
+        {
+            pMem = (byte*)System.Runtime.InteropServices.Marshal.AllocHGlobal((int)size);
+            memSize = (int)size;
+            memUsed = 0;
+        }
+
+        public static void Clear()
+        {
+            if (pMem != null)
+            {
+                System.Runtime.InteropServices.Marshal.FreeHGlobal((System.IntPtr)pMem);
+                pMem = null;
+            }
+            memSize = memUsed = 0;
+        }
+
         public static void* malloc(SIZE_T size)
         {
-            throw new System.NotImplementedException();
+            if (size == 0)
+                return null;
+            if (memUsed + (int)size > memSize)
+                throw new System.OutOfMemoryException();
+            SIZE_T realSize = 8 + ((size + 7) & 0xFFFFFFF8);
+            if (pMem == null)
+                Init(DEFAULT_SIZE);
+            byte* p = pMem + memUsed;
+            memUsed += (int)realSize;
+            *(uint*)p = (uint)size;
+            *(uint*)(p + 4) = (uint)0;
+            return p + 8;
         }
 
         public static void* realloc(void* p, SIZE_T size)
         {
-            throw new System.NotImplementedException();
+            ulong* a = (ulong*)p;
+            ulong* b = (ulong*)malloc(size);
+            int oldWords = (int)(((*(int*)(a - 8)) + 7) & 0xFFFFFFF8) >> 3;
+            int newWords = (int)((size + 7) & 0xFFFFFFF8) >> 3;
+            int minWords = newWords < oldWords ? newWords : oldWords;
+            for (int i = 0; i < minWords; i++)
+                *b++ = *a++;
+            return b;
         }
 
         public static void* mallocForever(SIZE_T size)
         {
-            throw new System.NotImplementedException();
+            return malloc(size);
         }
 
         public static void free(void* p)
         {
-            throw new System.NotImplementedException();
+            // DO NOTHING FOR NOW
         }
 
         public static void memcpy(void* p1, void* p2, SIZE_T size)
         {
-            throw new System.NotImplementedException();
+            // For now.. slow but simple - accurate
+            byte* a = (byte*)p1;
+            byte* b = (byte*)p2;
+            int len = (int)size;
+            for (int i = 0; i < len; i++)
+                *a++ = *b++;
         }
 
         public static void memmove(void* p1, void* p2, SIZE_T size)
         {
-            throw new System.NotImplementedException();
+            // Handle overlapping regions correctly!
+            if (p1 > p2)
+            {
+                memcpy(p1, p2, size);
+            }
+            else
+            {
+                // For now.. slow but simple - accurate
+                byte* a = (byte*)p1 + size - 1;
+                byte* b = (byte*)p2 + size - 1;
+                int len = (int)size;
+                for (int i = 0; i < len; i++)
+                    *a-- = *b--;                
+            }
         }
 
         public static void memset(void* p, int v, SIZE_T size)
         {
-            throw new System.NotImplementedException();
+            // For now.. slow but simple - accurate
+            byte* a = (byte*)p;
+            byte b = (byte)v;
+            int len = (int)size;
+            for (int i = 0; i < len; i++)
+                *a++ = b;
         }
 
-        public static int memcmp(void* a, void* b, SIZE_T size)
+        public static int memcmp(void* p1, void* p2, SIZE_T size)
         {
-            throw new System.NotImplementedException();
+            // For now.. slow but simple - accurate
+            byte* a = (byte*)p1;
+            byte* b = (byte*)p2;
+            int len = (int)size;
+            for (int i = 0; i < len; i++)
+            {
+                if (*a < *b)
+                    return -1;
+                else if (*a > *b)
+                    return 1;
+                a++;
+                b++;
+            }
+            return 0;
         }
     }
 

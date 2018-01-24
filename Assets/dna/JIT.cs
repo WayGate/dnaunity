@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 namespace DnaUnity
 {
-    #if UNITY_WEBGL || DNA_32BIT
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
     using SIZE_T = System.UInt32;
     using PTR = System.UInt32;
     #else
@@ -215,7 +215,7 @@ namespace DnaUnity
             PushU32_(ref ops, convDouble.u32b);
         }
 
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
 
             static void PushPTR(void* ptr)
             {
@@ -850,14 +850,14 @@ cilCallVirtConstrained:
         				pTypeA = PopStackType();
                         u32Value = (uint)(cilOfs + (int)u32Value);
         				MayCopyTypeStack(u32Value);
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         				if ((pTypeA->stackType == EvalStack.EVALSTACK_INT32 && pTypeB->stackType == EvalStack.EVALSTACK_INT32) ||
         					(pTypeA->stackType == EvalStack.EVALSTACK_O && pTypeB->stackType == EvalStack.EVALSTACK_O)) {
         #else
                         if (pTypeA->stackType == EvalStack.EVALSTACK_INT32 && pTypeB->stackType == EvalStack.EVALSTACK_INT32) {
         #endif
         					PushOp(JitOps.JIT_BEQ_I32I32 + (op - u32Value2));
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64 && pTypeB->stackType == EvalStack.EVALSTACK_INT64) {
         #else
                         } else if ((pTypeA->stackType == EvalStack.EVALSTACK_INT64 && pTypeB->stackType == EvalStack.EVALSTACK_INT64) ||
@@ -961,7 +961,7 @@ cilCallVirtConstrained:
         			case OpCodes.CONV_I4:
         			case OpCodes.CONV_OVF_I4: // Fix this later - will never overflow
         			case OpCodes.CONV_OVF_I4_UN: // Fix this later - will never overflow
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         			case OpCodes.CONV_I: // Only on 32-bit
         			case OpCodes.CONV_OVF_I_UN: // Only on 32-bit; Fix this later - will never overflow
         #endif
@@ -985,7 +985,7 @@ cilCallVirtConstrained:
         			case OpCodes.CONV_U4:
         			case OpCodes.CONV_OVF_U4: // Fix this later - will never overflow
         			case OpCodes.CONV_OVF_U4_UN: // Fix this later - will never overflow
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         			case OpCodes.CONV_U:
         			case OpCodes.CONV_OVF_U_UN:
         #endif
@@ -1045,7 +1045,7 @@ cilCallVirtConstrained:
         					case EvalStack.EVALSTACK_PTR:
         						opCodeBase =
         							(pStackType == Type.types[Type.TYPE_SYSTEM_UINTPTR])
-#if UNITY_WEBGL || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                                         ?JitOps.JIT_CONV_FROM_U32:JitOps.JIT_CONV_FROM_I32;
 #else
                                         ?JitOps.JIT_CONV_FROM_U64:JitOps.JIT_CONV_FROM_I64;
@@ -1226,7 +1226,7 @@ cilCallVirtConstrained:
 
         			case OpCodes.LDELEM_REF:
         				PopStackTypeMulti(2); // Don't care what any of these are
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         				PushOp(JitOps.JIT_LOAD_ELEMENT_U32);
         #else
                         PushOp(JitOps.JIT_LOAD_ELEMENT_I64);
@@ -1264,7 +1264,7 @@ cilCallVirtConstrained:
         				break;
 
                     case OpCodes.STELEM_REF:
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                         PopStackTypeMulti(3); // Don't care what any of these are
                         PushOp(JitOps.JIT_STORE_ELEMENT_32);
         #else
@@ -1517,7 +1517,7 @@ cilCallVirtConstrained:
         				case OpCodes.X_CLT_UN:
         					pTypeB = PopStackType();
         					pTypeA = PopStackType();
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         					if ((pTypeA->stackType == EvalStack.EVALSTACK_INT32 && pTypeB->stackType == EvalStack.EVALSTACK_INT32) ||
         						(pTypeA->stackType == EvalStack.EVALSTACK_O && pTypeB->stackType == EvalStack.EVALSTACK_O) ||
         						(pTypeA->stackType == EvalStack.EVALSTACK_PTR && pTypeB->stackType == EvalStack.EVALSTACK_PTR)) {
@@ -1525,7 +1525,7 @@ cilCallVirtConstrained:
                                 if (pTypeA->stackType == EvalStack.EVALSTACK_INT32 && pTypeB->stackType == EvalStack.EVALSTACK_INT32) {
         #endif
                                 PushOp((uint)(JitOps.JIT_CEQ_I32I32 + (op - OpCodes.X_CEQ)));
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             } else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64 && pTypeB->stackType == EvalStack.EVALSTACK_INT64) {
         #else
                             } else if ((pTypeA->stackType == EvalStack.EVALSTACK_INT64 && pTypeB->stackType == EvalStack.EVALSTACK_INT64) ||

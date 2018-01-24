@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 namespace DnaUnity
 {
-    #if UNITY_WEBGL || DNA_32BIT
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
     using _SIZE_T = System.UInt32;
     using _PTR = System.UInt32;
     #else

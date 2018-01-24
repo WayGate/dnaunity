@@ -20,7 +20,7 @@
 
 using System.Runtime.InteropServices;
 
-#if UNITY_WEBGL || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
 using SIZE_T = System.UInt32;
 using PTR = System.UInt32;
 #else

@@ -20,7 +20,7 @@
 
 using System.Runtime.InteropServices;
 
-#if UNITY_WEBGL || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
 using SIZE_T = System.UInt32;
 using PTR = System.UInt32;
 #else
@@ -332,83 +332,83 @@ namespace DnaUnity
         	s: 16-bit value
         	c: 8-bit value
         */
-        static byte*[] tableDefs = {
+        static byte** tableDefs = S.buildArray(
         	// 0x00
-            new S("sxS*G*GxGx"),
+            "sxS*G*GxGx",
         	// 0x01
-            new S("x*;ixiS*S*"),
+            "x*;ixiS*S*",
         	// 0x02
-            new S("x*m*iixiS*S*0i\x04i\x06ixclcxcxcxixix*x*xixix*xixix*xixixixix*Iixix*x*x*x*xixix*xixix*x*x*x*"),
+            "x*m*iixiS*S*0i\x04i\x06ixclcxcxcxixix*x*xixix*xixix*xixixixix*Iixix*x*x*x*xixix*xixix*x*x*x*",
         	// 0x03
         	null,
         	// 0x04
-            new S("x*m*ssxsxiS*B*x*x*xixiIixix*"),
+            "x*m*ssxsxiS*B*x*x*xixiIixix*",
         	// 0x05
         	null,
         	// 0x06
-            new S("x*m*^*ssssxiS*B*\x08ixix*xixix*xixix*x*Iixix*x*")
+            "x*m*^*ssssxiS*B*\x08ixix*xixix*xixix*x*Iixix*x*"
         #if DIAG_METHOD_CALLS
-            new S("xixix*")
+            "xixix*"
         #endif
         	,
         	// 0x07
         	null,
         	// 0x08
-            new S("ssssxiS*"),
+            "ssssxiS*",
         	// 0x09
-            new S("\x02i0i"),
+            "\x02i0i",
         	// 0x0A
-            new S("x*5ixiS*B*"),
+            "x*5ixiS*B*",
         	// 0x0B
-            new S("ccccxs1iB*"),
+            "ccccxs1iB*",
         	// 0x0C
-            new S("2i:iB*"),
+            "2i:iB*",
         	// 0x0D
         	null,
         	// 0x0E
-            new S("ssxs4iB*"),
+            "ssxs4iB*",
         	// 0x0F
-            new S("ssxsii\x02i"),
+            "ssxsii\x02i",
         	// 0x10
         	null,
         	// 0x11
-            new S("B*"),
+            "B*",
         	// 0x12
-            new S("\x02i\x14i"),
+            "\x02i\x14i",
         	// 0x13
         	null,
         	// 0x14
-            new S("ssxsxiS*0i"),
+            "ssxsxiS*0i",
         	// 0x15
-            new S("\x02i\x17i"),
+            "\x02i\x17i",
         	// 0x16
         	null,
         	// 0x17
-            new S("ssxsxiS*B*"),
+            "ssxsxiS*B*",
         	// 0x18
-            new S("ssxs\06i6i"),
+            "ssxs\06i6i",
         	// 0x19
-            new S("\x02i7i7i"),
+            "\x02i7i7i",
         	// 0x1A
-            new S("S*"),
+            "S*",
         	// 0x1B
-            new S("x*m*B*"),
+            "x*m*B*",
         	// 0x1C
-            new S("ssxs8iS*\x1ai"),
+            "ssxs8iS*\x1ai",
         	// 0x1D
-            new S("^*\x04i"),
+            "^*\x04i",
         	// 0x1E
         	null,
         	// 0x1F
         	null,
         	// 0x20
-            new S("iissssssssiiB*S*S*"),
+            "iissssssssiiB*S*S*",
         	// 0x21
         	null,
         	// 0x22
         	null,
         	// 0x23
-            new S("ssssssssiixiB*S*S*B*"),
+            "ssssssssiixiB*S*S*B*",
         	// 0x24
         	null,
         	// 0x25
@@ -420,46 +420,48 @@ namespace DnaUnity
         	// 0x28
         	null,
         	// 0x29
-            new S("\x02i\x02i"),
+            "\x02i\x02i",
         	// 0x2A
-            new S("ssss<iS*"),
+            "ssss<iS*",
         	// 0x2B
-            new S("x*m*7ixiB*"),
+            "x*m*7ixiB*",
         	// 0x2C
-            new S("\x2a*0i"),
-        };
+            "\x2a*0i"
+        );
+
+        public const int TABLEDEFS_LENGTH = 0x2D;
 
         // Coded indexes use this lookup table.
         // Note that the extra 'z' characters are important!
         // (Because of how the lookup works each string must be a power of 2 in length)
-        static byte*[] codedTags = {
+        static byte** codedTags = S.buildArray(
         	// TypeDefOrRef
-            new S("\x02\x01\x1Bz"),
+            "\x02\x01\x1Bz",
         	// HasConstant
-            new S("\x04\x08\x17z"),
+            "\x04\x08\x17z",
         	// HasCustomAttribute
-            new S("\x06\x04\x01\x02\x08\x09\x0A\x00\x0E\x17\x14\x11\x1A\x1B\x20\x23\x26\x27\x28zzzzzzzzzzzzz"),
+            "\x06\x04\x01\x02\x08\x09\x0A\x00\x0E\x17\x14\x11\x1A\x1B\x20\x23\x26\x27\x28zzzzzzzzzzzzz",
         	// HasFieldMarshall
-            new S("\x04\x08"),
+            "\x04\x08",
         	// HasDeclSecurity
-            new S("\x02\x06\x20z"),
+            "\x02\x06\x20z",
         	// MemberRefParent
-            new S("z\x01\x1A\x06\x1Bzzz"),
+            "z\x01\x1A\x06\x1Bzzz",
         	// HasSemantics
-            new S("\x14\x17"),
+            "\x14\x17",
         	// MethodDefOrRef
-            new S("\x06\x0A"),
+            "\x06\x0A",
         	// MemberForwarded
-            new S("\x04\x06"),
+            "\x04\x06",
         	// Implementation
-            new S("\x26\x23\x27z"),
+            "\x26\x23\x27z",
         	// CustomAttributeType
-            new S("zz\x06\x0Azzzz"),
+            "zz\x06\x0Azzzz",
         	// ResolutionScope
-            new S("\x00\x1A\x23\x01"),
+            "\x00\x1A\x23\x01",
         	// TypeOrMethodDef
-            new S("\x02\x06"),
-        };
+            "\x02\x06"
+        );
 
         static byte[] codedTagBits = {
         	2, 2, 5, 1, 2, 3, 1, 1, 1, 2, 3, 2, 1
@@ -745,7 +747,7 @@ namespace DnaUnity
 
         	for (i=0; i<MAX_TABLES; i++) {
         		if (pThis->tables.numRows[i] > 0) {
-        			if (i >= tableDefs.Length || tableDefs[i] == null) {
+                    if (i >= TABLEDEFS_LENGTH || tableDefs[i] == null) {
         				Sys.Crash("No table definition for MetaData table 0x%02x\n", i);
         			}
                     pThis->tables.data[i] = (PTR)LoadSingleTable(pThis, pRVA, i, &pTable);

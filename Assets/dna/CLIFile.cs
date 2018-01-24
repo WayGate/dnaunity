@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 namespace DnaUnity
 {
-    #if UNITY_WEBGL || DNA_32BIT
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
     using SIZE_T = System.UInt32;
     using PTR = System.UInt32;
     #else
@@ -58,23 +58,25 @@ namespace DnaUnity
 
         // In .NET Core, the core libraries are split over numerous assemblies. For simplicity,
         // the DNA corlib just puts them in one assembly
-        static /*char**/byte*[] assembliesMappedToDnaCorlib = {
-            new S("mscorlib"),
-            new S("System.Collections"),
-            new S("System.Console"),
-            new S("System.IO"),
-            new S("System.Linq"),
-            new S("System.Net.Http"),
-            new S("System.Private.CoreLib"),
-            new S("System.Private.Uri"),
-            new S("System.Reflection"),
-            new S("System.Reflection.Extensions"),
-            new S("System.Runtime"),
-            new S("System.Runtime.Extensions"),
-            new S("System.Runtime.InteropServices"),
-            new S("System.Threading"),
-            new S("System.Threading.Tasks")
-        };
+        static /*char**/byte** assembliesMappedToDnaCorlib = S.buildArray(
+            "mscorlib",
+            "System.Collections",
+            "System.Console",
+            "System.IO",
+            "System.Linq",
+            "System.Net.Http",
+            "System.Private.CoreLib",
+            "System.Private.Uri",
+            "System.Reflection",
+            "System.Reflection.Extensions",
+            "System.Runtime",
+            "System.Runtime.Extensions",
+            "System.Runtime.InteropServices",
+            "System.Threading",
+            "System.Threading.Tasks"
+        );
+
+        const int MAPPED_ASSEMBLIES_COUNT = 15;
 
         // Keep track of all the files currently loaded
         static tFilesLoaded *pFilesLoaded = null;
@@ -106,8 +108,8 @@ namespace DnaUnity
 
         	// Where applicable, redirect this assembly lookup into DNA's corlib
         	// (e.g., mscorlib, System.Runtime, etc.)
-        	for (int i = 0; i < assembliesMappedToDnaCorlib.Length; i++) {
-        		if (S.strcmp(pAssemblyName, assembliesMappedToDnaCorlib[i]) == 0) {
+            for (int i = 0; i < MAPPED_ASSEMBLIES_COUNT; i++) {
+                if (S.strcmp(pAssemblyName, assembliesMappedToDnaCorlib[i]) == 0) {
                     pAssemblyName = new S(ref scCorlib, "corlib");
         			break;
         		}
@@ -160,8 +162,18 @@ namespace DnaUnity
         	return null;
         }
 
-        private static void* LoadFileFromDisk(/*char**/byte *pFileName) 
+        private static void* LoadFileFromDisk(string filename) 
         {
+            if (!System.IO.File.Exists(filename))
+                throw new System.InvalidOperationException("File doesn't exist");
+
+            long len = (new System.IO.FileInfo(filename)).Length;
+            byte* buf = (byte*)Mem.malloc((SIZE_T)len);
+
+            System.IO.UnmanagedMemoryStream memStream = new System.IO.UnmanagedMemoryStream(buf, len);
+
+
+            byte[] bytes = System.IO.File.ReadAllBytes(filename);
             throw new System.NotImplementedException();
 /*        	int f;
         	void *pData = null;

@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 namespace DnaUnity
 {
-    #if UNITY_WEBGL || DNA_32BIT
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
     using SIZE_T = System.UInt32;
     using PTR = System.UInt32;
     #else
@@ -186,7 +186,7 @@ namespace DnaUnity
         		pRoot->marked = 0;
         	} else {
         		tHeapEntry* pNode = pHeapTreeRoot;
-                tHeapEntry*[] pUp = new tHeapEntry*[MAX_TREE_DEPTH];
+                tHeapEntry** pUp = stackalloc tHeapEntry*[MAX_TREE_DEPTH];
         		int top = 0, dir;
         		// Find leaf position to insert into tree. This first step is unbalanced
         		for (;;) {
@@ -276,7 +276,7 @@ namespace DnaUnity
         {
         	tHeapRoots heapRoots;
         	tHeapEntry* pNode;
-            tHeapEntry*[] pUp = new tHeapEntry*[MAX_TREE_DEPTH * 2];
+            tHeapEntry** pUp = stackalloc tHeapEntry*[MAX_TREE_DEPTH * 2];
         	int top;
         	tHeapEntry *pToDelete = null;
         	SIZE_T orgHeapSize = trackHeapSize;

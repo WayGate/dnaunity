@@ -38,7 +38,7 @@ namespace DnaUnity
             return *(void**)r = (void*)(val); 
         }
 
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         public const int S_PTR = 4;
         #else
         public const int S_PTR = 8;
@@ -49,36 +49,15 @@ namespace DnaUnity
 
         public static void log_f(uint level, string pMsg, params object[] args)
         {
-            throw new System.NotImplementedException();
+            if (logLevel <= level)
+                printf(pMsg, args);
         }
 
         public static void Crash(string pMsg, params object[] args) 
         {
-            throw new System.NotImplementedException();
-        #if NO
-        	va_list va;
-
-        	printf("\n\n*** CRASH ***\n");
-
-        	va_start(va, pMsg);
-
-        	vprintf(pMsg, va);
-
-        	va_end(va);
-
-        	printf("\n\n");
-
-        #if WIN32
-        	{
-        		// Cause a delibrate exception, to get into debugger
-        		__debugbreak();
-        	}
-        #endif
-
-        	exit(1);
-        #endif
+            printf(pMsg, args);
+            throw new UnityEngine.UnityException("DnaUnity CRASH!");
         }
-
   
         public static /*char*/byte* GetMethodDesc(tMD_MethodDef *pMethod) 
         {
@@ -92,7 +71,7 @@ namespace DnaUnity
         			S.sprintf(S.strchr(methodName, 0), ",");
         		}
                 tParameter *param = &(pMethod->pParams[i]);
-                S.sprintf(S.strchr(methodName, 0), new S("%s"), param->pTypeDef->name);
+                S.sprintf(S.strchr(methodName, 0), "%s", param->pTypeDef->name);
         	}
         	S.sprintf(S.strchr(methodName, 0), ")");
         	return methodName;
@@ -111,7 +90,10 @@ namespace DnaUnity
 
         public static void printf(string format, params object[] args)
         {
-            throw new System.NotImplementedException();
+            byte* buf = stackalloc byte[256];
+            S.sprintf(buf, format, args);
+            string msg = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)buf);
+            UnityEngine.Debug.Log(msg);
         }
     }
 }

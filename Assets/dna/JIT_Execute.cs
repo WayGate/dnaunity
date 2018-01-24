@@ -22,7 +22,7 @@
 
 namespace DnaUnity
 {
-    #if UNITY_WEBGL || DNA_32BIT
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
     using SIZE_T = System.UInt32;
     using PTR = System.UInt32;
     #else
@@ -52,10 +52,10 @@ namespace DnaUnity
         }
 
         // Get a 32/64 bit pointer
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         static void* GET_PTR()
         {
-            return (*(pCurOp++));
+            return (void*)(*(pCurOp++));
         }
         #else
         // NOTE: Technically this is undefined behavior having two increments in the same expression
@@ -337,31 +337,20 @@ namespace DnaUnity
         #if DIAG_OPCODE_USE
         static uint opcodeNumUses[JitOps.JIT_OPCODE_MAXNUM];
 
-        #if TRACE
+        [System.Diagnostics.Conditional("TRACE")]
         static void OPCODE_USE(uint op) 
         {
             S.printf("%s %X op \n", (PTR)pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack)); 
             opcodeNumUses[op]++;
         }
-        #else
-        const void OPCODE_USE(uint op)
-        {
-            opcodeNumUses[op]++;
-        }
-        #endif
 
         #else
 
-        #if TRACE
+        [System.Diagnostics.Conditional("TRACE")]
         static void OPCODE_USE(uint op) 
         {
             Sys.printf("%s %X op \n", (PTR)pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack));
         }
-        #else
-        static void OPCODE_USE(uint op)
-        {
-        }
-        #endif
 
         #endif
 
@@ -494,7 +483,7 @@ namespace DnaUnity
                     case JitOps.JIT_LOADPARAMLOCAL_PTR:
                         OPCODE_USE(JitOps.JIT_LOADPARAMLOCAL_O);
                         {
-                    #if UNITY_WEBGL || DNA_32BIT
+                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             uint ofs = GET_OP();
                             uint value = PARAMLOCAL_U32(ofs);
                             PUSH_U32(value);
@@ -596,7 +585,7 @@ namespace DnaUnity
                     case JitOps.JIT_STOREPARAMLOCAL_PTR:
                         OPCODE_USE(JitOps.JIT_STOREPARAMLOCAL_PTR);
                         {
-                    #if UNITY_WEBGL || DNA_32BIT
+                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             uint ofs = GET_OP();
                             uint value = POP_U32();
                             SET_PARAMLOCAL_U32(ofs, value);
@@ -691,7 +680,7 @@ namespace DnaUnity
                         OPCODE_USE(JitOps.JIT_LOADINDIRECT_U32);
                         {
                             byte* pMem = POP_PTR();
-                    #if UNITY_WEBGL || DNA_32BIT
+                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             uint value = *(uint*)pMem;
                             PUSH_U32(value);
                     #else
@@ -725,7 +714,7 @@ namespace DnaUnity
                     case JitOps.JIT_STOREINDIRECT_REF:
                         OPCODE_USE(JitOps.JIT_STOREINDIRECT_U32);
                         {
-                    #if UNITY_WEBGL || DNA_32BIT
+                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             uint value = POP_U32(); // The value to store
                             byte* pMem = POP_PTR(); // The address to store to
                             *(uint*)pMem = value;
@@ -803,40 +792,42 @@ namespace DnaUnity
                     case JitOps.JIT_RETURN:
                     JIT_RETURN_start:
                         OPCODE_USE(JitOps.JIT_RETURN);
-                    #if TRACE
-                            Sys.log_f(2, "Returned from %s() to %s()\n", (PTR)pCurrentMethodState->pMethod->name, (pCurrentMethodState->pCaller != null)?(PTR)pCurrentMethodState->pCaller->pMethod->name:(PTR)((byte*)(new S(ref scNone, "<none>"))));
-                    #endif
-                        if (pCurrentMethodState->pCaller == null) {
-                            // End of thread!
-                            if (pCurrentMethodState->pMethod->pReturnType == Type.types[Type.TYPE_SYSTEM_INT32]) {
-                                // If function returned an int32, then make it the thread exit-value
-                                pThread->threadExitValue = (int)POP_U32();
-                            }
-                            return Thread.THREAD_STATUS_EXIT;
-                        }
-                        // Make u32Value the number of bytes of the return value from the function
-                        if (pCurrentMethodState->pMethod->pReturnType != null) {
-                            u32Value = pCurrentMethodState->pMethod->pReturnType->stackSize;
-                        } else if (pCurrentMethodState->isInternalNewObjCall != 0) {
-                            u32Value = (uint)sizeof(void*);
-                        } else {
-                            u32Value = 0;
-                        }
-                        byte* pEvalStk = pCurrentMethodState->pEvalStack;
                         {
-                            tMethodState *pOldMethodState = pCurrentMethodState;
-                            pThread->pCurrentMethodState = pCurrentMethodState->pCaller;
-                            LOAD_METHOD_STATE();
-                            // Copy return value to callers evaluation stack
-                            if (u32Value > 0) {
-                                Mem.memmove(pCurEvalStack, pEvalStk, (SIZE_T)u32Value);
-                                pCurEvalStack += u32Value;
+                        #if TRACE
+                                Sys.log_f(2, "Returned from %s() to %s()\n", (PTR)pCurrentMethodState->pMethod->name, (pCurrentMethodState->pCaller != null)?(PTR)pCurrentMethodState->pCaller->pMethod->name:(PTR)((byte*)(new S(ref scNone, "<none>"))));
+                        #endif
+                            if (pCurrentMethodState->pCaller == null) {
+                                // End of thread!
+                                if (pCurrentMethodState->pMethod->pReturnType == Type.types[Type.TYPE_SYSTEM_INT32]) {
+                                    // If function returned an int32, then make it the thread exit-value
+                                    pThread->threadExitValue = (int)POP_U32();
+                                }
+                                return Thread.THREAD_STATUS_EXIT;
                             }
-                            // Delete the current method state and go back to callers method state
-                            MethodState.Delete(pThread, ref pOldMethodState);
-                        }
-                        if (pCurrentMethodState->pNextDelegate == null) {
-                            break;
+                            // Make u32Value the number of bytes of the return value from the function
+                            if (pCurrentMethodState->pMethod->pReturnType != null) {
+                                u32Value = pCurrentMethodState->pMethod->pReturnType->stackSize;
+                            } else if (pCurrentMethodState->isInternalNewObjCall != 0) {
+                                u32Value = (uint)sizeof(void*);
+                            } else {
+                                u32Value = 0;
+                            }
+                            byte* pEvalStk = pCurrentMethodState->pEvalStack;
+                            {
+                                tMethodState *pOldMethodState = pCurrentMethodState;
+                                pThread->pCurrentMethodState = pCurrentMethodState->pCaller;
+                                LOAD_METHOD_STATE();
+                                // Copy return value to callers evaluation stack
+                                if (u32Value > 0) {
+                                    Mem.memmove(pCurEvalStack, pEvalStk, (SIZE_T)u32Value);
+                                    pCurEvalStack += u32Value;
+                                }
+                                // Delete the current method state and go back to callers method state
+                                MethodState.Delete(pThread, ref pOldMethodState);
+                            }
+                            if (pCurrentMethodState->pNextDelegate == null) {
+                                break;
+                            }
                         }
                         // Fall-through if more delegate methods to invoke
                         goto JIT_INVOKE_DELEGATE_start;
@@ -992,24 +983,27 @@ namespace DnaUnity
                             tMD_MethodDef *pCallMethod = null;
                             tMethodState *pCallMethodState = null;
                             tMD_TypeDef *pBoxCallType = null;
+                            byte* heapPtr = null;
+                            byte* pMem = null;
 
                             if (op == JitOps.JIT_BOX_CALLVIRT) {
                                 pBoxCallType = (tMD_TypeDef*)GET_PTR();
                             }
 
                             pCallMethod = (tMD_MethodDef*)GET_PTR();
-                            byte* heapPtr = null;
-                            byte* pMem = null;
 
                             if (op == JitOps.JIT_BOX_CALLVIRT) {
                                 // Need to de-ref and box the value-type before calling the function
                                 // TODO: Will this work on value-Type.types that are not 4 bytes long?
                                 pMem = pCurEvalStack - pCallMethod->parameterStackSize;
                                 heapPtr = Heap.Box(pBoxCallType, *(byte**)pMem);
-                                *(/*HEAP_PTR*/byte**)pMem = heapPtr;
+                                *(/*HEAP_PTR**/byte**)pMem = heapPtr;
                             } else if (op == JitOps.JIT_DEREF_CALLVIRT) {
                                 pMem = pCurEvalStack - pCallMethod->parameterStackSize;
-                                *(/*HEAP_PTR*/byte**)pMem = **(/*HEAP_PTR*/byte***)pMem;
+                                // *(/*HEAP_PTR**/byte**)pMem = **(/*HEAP_PTR***/byte***)pMem;
+                                heapPtr = *(byte**)pMem;    // NOTE: Need to do this in two steps or WebGL IL2CPP won't build..
+                                heapPtr = *(byte**)heapPtr;
+                                *(/*HEAP_PTR*/byte**)pMem = heapPtr;
                             }
 
                             // If it's a virtual call then find the real correct method to call
@@ -1030,15 +1024,13 @@ namespace DnaUnity
                                 }
                             } else if (op == JitOps.JIT_CALL_INTERFACE) {
                                 tMD_TypeDef* pInterface, pThisType;
-                                uint vIndex;
+                                uint vIndex = 0xffffffff;
                                 int i;
 
                                 pInterface = pCallMethod->pParentType;
                                 // Get the actual object that is becoming 'this'
                                 heapPtr = *(/*HEAP_PTR*/byte**)(pCurEvalStack - pCallMethod->parameterStackSize);
                                 pThisType = Heap.GetType(heapPtr);
-                                // Find the interface mapping on the 'this' type.
-                                vIndex = 0xffffffff;
                                 // This must be searched backwards so if an interface is implemented more than
                                 // once in the type hierarchy, the most recent definition gets called
                                 for (i=(int)pThisType->numInterfaces-1; i >= 0; i--) {
@@ -1046,17 +1038,16 @@ namespace DnaUnity
                                         // Found the right interface map
                                         if (pThisType->pInterfaceMaps[i].pVTableLookup != null) {
                                             vIndex = pThisType->pInterfaceMaps[i].pVTableLookup[pCallMethod->vTableOfs];
-                                            break;
+                                            UnityEngine.Assertions.Assert.IsTrue(vIndex != 0xffffffff);
+                                            pCallMethod = pThisType->pVTable[vIndex];
+                                        } else {
+                                            pCallMethod = pThisType->pInterfaceMaps[i].ppMethodVLookup[pCallMethod->vTableOfs];
                                         }
-                                        pCallMethod = pThisType->pInterfaceMaps[i].ppMethodVLookup[pCallMethod->vTableOfs];
-                                        goto callMethodSet;
+                                        break;
                                     }
                                 }
-                                UnityEngine.Assertions.Assert.IsTrue(vIndex != 0xffffffff);
-                                pCallMethod = pThisType->pVTable[vIndex];
                             }
-                    callMethodSet:
-                            //printf("Calling method: %s\n", Sys_GetMethodDesc(pCallMethod));
+                            //printf("Calling method: %s\n", Sys.GetMethodDesc(pCallMethod));
                             // Set up the new method state for the called method
                             pCallMethodState = MethodState.Direct(pThread, pCallMethod, pCurrentMethodState, 0);
                             // Set up the parameter stack for the method being called
@@ -2529,7 +2520,7 @@ namespace DnaUnity
                     case JitOps.JIT_STOREFIELD_PTR:
                         OPCODE_USE(JitOps.JIT_STOREFIELD_PTR);
                         {
-                    #if UNITY_WEBGL || DNA_32BIT
+                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
                             uint value;
@@ -2677,7 +2668,7 @@ namespace DnaUnity
                     case JitOps.JIT_STORESTATICFIELD_PTR: // only for 32-bit
                         OPCODE_USE(JitOps.JIT_STORESTATICFIELD_INT32);
                         {
-                    #if UNITY_WEBGL || DNA_32BIT
+                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
                             uint value;
@@ -2777,7 +2768,7 @@ namespace DnaUnity
                                 PUSH_U64(value);
                             } else if (op == JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_PTR ||
                                        op == JitOps.JIT_LOADSTATICFIELDADDRESS_CHECKTYPEINIT) {
-                    #if UNITY_WEBGL || DNA_32BIT
+                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                                 uint value;
                                 if (op == JitOps.JIT_LOADSTATICFIELDADDRESS_CHECKTYPEINIT) {
                                     value = (uint)(pFieldDef->pMemory);
@@ -3123,7 +3114,9 @@ namespace DnaUnity
                         if (--numInst == 0) 
                             goto done;
                         break;
+
                     }
+
                 }
 
             done:

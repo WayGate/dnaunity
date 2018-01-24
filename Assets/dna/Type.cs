@@ -22,7 +22,7 @@ using System.Runtime.InteropServices;
 
 namespace DnaUnity
 {
-    #if UNITY_WEBGL || DNA_32BIT
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
     using SIZE_T = System.UInt32;
     using PTR = System.UInt32;
     #else
@@ -128,7 +128,7 @@ namespace DnaUnity
 
         const int GENERICARRAYMETHODS_NUM = 13;
         static byte genericArrayMethodsInited = 0;
-        static tMD_MethodDef*[] ppGenericArrayMethods = new tMD_MethodDef*[GENERICARRAYMETHODS_NUM];
+        static tMD_MethodDef** ppGenericArrayMethods = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(sizeof(tMD_MethodDef*) * GENERICARRAYMETHODS_NUM));
 
         const int GENERICARRAYMETHODS_Internal_GetGenericEnumerator     = 0;
         const int GENERICARRAYMETHODS_get_Length                        = 1;
@@ -143,21 +143,21 @@ namespace DnaUnity
         const int GENERICARRAYMETHODS_Internal_GenericRemoveAt          = 10;
         const int GENERICARRAYMETHODS_Internal_GenericGetItem           = 11;
         const int GENERICARRAYMETHODS_Internal_GenericSetItem           = 12;
-        static /*char**/ byte*[] pGenericArrayMethodsInit = new byte*[] {
-            new S("Internal_GetGenericEnumerator"),
-            new S("get_Length"),
-            new S("Internal_GenericIsReadOnly"),
-            new S("Internal_GenericAdd"),
-            new S("Internal_GenericClear"),
-            new S("Internal_GenericContains"),
-            new S("Internal_GenericCopyTo"),
-            new S("Internal_GenericRemove"),
-            new S("Internal_GenericIndexOf"),
-            new S("Internal_GenericInsert"),
-            new S("Internal_GenericRemoveAt"),
-            new S("Internal_GenericGetItem"),
-            new S("Internal_GenericSetItem"),
-        };
+        static /*char**/ byte** pGenericArrayMethodsInit = S.buildArray(
+            "Internal_GetGenericEnumerator",
+            "get_Length",
+            "Internal_GenericIsReadOnly",
+            "Internal_GenericAdd",
+            "Internal_GenericClear",
+            "Internal_GenericContains",
+            "Internal_GenericCopyTo",
+            "Internal_GenericRemove",
+            "Internal_GenericIndexOf",
+            "Internal_GenericInsert",
+            "Internal_GenericRemoveAt",
+            "Internal_GenericGetItem",
+            "Internal_GenericSetItem"
+        );
 
         static void GetMethodDefs() 
         {
@@ -446,7 +446,7 @@ namespace DnaUnity
         static byte* scSystemIO;
         static byte* scSystemGlobalization;
 
-        #if UNITY_WEBGL || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         const int PTR_SIZE = 4;
         #else
         const int PTR_SIZE = 8;

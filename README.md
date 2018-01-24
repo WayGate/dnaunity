@@ -4,13 +4,14 @@
 
 - [x] C version modified to run in 32/64 bit mode correctly
 - [x] All C code converted to C#
-- [x] Builds in Unity
-- [ ] Stub functions (memory, string, gchandle, sprintf, printf, etc.) minimally working (no NotImplementedExceptions)
+- [x] Successfully builds in Unity
+- [x] Successfully builds with IL2CPP for iOS target and WebGL target
+- [x] Stub functions (memory, string, gchandle, sprintf, printf, etc.) minimally working (no NotImplementedExceptions)
 - [ ] CLIFile load works loading a HelloWorld assembly.
 - [ ] Basic metadata tests pass.
 - [ ] String, Array, Type, other basic internal .NET types switched to Mono versions.
-- [ ] Simple "HelloWorld" prints to console.
-- [ ] Wrapping of basic external classes and structs works (COW value types works)
+- [ ] Simple "HelloWorld" prints to Unity console.
+- [ ] Wrapping of Mono/Unity classes and structs working (COW value types works)
 - [ ] Fastcall and slowcall to Mono/Unity methods works.
 - [ ] Basic mapping of Mono/Unity API's works for both fast/slow calling.
 - [ ] 32 bit and 64 bit mode works
