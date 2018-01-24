@@ -31,13 +31,13 @@ namespace DnaUnity
         {
         	/*HEAP_PTR*/byte* o1,o2, ret;
         	tMD_TypeDef *pType;
-        	tMetaData *pMetaData;
+        	//tMetaData *pMetaData;
         	uint i, retOfs, numInstanceFields;
 
         	o1 = ((/*HEAP_PTR*/byte**)pParams)[0];
         	o2 = ((/*HEAP_PTR*/byte**)pParams)[1];
         	pType = Heap.GetType(o1);
-        	pMetaData = pType->pMetaData;
+        	//pMetaData = pType->pMetaData;
 
         	numInstanceFields = 0;
         	for (i=0; i<pType->numFields; i++) {

@@ -99,11 +99,12 @@ namespace DnaUnity
 
         public static tAsyncCall* ctor_StringIntInt(byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
-        	tSystemString* pThis, pStr;
+            tSystemString* pThis;
+            //tSystemString* pStr;
         	uint startIndex, length;
             char* pChars;
 
-        	pStr = (*((tSystemString**)(pParams + 0)));
+        	//pStr = (*((tSystemString**)(pParams + 0)));
         	startIndex = (*((uint*)(pParams + Sys.S_PTR)));
         	length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT)));
 

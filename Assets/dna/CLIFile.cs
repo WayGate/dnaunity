@@ -162,40 +162,21 @@ namespace DnaUnity
         	return null;
         }
 
-        private static void* LoadFileFromDisk(string filename) 
+        private static void* LoadFileFromDisk(byte* fileName) 
         {
-            if (!System.IO.File.Exists(filename))
+            string fileNameStr = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)fileName);
+            if (!System.IO.File.Exists(fileNameStr))
                 throw new System.InvalidOperationException("File doesn't exist");
 
-            long len = (new System.IO.FileInfo(filename)).Length;
-            byte* buf = (byte*)Mem.malloc((SIZE_T)len);
 
-            System.IO.UnmanagedMemoryStream memStream = new System.IO.UnmanagedMemoryStream(buf, len);
+            byte[] data = System.IO.File.ReadAllBytes(fileNameStr);
+            byte* buf = (byte*)Mem.malloc((SIZE_T)data.Length);
+            fixed (byte* ptr = &data[0])
+            {
+                Mem.memcpy(buf, ptr, (SIZE_T)data.Length);
+            }
 
-
-            byte[] bytes = System.IO.File.ReadAllBytes(filename);
-            throw new System.NotImplementedException();
-/*        	int f;
-        	void *pData = null;
-
-        	f = open(pFileName, O_RDONLY|O_BINARY);
-        	if (f >= 0) {
-        		int len;
-        		len = lseek(f, 0, SEEK_END);
-        		lseek(f, 0, SEEK_SET);
-        		// TODO: Change to use mmap() or windows equivilent
-        		pData = Mem.mallocForever(len);
-        		if (pData != null) {
-        			int r = read(f, pData, len);
-        			if (r != len) {
-        				Mem.free(pData);
-        				pData = null;
-        			}
-        		}
-        		close(f);
-        	}
-
-        	return pData;*/
+            return buf;
         }
 
         private static tCLIFile* LoadPEFile(void *pData) 
@@ -213,10 +194,12 @@ namespace DnaUnity
         	uint lfanew;
         	ushort machine;
         	int numSections;
-        	uint imageBase;
-        	int fileAlignment;
-        	uint cliHeaderRVA, cliHeaderSize;
-        	uint metaDataRVA, metaDataSize;
+        	//uint imageBase;
+        	//int fileAlignment;
+            uint cliHeaderRVA;
+            //uint cliHeaderSize;
+            uint metaDataRVA;
+            //uint metaDataSize;
         	tMetaData *pMetaData;
 
         	pRet->pRVA = RVA.New();
@@ -233,8 +216,8 @@ namespace DnaUnity
         	}
         	numSections = *(ushort*)&(pPEHeader[2]);
 
-        	imageBase = *(uint*)&(pPEOptionalHeader[28]);
-        	fileAlignment = *(int*)&(pPEOptionalHeader[36]);
+        	//imageBase = *(uint*)&(pPEOptionalHeader[28]);
+        	//fileAlignment = *(int*)&(pPEOptionalHeader[36]);
 
         	for (i=0; i<numSections; i++) {
         		byte *pSection = pPESectionHeaders + i * 40;
@@ -242,12 +225,12 @@ namespace DnaUnity
         	}
 
         	cliHeaderRVA = *(uint*)&(pPEOptionalHeader[208]);
-        	cliHeaderSize = *(uint*)&(pPEOptionalHeader[212]);
+        	//cliHeaderSize = *(uint*)&(pPEOptionalHeader[212]);
 
             pCLIHeader = (byte*)RVA.FindData(pRet->pRVA, cliHeaderRVA);
 
         	metaDataRVA = *(uint*)&(pCLIHeader[8]);
-        	metaDataSize = *(uint*)&(pCLIHeader[12]);
+        	//metaDataSize = *(uint*)&(pCLIHeader[12]);
         	pRet->entryPoint = *(uint*)&(pCLIHeader[20]);
             pRawMetaData = (byte*)RVA.FindData(pRet->pRVA, metaDataRVA);
 

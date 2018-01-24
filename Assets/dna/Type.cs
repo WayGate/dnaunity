@@ -359,10 +359,10 @@ namespace DnaUnity
 
         		case Type.ELEMENT_TYPE_BYREF:
         			{
-        				tMD_TypeDef *pByRefType;
+        				/*tMD_TypeDef *pByRefType;*/
 
         				// type of the by-ref parameter, don't care
-        				pByRefType = Type.GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
+        				/*pByRefType =*/ Type.GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
         			}
                     return types[Type.TYPE_SYSTEM_INTPTR];
 
@@ -506,7 +506,7 @@ namespace DnaUnity
             new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodInfo)},
             new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodBase"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodBase)},
         };
-        static int CorLibDone = 0;
+        //static int CorLibDone = 0;
 
         public static void Init() 
         {
@@ -534,7 +534,7 @@ namespace DnaUnity
         			types[i] = Type.GetArrayTypeDef(types[(uint)(typeInit[i].name)], null, null);
         		}
         	}
-        	CorLibDone = 1;
+        	//CorLibDone = 1;
         }
 
         public static uint IsMethod(tMD_MethodDef *pMethod, /*STRING*/byte* name, tMD_TypeDef *pReturnType, uint numParams, byte *pParamTypeIndexs) {

@@ -1626,7 +1626,7 @@ cilCallVirtConstrained:
         // This makes sure that the method has been JITed.
         public static void Prepare(tMD_MethodDef *pMethodDef, uint genCombinedOpcodes) 
         {
-        	tMetaData* pMetaData;
+        	//tMetaData* pMetaData;
         	byte* pMethodHeader;
         	tJITted* pJITted;
         	/*FLAGS16*/ushort flags;
@@ -1639,19 +1639,9 @@ cilCallVirtConstrained:
 
             Sys.log_f(2, "JIT:   %s\n", (PTR)Sys.GetMethodDesc(pMethodDef));
 
-        	pMetaData = pMethodDef->pMetaData;
+        	//pMetaData = pMethodDef->pMetaData;
             pJITted = (genCombinedOpcodes != 0)?((tJITted*)Mem.malloc((SIZE_T)sizeof(tJITted))) : ((tJITted*)Mem.mallocForever((SIZE_T)sizeof(tJITted)));
-        #if GEN_COMBINED_OPCODES
-        	pJITted->pCombinedOpcodesMem = null;
-        	pJITted->opsMemSize = 0;
-        	if (genCombinedOpcodes) {
-        		pMethodDef->pJITtedCombined = pJITted;
-        	} else {
-        		pMethodDef->pJITted = pJITted;
-        	}
-        #else
         	pMethodDef->pJITted = pJITted;
-        #endif
 
             if (((pMethodDef->implFlags & MetaData.METHODIMPLATTRIBUTES_INTERNALCALL) != 0) ||
         		((pMethodDef->implFlags & MetaData.METHODIMPLATTRIBUTES_CODETYPE_MASK) == MetaData.METHODIMPLATTRIBUTES_CODETYPE_RUNTIME)) {
