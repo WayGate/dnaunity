@@ -34,7 +34,7 @@ namespace DnaUnity
         static /*HEAP_PTR*/byte* *ppToFinalize;
         static int toFinalizeOfs, toFinalizeCapacity;
 
-        public static void Finalizer_Init() 
+        public static void Init() 
         {
         	toFinalizeCapacity = 4;
             ppToFinalize = (/*HEAP_PTR*/byte**)Mem.malloc((SIZE_T)(toFinalizeCapacity * sizeof(void*)));

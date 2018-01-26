@@ -123,7 +123,7 @@ namespace DnaUnity
         const int MIN_HEAP_SIZE = 50000;
         const int MAX_HEAP_EXCESS = 200000;
 
-        public static void Heap_Init() 
+        public static void Init() 
         {
         	// Initialise vars
         	trackHeapSize = 0;

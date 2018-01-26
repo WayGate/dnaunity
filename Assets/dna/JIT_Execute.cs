@@ -3125,7 +3125,7 @@ namespace DnaUnity
             return Thread.THREAD_STATUS_RUNNING;
         }
 
-        public static void Execute_Init() 
+        public static void Init() 
         {
             // Initialise the JIT code addresses
             Execute(null, 0);

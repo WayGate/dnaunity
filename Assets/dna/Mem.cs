@@ -28,16 +28,16 @@ namespace DnaUnity
 
     public static unsafe class Mem
     {
-        const SIZE_T DEFAULT_SIZE = 128 * 1024; // 128K
+        const int DEFAULT_SIZE = 128 * 1024; // 128K
 
         static byte* pMem;
         static int memSize;
         static int memUsed;
 
-        public static void Init(SIZE_T size)
+        public static void Init(int size)
         {
-            pMem = (byte*)System.Runtime.InteropServices.Marshal.AllocHGlobal((int)size);
-            memSize = (int)size;
+            pMem = (byte*)System.Runtime.InteropServices.Marshal.AllocHGlobal(size);
+            memSize = size;
             memUsed = 0;
         }
 
@@ -59,7 +59,7 @@ namespace DnaUnity
                 throw new System.OutOfMemoryException();
             SIZE_T realSize = 8 + ((size + 7) & 0xFFFFFFF8);
             if (pMem == null)
-                Init(DEFAULT_SIZE);
+                Init((int)DEFAULT_SIZE);
             byte* p = pMem + memUsed;
             memUsed += (int)realSize;
             *(uint*)p = (uint)size;
