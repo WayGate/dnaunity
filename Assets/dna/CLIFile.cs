@@ -58,28 +58,39 @@ namespace DnaUnity
 
         // In .NET Core, the core libraries are split over numerous assemblies. For simplicity,
         // the DNA corlib just puts them in one assembly
-        static /*char**/byte** assembliesMappedToDnaCorlib = S.buildArray(
-            "mscorlib",
-            "System.Collections",
-            "System.Console",
-            "System.IO",
-            "System.Linq",
-            "System.Net.Http",
-            "System.Private.CoreLib",
-            "System.Private.Uri",
-            "System.Reflection",
-            "System.Reflection.Extensions",
-            "System.Runtime",
-            "System.Runtime.Extensions",
-            "System.Runtime.InteropServices",
-            "System.Threading",
-            "System.Threading.Tasks"
-        );
+        static /*char**/byte** assembliesMappedToDnaCorlib = null;
 
         const int MAPPED_ASSEMBLIES_COUNT = 15;
 
         // Keep track of all the files currently loaded
         static tFilesLoaded *pFilesLoaded = null;
+
+        static byte* scCorlib;
+
+        public static void Init()
+        {
+            scCorlib = null;
+
+            assembliesMappedToDnaCorlib = S.buildArray(
+                "mscorlib",
+                "System.Collections",
+                "System.Console",
+                "System.IO",
+                "System.Linq",
+                "System.Net.Http",
+                "System.Private.CoreLib",
+                "System.Private.Uri",
+                "System.Reflection",
+                "System.Reflection.Extensions",
+                "System.Runtime",
+                "System.Runtime.Extensions",
+                "System.Runtime.InteropServices",
+                "System.Threading",
+                "System.Threading.Tasks"
+            );
+
+            pFilesLoaded = null;
+        }
 
         public static tMetaData* GetMetaDataForLoadedAssembly(byte *pLoadedAssemblyName) 
         {
@@ -98,9 +109,6 @@ namespace DnaUnity
             Sys.Crash("Assembly %s is not loaded\n", (PTR)pLoadedAssemblyName);
             return null;
         }
-
-        static byte* scCorlib;
-        static byte* scSDll;
 
         public static tMetaData* GetMetaDataForAssembly(byte *pAssemblyName) 
         {

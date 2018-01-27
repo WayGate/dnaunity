@@ -37,11 +37,15 @@ namespace DnaUnity
             if (!isInitialized)
             {
                 Mem.Init(memsize);
+                JIT.Init();
                 JIT_Execute.Init();
                 MetaData.Init();
+                Generics.Init();
                 Type.Init();
                 Heap.Init();
                 Finalizer.Init();
+                InternalCall.Init();
+                CLIFile.Init();
                 isInitialized = true;
             }
         }

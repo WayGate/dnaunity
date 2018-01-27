@@ -37,6 +37,8 @@ namespace DnaUnity
         static tMethodState *pCurrentMethodState;
         static byte* pParamsLocals;
 
+        static byte* scNone;
+
         // Local copies of thread state variables, to speed up execution
         // Pointer to next op-code
         static uint *pOps;
@@ -44,6 +46,19 @@ namespace DnaUnity
         // Pointer to eval-stack position
         static byte* pCurEvalStack;
         static byte* pThrowExcept;
+
+        public static void Init()
+        {
+            scNone = null;
+
+            pOps = null;
+            pCurOp = null;
+            pCurEvalStack = null;
+            pThrowExcept = null;
+
+            // Initialise the JIT code addresses
+            Execute(null, 0);
+        }
 
         // Get the next op-code
         static uint GET_OP()
@@ -361,8 +376,6 @@ namespace DnaUnity
                 CHANGE_METHOD_STATE(pMS);
             }
         }
-
-        static byte* scNone;
 
         public static uint Execute(tThread *pThread, uint numInst) 
         {
@@ -3123,12 +3136,6 @@ namespace DnaUnity
                 SAVE_METHOD_STATE();
 
             return Thread.THREAD_STATUS_RUNNING;
-        }
-
-        public static void Init() 
-        {
-            // Initialise the JIT code addresses
-            Execute(null, 0);
         }
 
     } 

@@ -163,7 +163,17 @@ namespace DnaUnity
         static uConvDouble convDouble;
         static tMetaData* pMetaData;
 
-        static byte* scInvoke;
+        static byte* scInvoke, scConstr;
+
+        public static void Init()
+        {
+            scInvoke = scConstr = null;
+            pJITOffsets = null;
+            ppTypeStacks = null;
+            pFinalOps = null;
+            pStackType = null;
+            pMetaData = null;
+        }
 
         static void InitOps(ref tOps ops, uint initialCapacity) 
         {
@@ -1619,8 +1629,6 @@ cilCallVirtConstrained:
 
         	return pFinalOps;
         }
-
-        static byte* scConstr;
 
         // Prepare a method for execution
         // This makes sure that the method has been JITed.

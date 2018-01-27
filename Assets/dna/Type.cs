@@ -32,35 +32,40 @@ namespace DnaUnity
 
     public unsafe static class Type
     {
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+        const int PTR_SIZE = 4;
+        #else
+        const int PTR_SIZE = 8;
+        #endif         
 
-        public const int ELEMENT_TYPE_VOID          = 0x01;
-        public const int ELEMENT_TYPE_BOOLEAN       = 0x02;
-        public const int ELEMENT_TYPE_CHAR          = 0x03;
-        public const int ELEMENT_TYPE_I1            = 0x04;
-        public const int ELEMENT_TYPE_U1            = 0x05;
-        public const int ELEMENT_TYPE_I2            = 0x06;
-        public const int ELEMENT_TYPE_U2            = 0x07;
-        public const int ELEMENT_TYPE_I4            = 0x08;
-        public const int ELEMENT_TYPE_U4            = 0x09;
-        public const int ELEMENT_TYPE_I8            = 0x0a;
-        public const int ELEMENT_TYPE_U8            = 0x0b;
-        public const int ELEMENT_TYPE_R4            = 0x0c;
-        public const int ELEMENT_TYPE_R8            = 0x0d;
-        public const int ELEMENT_TYPE_STRING        = 0x0e;
-        public const int ELEMENT_TYPE_PTR           = 0x0f;
-        public const int ELEMENT_TYPE_BYREF         = 0x10;
-        public const int ELEMENT_TYPE_VALUETYPE     = 0x11;
-        public const int ELEMENT_TYPE_CLASS         = 0x12;
-        public const int ELEMENT_TYPE_VAR           = 0x13; // Generic argument type
+        public const int ELEMENT_TYPE_VOID                              = 0x01;
+        public const int ELEMENT_TYPE_BOOLEAN                           = 0x02;
+        public const int ELEMENT_TYPE_CHAR                              = 0x03;
+        public const int ELEMENT_TYPE_I1                                = 0x04;
+        public const int ELEMENT_TYPE_U1                                = 0x05;
+        public const int ELEMENT_TYPE_I2                                = 0x06;
+        public const int ELEMENT_TYPE_U2                                = 0x07;
+        public const int ELEMENT_TYPE_I4                                = 0x08;
+        public const int ELEMENT_TYPE_U4                                = 0x09;
+        public const int ELEMENT_TYPE_I8                                = 0x0a;
+        public const int ELEMENT_TYPE_U8                                = 0x0b;
+        public const int ELEMENT_TYPE_R4                                = 0x0c;
+        public const int ELEMENT_TYPE_R8                                = 0x0d;
+        public const int ELEMENT_TYPE_STRING                            = 0x0e;
+        public const int ELEMENT_TYPE_PTR                               = 0x0f;
+        public const int ELEMENT_TYPE_BYREF                             = 0x10;
+        public const int ELEMENT_TYPE_VALUETYPE                         = 0x11;
+        public const int ELEMENT_TYPE_CLASS                             = 0x12;
+        public const int ELEMENT_TYPE_VAR                               = 0x13; // Generic argument type
 
-        public const int ELEMENT_TYPE_GENERICINST   = 0x15;
+        public const int ELEMENT_TYPE_GENERICINST                       = 0x15;
 
-        public const int ELEMENT_TYPE_INTPTR        = 0x18;
-        public const int ELEMENT_TYPE_UINTPTR       = 0x19;
+        public const int ELEMENT_TYPE_INTPTR                            = 0x18;
+        public const int ELEMENT_TYPE_UINTPTR                           = 0x19;
 
-        public const int ELEMENT_TYPE_OBJECT        = 0x1c;
-        public const int ELEMENT_TYPE_SZARRAY       = 0x1d;
-        public const int ELEMENT_TYPE_MVAR          = 0x1e;
+        public const int ELEMENT_TYPE_OBJECT                            = 0x1c;
+        public const int ELEMENT_TYPE_SZARRAY                           = 0x1d;
+        public const int ELEMENT_TYPE_MVAR                              = 0x1e;
 
 
         public const int TYPE_SYSTEM_OBJECT                             = 0;
@@ -128,7 +133,7 @@ namespace DnaUnity
 
         const int GENERICARRAYMETHODS_NUM = 13;
         static byte genericArrayMethodsInited = 0;
-        static tMD_MethodDef** ppGenericArrayMethods = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(sizeof(tMD_MethodDef*) * GENERICARRAYMETHODS_NUM));
+        static tMD_MethodDef** ppGenericArrayMethods = null;
 
         const int GENERICARRAYMETHODS_Internal_GetGenericEnumerator     = 0;
         const int GENERICARRAYMETHODS_get_Length                        = 1;
@@ -143,21 +148,133 @@ namespace DnaUnity
         const int GENERICARRAYMETHODS_Internal_GenericRemoveAt          = 10;
         const int GENERICARRAYMETHODS_Internal_GenericGetItem           = 11;
         const int GENERICARRAYMETHODS_Internal_GenericSetItem           = 12;
-        static /*char**/ byte** pGenericArrayMethodsInit = S.buildArray(
-            "Internal_GetGenericEnumerator",
-            "get_Length",
-            "Internal_GenericIsReadOnly",
-            "Internal_GenericAdd",
-            "Internal_GenericClear",
-            "Internal_GenericContains",
-            "Internal_GenericCopyTo",
-            "Internal_GenericRemove",
-            "Internal_GenericIndexOf",
-            "Internal_GenericInsert",
-            "Internal_GenericRemoveAt",
-            "Internal_GenericGetItem",
-            "Internal_GenericSetItem"
-        );
+        static /*char**/ byte** pGenericArrayMethodsInit = null;
+
+        public static tMD_TypeDef **types;
+        static uint numInitTypes;
+
+        [StructLayout(LayoutKind.Sequential)]
+        unsafe struct tTypeInit
+        {
+            public /*char**/byte* assemblyName;
+            public /*char**/byte* nameSpace;
+            public /*char**/byte* name;
+            public byte stackType;
+            public byte stackSize;
+            public byte arrayElementSize;
+            public byte instanceMemSize;
+        };
+
+        // String constant statics
+        static byte* scMscorlib, scSystemCollectionsGeneric, scSystemReflection, scSystemThreading,
+            scSystemIO, scSystemGlobalization, scSystem, scValueType, scObject;
+
+        static tTypeInit[] typeInit = null;
+        //static int CorLibDone = 0;
+
+        public static void Init() 
+        {
+            uint i;
+
+            scMscorlib = scSystemCollectionsGeneric = scSystemReflection = scSystemThreading = 
+                scSystemIO = scSystemGlobalization = scSystem = scValueType = scObject = null;
+
+            ppGenericArrayMethods = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(sizeof(tMD_MethodDef*) * GENERICARRAYMETHODS_NUM));
+
+            pGenericArrayMethodsInit = S.buildArray(
+                "Internal_GetGenericEnumerator",
+                "get_Length",
+                "Internal_GenericIsReadOnly",
+                "Internal_GenericAdd",
+                "Internal_GenericClear",
+                "Internal_GenericContains",
+                "Internal_GenericCopyTo",
+                "Internal_GenericRemove",
+                "Internal_GenericIndexOf",
+                "Internal_GenericInsert",
+                "Internal_GenericRemoveAt",
+                "Internal_GenericGetItem",
+                "Internal_GenericSetItem"
+            );
+
+            typeInit = new tTypeInit[] {
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Object"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Array"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Void"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Boolean"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Byte"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 1, instanceMemSize = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("SByte"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 1, instanceMemSize = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Char"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("String"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("IntPtr"), stackType = EvalStack.EVALSTACK_PTR, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeFieldHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("InvalidCastException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4},
+                new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_CHAR, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_OBJECT, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemCollectionsGeneric, "System.Collections.Generic"), name = new S("IEnumerable`1"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemCollectionsGeneric, "System.Collections.Generic"), name = new S("ICollection`1"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemCollectionsGeneric, "System.Collections.Generic"), name = new S("IList`1"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("MulticastDelegate"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("NullReferenceException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Single"), stackType = EvalStack.EVALSTACK_F32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Double"), stackType = EvalStack.EVALSTACK_F64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeType"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tRuntimeType)},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Type"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeTypeHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeMethodHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Enum"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_STRING, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_INT32, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("Thread"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tThread)},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("ThreadStart"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("ParameterizedThreadStart"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("WeakReference"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileMode"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAccess"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileShare"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_BYTE, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemGlobalization, "System.Globalization"), name = new S("UnicodeCategory"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("OverflowException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("PlatformID"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAttributes"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UIntPtr"), stackType = EvalStack.EVALSTACK_PTR, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Nullable`1"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_TYPE, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("PropertyInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tPropertyInfo)},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodInfo)},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodBase"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodBase)},
+            };
+
+            // Build all the types needed by the interpreter.
+            numInitTypes = (uint)typeInit.Length;
+            types = (tMD_TypeDef**)Mem.mallocForever((SIZE_T)(numInitTypes * sizeof(tMD_TypeDef*)));
+            for (i=0; i<numInitTypes; i++) {
+                if (typeInit[i].assemblyName != null) {
+                    // Normal type initialisation
+                    types[i] = MetaData.GetTypeDefFromFullName(typeInit[i].assemblyName, typeInit[i].nameSpace, typeInit[i].name);
+                    // For the pre-defined system types, fill in the well-known memory sizes
+                    types[i]->stackType = typeInit[i].stackType;
+                    types[i]->stackSize = typeInit[i].stackSize;
+                    types[i]->arrayElementSize = typeInit[i].arrayElementSize;
+                    types[i]->instanceMemSize = typeInit[i].instanceMemSize;
+                }
+            }
+            for (i=0; i<numInitTypes; i++) {
+                if (typeInit[i].assemblyName != null) {
+                    MetaData.Fill_TypeDef(types[i], null, null);
+                } else {
+                    // Special initialisation for arrays of particular types.
+                    types[i] = Type.GetArrayTypeDef(types[(uint)(typeInit[i].name)], null, null);
+                }
+            }
+            //CorLibDone = 1;
+        }
 
         static void GetMethodDefs() 
         {
@@ -278,8 +395,6 @@ namespace DnaUnity
         	CreateNewArrayType(pIterArrays->pArrayType, pElementType, ppClassTypeArgs, ppMethodTypeArgs);
         	return pIterArrays->pArrayType;
         }
-
-        static byte* scSystem, scValueType, scObject;
 
         public static uint IsValueType(tMD_TypeDef *pTypeDef) 
         {
@@ -422,119 +537,6 @@ namespace DnaUnity
         			Sys.Crash("Type.GetTypeFromSig(): Cannot handle signature element type: 0x%02x", entry);
                     return null;
         	}
-        }
-
-        public static tMD_TypeDef **types;
-        static uint numInitTypes;
-
-        [StructLayout(LayoutKind.Sequential)]
-        unsafe struct tTypeInit
-        {
-        	public /*char**/byte* assemblyName;
-            public /*char**/byte* nameSpace;
-            public /*char**/byte* name;
-            public byte stackType;
-            public byte stackSize;
-            public byte arrayElementSize;
-            public byte instanceMemSize;
-        };
-
-        static byte* scMscorlib;
-        static byte* scSystemCollectionsGeneric;
-        static byte* scSystemReflection;
-        static byte* scSystemThreading;
-        static byte* scSystemIO;
-        static byte* scSystemGlobalization;
-
-        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
-        const int PTR_SIZE = 4;
-        #else
-        const int PTR_SIZE = 8;
-        #endif 
-
-
-        static tTypeInit[] typeInit = {
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Object"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Array"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Void"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Boolean"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Byte"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 1, instanceMemSize = 4},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("SByte"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 1, instanceMemSize = 4},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Char"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("String"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("IntPtr"), stackType = EvalStack.EVALSTACK_PTR, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeFieldHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("InvalidCastException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4},
-            new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_CHAR, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_OBJECT, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemCollectionsGeneric, "System.Collections.Generic"), name = new S("IEnumerable`1"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemCollectionsGeneric, "System.Collections.Generic"), name = new S("ICollection`1"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemCollectionsGeneric, "System.Collections.Generic"), name = new S("IList`1"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("MulticastDelegate"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("NullReferenceException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Single"), stackType = EvalStack.EVALSTACK_F32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Double"), stackType = EvalStack.EVALSTACK_F64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeType"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tRuntimeType)},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Type"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeTypeHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeMethodHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Enum"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_STRING, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_INT32, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("Thread"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tThread)},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("ThreadStart"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("ParameterizedThreadStart"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("WeakReference"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileMode"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAccess"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileShare"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_BYTE, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemGlobalization, "System.Globalization"), name = new S("UnicodeCategory"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("OverflowException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("PlatformID"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAttributes"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UIntPtr"), stackType = EvalStack.EVALSTACK_PTR, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Nullable`1"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_TYPE, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("PropertyInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tPropertyInfo)},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodInfo)},
-            new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodBase"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodBase)},
-        };
-        //static int CorLibDone = 0;
-
-        public static void Init() 
-        {
-        	uint i;
-
-        	// Build all the type needed by the interpreter.
-            numInitTypes = (uint)typeInit.Length;
-            types = (tMD_TypeDef**)Mem.mallocForever((SIZE_T)(numInitTypes * sizeof(tMD_TypeDef*)));
-        	for (i=0; i<numInitTypes; i++) {
-        		if (typeInit[i].assemblyName != null) {
-        			// Normal type initialisation
-        			types[i] = MetaData.GetTypeDefFromFullName(typeInit[i].assemblyName, typeInit[i].nameSpace, typeInit[i].name);
-        			// For the pre-defined system types, fill in the well-known memory sizes
-        			types[i]->stackType = typeInit[i].stackType;
-        			types[i]->stackSize = typeInit[i].stackSize;
-        			types[i]->arrayElementSize = typeInit[i].arrayElementSize;
-        			types[i]->instanceMemSize = typeInit[i].instanceMemSize;
-        		}
-        	}
-        	for (i=0; i<numInitTypes; i++) {
-        		if (typeInit[i].assemblyName != null) {
-        			MetaData.Fill_TypeDef(types[i], null, null);
-        		} else {
-        			// Special initialisation for arrays of particular types.
-        			types[i] = Type.GetArrayTypeDef(types[(uint)(typeInit[i].name)], null, null);
-        		}
-        	}
-        	//CorLibDone = 1;
         }
 
         public static uint IsMethod(tMD_MethodDef *pMethod, /*STRING*/byte* name, tMD_TypeDef *pReturnType, uint numParams, byte *pParamTypeIndexs) {

@@ -217,6 +217,202 @@ namespace DnaUnity
             return ((/*IDX_TABLE*/uint)(((table) << 24) | ((index) & 0x00ffffff))); 
         }
 
+        // Definition strings
+        static byte** tableDefs = null;
+
+        public const int TABLEDEFS_LENGTH = 0x2D;
+
+        // Coded indexes use this lookup table.
+        static byte** codedTags = null;
+
+        static byte[] codedTagBits = null;
+
+        static byte[] tableRowSize = null;
+
+        public static void Init() 
+        {
+            // Clear const ptrs
+            scCctor = scFinalize = null;
+
+            /*
+        Format of definition strings:
+        Always 2 characters to togther. 1st character defines source, 2nd defines destination.
+        Sources:
+            c: 8-bit value
+            s: 16-bit short
+            i: 32-bit int
+            S: Index into string heap
+            G: Index into GUID heap
+            B: Index into BLOB heap
+            0: Coded index: TypeDefOrRef
+            1: Coded index: HasConstant
+            2: Coded index: HasCustomAttribute
+            3: Coded index: HasFieldMarshall
+            4: Coded index: HasDeclSecurity
+            5: Coded index: MemberRefParent
+            6: Coded index: HasSemantics
+            7: Coded index: MethodDefOrRef
+            8: Coded index: MemberForwarded
+            9: Coded index: Implementation
+            :: Coded index: CustomAttributeType
+            ;: Coded index: ResolutionScope
+            <: Coded index: TypeOrMethodDef
+            \x00 - \x2c: Simple indexes into the respective table
+            ^: RVA: Convert to pointer
+            x: Nothing, use 0
+            m: This metadata pointer
+            l: (lower case L) Boolean, is this the last entry in this table?
+            I: The original table index for this table item
+        Destination:
+            x: nowhere, ignore
+            *: Pointer (also RVA)
+            i: 32-bit index into relevant heap;
+                Or coded index - MSB = which table, other 3 bytes = table index
+                Or 32-bit int
+            s: 16-bit value
+            c: 8-bit value
+            */
+
+         tableDefs = S.buildArray(
+                // 0x00
+                "sxS*G*GxGx",
+                // 0x01
+                "x*;ixiS*S*",
+                // 0x02
+                "x*m*iixiS*S*0i\x04i\x06ixclcxcxcxixix*x*xixix*xixix*xixixixix*Iixix*x*x*x*xixix*xixix*x*x*x*",
+                // 0x03
+                null,
+                // 0x04
+                "x*m*ssxsxiS*B*x*x*xixiIixix*",
+                // 0x05
+                null,
+                // 0x06
+                "x*m*^*ssssxiS*B*\x08ixix*xixix*xixix*x*Iixix*x*"
+                #if DIAG_METHOD_CALLS
+                "xixix*"
+                #endif
+                ,
+                // 0x07
+                null,
+                // 0x08
+                "ssssxiS*",
+                // 0x09
+                "\x02i0i",
+                // 0x0A
+                "x*5ixiS*B*",
+                // 0x0B
+                "ccccxs1iB*",
+                // 0x0C
+                "2i:iB*",
+                // 0x0D
+                null,
+                // 0x0E
+                "ssxs4iB*",
+                // 0x0F
+                "ssxsii\x02i",
+                // 0x10
+                null,
+                // 0x11
+                "B*",
+                // 0x12
+                "\x02i\x14i",
+                // 0x13
+                null,
+                // 0x14
+                "ssxsxiS*0i",
+                // 0x15
+                "\x02i\x17i",
+                // 0x16
+                null,
+                // 0x17
+                "ssxsxiS*B*",
+                // 0x18
+                "ssxs\06i6i",
+                // 0x19
+                "\x02i7i7i",
+                // 0x1A
+                "S*",
+                // 0x1B
+                "x*m*B*",
+                // 0x1C
+                "ssxs8iS*\x1ai",
+                // 0x1D
+                "^*\x04i",
+                // 0x1E
+                null,
+                // 0x1F
+                null,
+                // 0x20
+                "iissssssssiiB*S*S*",
+                // 0x21
+                null,
+                // 0x22
+                null,
+                // 0x23
+                "ssssssssiixiB*S*S*B*",
+                // 0x24
+                null,
+                // 0x25
+                null,
+                // 0x26
+                null,
+                // 0x27
+                null,
+                // 0x28
+                null,
+                // 0x29
+                "\x02i\x02i",
+                // 0x2A
+                "ssss<iS*",
+                // 0x2B
+                "x*m*7ixiB*",
+                // 0x2C
+                "\x2a*0i"
+            );
+
+            // Coded indexes use this lookup table.
+            // Note that the extra 'z' characters are important!
+            // (Because of how the lookup works each string must be a power of 2 in length)
+            codedTags = S.buildArray(
+                // TypeDefOrRef
+                "\x02\x01\x1Bz",
+                // HasConstant
+                "\x04\x08\x17z",
+                // HasCustomAttribute
+                "\x06\x04\x01\x02\x08\x09\x0A\x00\x0E\x17\x14\x11\x1A\x1B\x20\x23\x26\x27\x28zzzzzzzzzzzzz",
+                // HasFieldMarshall
+                "\x04\x08",
+                // HasDeclSecurity
+                "\x02\x06\x20z",
+                // MemberRefParent
+                "z\x01\x1A\x06\x1Bzzz",
+                // HasSemantics
+                "\x14\x17",
+                // MethodDefOrRef
+                "\x06\x0A",
+                // MemberForwarded
+                "\x04\x06",
+                // Implementation
+                "\x26\x23\x27z",
+                // CustomAttributeType
+                "zz\x06\x0Azzzz",
+                // ResolutionScope
+                "\x00\x1A\x23\x01",
+                // TypeOrMethodDef
+                "\x02\x06"
+            );
+
+            codedTagBits = new byte[] {
+                2, 2, 5, 1, 2, 3, 1, 1, 1, 2, 3, 2, 1
+            };
+
+            tableRowSize = new byte[MAX_TABLES];
+
+            uint i;
+            for (i=0; i<MAX_TABLES; i++) {
+                tableRowSize[i] = 0;
+            }
+        }
 
         public static uint DecodeSigEntry(/*SIG*/byte* *pSig) {
         	byte a,b,c,d;
@@ -292,189 +488,6 @@ namespace DnaUnity
         	pThis->GUIDs.pGUID1 = (byte*)pStream;
 
             Sys.log_f(1, "Read %d GUIDs\n", pThis->GUIDs.numGUIDs);
-        }
-
-        /*
-        Format of definition strings:
-        Always 2 characters to togther. 1st character defines source, 2nd defines destination.
-        Sources:
-        	c: 8-bit value
-        	s: 16-bit short
-        	i: 32-bit int
-        	S: Index into string heap
-        	G: Index into GUID heap
-        	B: Index into BLOB heap
-        	0: Coded index: TypeDefOrRef
-        	1: Coded index: HasConstant
-        	2: Coded index: HasCustomAttribute
-        	3: Coded index: HasFieldMarshall
-        	4: Coded index: HasDeclSecurity
-        	5: Coded index: MemberRefParent
-        	6: Coded index: HasSemantics
-        	7: Coded index: MethodDefOrRef
-        	8: Coded index: MemberForwarded
-        	9: Coded index: Implementation
-        	:: Coded index: CustomAttributeType
-        	;: Coded index: ResolutionScope
-        	<: Coded index: TypeOrMethodDef
-        	\x00 - \x2c: Simple indexes into the respective table
-        	^: RVA: Convert to pointer
-        	x: Nothing, use 0
-        	m: This metadata pointer
-        	l: (lower case L) Boolean, is this the last entry in this table?
-        	I: The original table index for this table item
-        Destination:
-        	x: nowhere, ignore
-        	*: Pointer (also RVA)
-            i: 32-bit index into relevant heap;
-                Or coded index - MSB = which table, other 3 bytes = table index
-                Or 32-bit int
-        	s: 16-bit value
-        	c: 8-bit value
-        */
-        static byte** tableDefs = S.buildArray(
-        	// 0x00
-            "sxS*G*GxGx",
-        	// 0x01
-            "x*;ixiS*S*",
-        	// 0x02
-            "x*m*iixiS*S*0i\x04i\x06ixclcxcxcxixix*x*xixix*xixix*xixixixix*Iixix*x*x*x*xixix*xixix*x*x*x*",
-        	// 0x03
-        	null,
-        	// 0x04
-            "x*m*ssxsxiS*B*x*x*xixiIixix*",
-        	// 0x05
-        	null,
-        	// 0x06
-            "x*m*^*ssssxiS*B*\x08ixix*xixix*xixix*x*Iixix*x*"
-        #if DIAG_METHOD_CALLS
-            "xixix*"
-        #endif
-        	,
-        	// 0x07
-        	null,
-        	// 0x08
-            "ssssxiS*",
-        	// 0x09
-            "\x02i0i",
-        	// 0x0A
-            "x*5ixiS*B*",
-        	// 0x0B
-            "ccccxs1iB*",
-        	// 0x0C
-            "2i:iB*",
-        	// 0x0D
-        	null,
-        	// 0x0E
-            "ssxs4iB*",
-        	// 0x0F
-            "ssxsii\x02i",
-        	// 0x10
-        	null,
-        	// 0x11
-            "B*",
-        	// 0x12
-            "\x02i\x14i",
-        	// 0x13
-        	null,
-        	// 0x14
-            "ssxsxiS*0i",
-        	// 0x15
-            "\x02i\x17i",
-        	// 0x16
-        	null,
-        	// 0x17
-            "ssxsxiS*B*",
-        	// 0x18
-            "ssxs\06i6i",
-        	// 0x19
-            "\x02i7i7i",
-        	// 0x1A
-            "S*",
-        	// 0x1B
-            "x*m*B*",
-        	// 0x1C
-            "ssxs8iS*\x1ai",
-        	// 0x1D
-            "^*\x04i",
-        	// 0x1E
-        	null,
-        	// 0x1F
-        	null,
-        	// 0x20
-            "iissssssssiiB*S*S*",
-        	// 0x21
-        	null,
-        	// 0x22
-        	null,
-        	// 0x23
-            "ssssssssiixiB*S*S*B*",
-        	// 0x24
-        	null,
-        	// 0x25
-        	null,
-        	// 0x26
-        	null,
-        	// 0x27
-        	null,
-        	// 0x28
-        	null,
-        	// 0x29
-            "\x02i\x02i",
-        	// 0x2A
-            "ssss<iS*",
-        	// 0x2B
-            "x*m*7ixiB*",
-        	// 0x2C
-            "\x2a*0i"
-        );
-
-        public const int TABLEDEFS_LENGTH = 0x2D;
-
-        // Coded indexes use this lookup table.
-        // Note that the extra 'z' characters are important!
-        // (Because of how the lookup works each string must be a power of 2 in length)
-        static byte** codedTags = S.buildArray(
-        	// TypeDefOrRef
-            "\x02\x01\x1Bz",
-        	// HasConstant
-            "\x04\x08\x17z",
-        	// HasCustomAttribute
-            "\x06\x04\x01\x02\x08\x09\x0A\x00\x0E\x17\x14\x11\x1A\x1B\x20\x23\x26\x27\x28zzzzzzzzzzzzz",
-        	// HasFieldMarshall
-            "\x04\x08",
-        	// HasDeclSecurity
-            "\x02\x06\x20z",
-        	// MemberRefParent
-            "z\x01\x1A\x06\x1Bzzz",
-        	// HasSemantics
-            "\x14\x17",
-        	// MethodDefOrRef
-            "\x06\x0A",
-        	// MemberForwarded
-            "\x04\x06",
-        	// Implementation
-            "\x26\x23\x27z",
-        	// CustomAttributeType
-            "zz\x06\x0Azzzz",
-        	// ResolutionScope
-            "\x00\x1A\x23\x01",
-        	// TypeOrMethodDef
-            "\x02\x06"
-        );
-
-        static byte[] codedTagBits = {
-        	2, 2, 5, 1, 2, 3, 1, 1, 1, 2, 3, 2, 1
-        };
-
-        static byte[] tableRowSize = new byte[MAX_TABLES];
-
-        public static void Init() 
-        {
-        	uint i;
-        	for (i=0; i<MAX_TABLES; i++) {
-        		tableRowSize[i] = 0;
-        	}
         }
 
         static uint GetU16(byte *pSource) 

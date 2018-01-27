@@ -63,6 +63,12 @@ namespace DnaUnity
     [StructLayout(LayoutKind.Sequential)]
     public unsafe static class Generics
     {
+        static byte* scBracket, scComma, scNsDotName, scGenericName, scQuestion, scEndBracket;
+
+        public static void Init()
+        {
+            scBracket = scComma = scNsDotName = scGenericName = scQuestion = scEndBracket = null;
+        }
 
         public static void GetHeapRoots(tHeapRoots *pHeapRoots, tMD_TypeDef *pTypeDef) 
         {
@@ -117,13 +123,6 @@ namespace DnaUnity
         	}
         	return null;
         }
-
-        static byte* scBracket;
-        static byte* scComma;
-        static byte* scNsDotName;
-        static byte* scGenericName;
-        static byte* scQuestion;
-        static byte* scEndBracket;
 
         public static tMD_TypeDef* GetGenericTypeFromCoreType(tMD_TypeDef *pCoreType, uint numTypeArgs, tMD_TypeDef **ppTypeArgs) 
         {
