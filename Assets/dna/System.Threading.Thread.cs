@@ -28,7 +28,7 @@ namespace DnaUnity
     using PTR = System.UInt64;
     #endif 
 
-    public unsafe static class SystemThreadingThread
+    public unsafe static class System_Threading_Thread
     {
 
         public static tAsyncCall* ctor(byte* pThis_, byte* pParams, byte* pReturnValue) 

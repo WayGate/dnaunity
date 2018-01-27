@@ -132,13 +132,11 @@ namespace DnaUnity
                 new tInternalCall {nameSpace = null, type = null, method = new S("Pow"), fn = new H(System_Math.Pow), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE, Type.TYPE_SYSTEM_DOUBLE)},
                 new tInternalCall {nameSpace = null, type = null, method = new S("Sqrt"), fn = new H(System_Math.Sqrt), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
 
-                /*
-                new tInternalCall {nameSpace = new S("System.Threading"), type = new S("Thread"), method = new S(".ctor"), System_Threading_Thread_ctor, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_THREADING_THREADSTART}},
-                new tInternalCall {nameSpace = null, type = null, method = new S(".ctor"), System_Threading_Thread.ctorParam, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART}},
-                new tInternalCall {nameSpace = null, type = null, method = new S("Start"), System_Threading_Thread.Start, Type.TYPE_SYSTEM_VOID, 0},
-                new tInternalCall {nameSpace = null, type = null, method = new S("Sleep"), System_Threading_Thread.Sleep, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_INT32}},
-                new tInternalCall {nameSpace = null, type = null, method = new S("get_CurrentThread"), System_Threading_Thread.get_CurrentThread, Type.TYPE_SYSTEM_THREADING_THREAD, 0},
-                */
+                new tInternalCall {nameSpace = new S("System.Threading"), type = new S("Thread"), method = new S(".ctor"), fn = new H(System_Threading_Thread.ctor), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_THREADING_THREADSTART)},
+                new tInternalCall {nameSpace = null, type = null, method = new S(".ctor"), fn = new H(System_Threading_Thread.ctorParam), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Start"), fn = new H(System_Threading_Thread.Start), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Sleep"), fn = new H(System_Threading_Thread.Sleep), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_INT32)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("get_CurrentThread"), fn = new H(System_Threading_Thread.get_CurrentThread), returnType = Type.TYPE_SYSTEM_THREADING_THREAD, numParameters = 0},
 
                 new tInternalCall {nameSpace = null, type = new S("Monitor"), method = new S("Internal_TryEnter"), fn = new H(System_Threading_Monitor.Internal_TryEnter), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT, Type.TYPE_SYSTEM_INT32)},
                 new tInternalCall {nameSpace = null, type = null, method = new S("Internal_Exit"), fn = new H(System_Threading_Monitor.Internal_Exit), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT)},
