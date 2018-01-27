@@ -56,11 +56,11 @@ namespace DnaUnity
         public static void Init()
         {
             internalCalls = new tInternalCall[] {
-/*            
-                {"System", "Object", "Equals", System_Object_Equals, Type.TYPE_SYSTEM_BOOLEAN, 1, {Type.TYPE_SYSTEM_OBJECT}},
-                {null,      null,    "Clone", System_Object_Clone, Type.TYPE_SYSTEM_OBJECT, 1, {Type.TYPE_SYSTEM_OBJECT}},
-                {null,      null,    "GetHashCode", System_Object_GetHashCode, Type.TYPE_SYSTEM_INT32, 0},
-                {null,      null,    "GetType", System_Object_GetType, Type.TYPE_SYSTEM_TYPE, 0}, */
+
+                new tInternalCall {nameSpace = new S("System"), type = new S("Object"), method = new S("Equals"), fn = new H(System_Object.Equals), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Clone"), fn = new H(System_Object.Clone), returnType = Type.TYPE_SYSTEM_OBJECT, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("GetHashCode"), fn = new H(System_Object.GetHashCode), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("GetType"), fn = new H(System_Object.GetType), returnType = Type.TYPE_SYSTEM_TYPE, numParameters = 0},
 
                 new tInternalCall {nameSpace = null, type = new S("String"), method = new S(".ctor"), fn = new H(System_String.ctor_CharInt32), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_CHAR, Type.TYPE_SYSTEM_INT32)},
                 new tInternalCall {nameSpace = null, type = null,     method = new S(".ctor"), fn = new H(System_String.ctor_CharAIntInt), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_CHAR, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32)},
@@ -88,15 +88,15 @@ namespace DnaUnity
 
                 {null, "Environment", "get_TickCount", System_Environment_get_TickCount, Type.TYPE_SYSTEM_INT32, 0},
                 {null, null         , "GetOSVersionString", System_Environment_GetOSVersionString, Type.TYPE_SYSTEM_STRING, 0},
-                {null, null         , "get_Platform", System_Environment_get_Platform, Type.TYPE_SYSTEM_PLATFORMID, 0},
+                {null, null         , "get_Platform", System_Environment_get_Platform, Type.TYPE_SYSTEM_PLATFORMID, 0}, */
 
-                {null, "Type", "GetTypeFromHandle", System_Type_GetTypeFromHandle, Type.TYPE_SYSTEM_TYPE, 1, {Type.TYPE_SYSTEM_RUNTIMETYPEHANDLE}},
-                {null, null,   "EnsureAssemblyLoaded", System_Type_EnsureAssemblyLoaded, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_STRING}},
-                {null, null,   "GetMethodInternal", System_Type_GetMethod, Type.TYPE_SYSTEM_OBJECT, 1, {Type.TYPE_SYSTEM_STRING}},
-                {null, null,   "GetProperties", System_Type_GetProperties, Type.TYPE_SYSTEM_ARRAY_NO_TYPE, 0},
-                {null, null,   "GetType", System_Type_GetTypeFromName, Type.TYPE_SYSTEM_TYPE, 3, {Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING}},
-                {null, null,   "get_IsValueType", System_Type_get_IsValueType, Type.TYPE_SYSTEM_BOOLEAN, 0},
-    */
+                new tInternalCall {nameSpace = null, type = new S("Type"), method = new S("GetTypeFromHandle"), fn = new H(System_Type.GetTypeFromHandle), returnType = Type.TYPE_SYSTEM_TYPE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_RUNTIMETYPEHANDLE)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("EnsureAssemblyLoaded"), fn = new H(System_Type.EnsureAssemblyLoaded), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("GetMethodInternal"), fn = new H(System_Type.GetMethod), returnType = Type.TYPE_SYSTEM_OBJECT, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("GetProperties"), fn = new H(System_Type.GetProperties), returnType = Type.TYPE_SYSTEM_ARRAY_NO_TYPE, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("GetType"), fn = new H(System_Type.GetTypeFromName), returnType = Type.TYPE_SYSTEM_TYPE, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("get_IsValueType"), fn = new H(System_Type.get_IsValueType), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 0},
+    
                 new tInternalCall {nameSpace = null, type = new S("RuntimeType"), method = new S("get_Name"), fn = new H(System_RuntimeType.get_Name), returnType = Type.TYPE_SYSTEM_STRING},
                 new tInternalCall {nameSpace = null, type = null, method = new S("get_Namespace"), fn = new H(System_RuntimeType.get_Namespace), returnType = Type.TYPE_SYSTEM_STRING},
                 new tInternalCall {nameSpace = null, type = null, method = new S("GetNestingParentType"), fn = new H(System_RuntimeType.GetNestingParentType), returnType = Type.TYPE_SYSTEM_RUNTIMETYPE},
@@ -107,60 +107,61 @@ namespace DnaUnity
                 new tInternalCall {nameSpace = null, type = null, method = new S("GetGenericArguments"), fn = new H(System_RuntimeType.GetGenericArguments), returnType = Type.TYPE_SYSTEM_ARRAY_TYPE},
                 new tInternalCall {nameSpace = null, type = null, method = new S("GetElementType"), fn = new H(System_RuntimeType.GetElementType), returnType = Type.TYPE_SYSTEM_TYPE},
 
-    /*            {null, "Char", "GetUnicodeCategory", System_Char_GetUnicodeCategory, Type.TYPE_SYSTEM_GLOBALIZATION_UNICODECATEGORY, 1, {Type.TYPE_SYSTEM_CHAR}},
-                {null, null  , "ToLowerInvariant", System_Char_ToLowerInvariant, Type.TYPE_SYSTEM_CHAR, 1, {Type.TYPE_SYSTEM_CHAR}},
-                {null, null  , "ToUpperInvariant", System_Char_ToUpperInvariant, Type.TYPE_SYSTEM_CHAR, 1, {Type.TYPE_SYSTEM_CHAR}},
+                new tInternalCall {nameSpace = null, type = new S("Char"), method = new S("GetUnicodeCategory"), fn = new H(System_Char.GetUnicodeCategory), returnType = Type.TYPE_SYSTEM_GLOBALIZATION_UNICODECATEGORY, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_CHAR)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("ToLowerInvariant"), fn = new H(System_Char.ToLowerInvariant), returnType = Type.TYPE_SYSTEM_CHAR, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_CHAR)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("ToUpperInvariant"), fn = new H(System_Char.ToUpperInvariant), returnType = Type.TYPE_SYSTEM_CHAR, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_CHAR)},
 
-                {null, "GC", "Collect", System_GC_Collect, Type.TYPE_SYSTEM_VOID, 0},
-                {null, null, "Internal_CollectionCount", System_GC_Internal_CollectionCount, Type.TYPE_SYSTEM_INT32, 0},
-                {null, null, "GetTotalMemory", System_GC_GetTotalMemory, Type.TYPE_SYSTEM_INT64, 1, {Type.TYPE_SYSTEM_BOOLEAN}},
-                {null, null, "SuppressFinalize", System_GC_SuppressFinalize, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_OBJECT}},
+                new tInternalCall {nameSpace = null, type = new S("GC"), method = new S("Collect"), fn = new H(System_GC.Collect), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Internal_CollectionCount"), fn = new H(System_GC.Internal_CollectionCount), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("GetTotalMemory"), fn = new H(System_GC.GetTotalMemory), returnType = Type.TYPE_SYSTEM_INT64, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_BOOLEAN)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("SuppressFinalize"), fn = new H(System_GC.SuppressFinalize), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT)},
 
-                {null, "Enum", "Internal_GetValue", System_Enum_Internal_GetValue, Type.TYPE_SYSTEM_INT32, 0},
-                {null, null,   "Internal_GetInfo", System_Enum_Internal_GetInfo, Type.TYPE_SYSTEM_VOID, 3, {Type.TYPE_SYSTEM_TYPE, Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INTPTR}},
+                new tInternalCall {nameSpace = null, type = new S("Enum"), method = new S("Internal_GetValue"), fn = new H(System_Enum.Internal_GetValue), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Internal_GetInfo"), fn = new H(System_Enum.Internal_GetInfo), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_TYPE, Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INTPTR)},
 
-                {null, "ValueType", "GetFields", System_ValueType_GetFields, Type.TYPE_SYSTEM_ARRAY_NO_TYPE, 2, {Type.TYPE_SYSTEM_OBJECT, Type.TYPE_SYSTEM_OBJECT}},
+                new tInternalCall {nameSpace = null, type = new S("ValueType"), method = new S("GetFields"), fn = new H(System_ValueType.GetFields), returnType = Type.TYPE_SYSTEM_ARRAY_NO_TYPE, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT, Type.TYPE_SYSTEM_OBJECT)},
 
-                {null, "WeakReference", "get_Target", System_WeakReference_get_Target, Type.TYPE_SYSTEM_OBJECT, 0},
-                {null, null,            "set_Target", System_WeakReference_set_Target, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_OBJECT}},
+                new tInternalCall {nameSpace = null, type = new S("WeakReference"), method = new S("get_Target"), fn = new H(System_WeakReference.get_Target), returnType = Type.TYPE_SYSTEM_OBJECT, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("set_Target"), fn = new H(System_WeakReference.set_Target), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT)},
 
-                {null, "DateTime", "InternalUtcNow", System_DateTime_InternalUtcNow, Type.TYPE_SYSTEM_INT64, 0},
+                new tInternalCall {nameSpace = null, type = new S("DateTime"), method = new S("InternalUtcNow"), fn = new H(System_DateTime.InternalUtcNow), returnType = Type.TYPE_SYSTEM_INT64, numParameters = 0},
 
-                {null, "Math", "Sin", System_Math_Sin, Type.TYPE_SYSTEM_DOUBLE, 1, {Type.TYPE_SYSTEM_DOUBLE}},
-                {null, null,   "Cos", System_Math_Cos, Type.TYPE_SYSTEM_DOUBLE, 1, {Type.TYPE_SYSTEM_DOUBLE}},
-                {null, null,   "Tan", System_Math_Tan, Type.TYPE_SYSTEM_DOUBLE, 1, {Type.TYPE_SYSTEM_DOUBLE}},
-                {null, null,   "Pow", System_Math_Pow, Type.TYPE_SYSTEM_DOUBLE, 2, {Type.TYPE_SYSTEM_DOUBLE, Type.TYPE_SYSTEM_DOUBLE}},
-                {null, null,   "Sqrt", System_Math_Sqrt, Type.TYPE_SYSTEM_DOUBLE, 1, {Type.TYPE_SYSTEM_DOUBLE}},
+                new tInternalCall {nameSpace = null, type = new S("Math"), method = new S("Sin"), fn = new H(System_Math.Sin), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Cos"), fn = new H(System_Math.Cos), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Tan"), fn = new H(System_Math.Tan), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Pow"), fn = new H(System_Math.Pow), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE, Type.TYPE_SYSTEM_DOUBLE)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Sqrt"), fn = new H(System_Math.Sqrt), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
 
-                {"System.Threading", "Thread", ".ctor", System_Threading_Thread_ctor, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_THREADING_THREADSTART}},
-                {null,               null,     ".ctor", System_Threading_Thread_ctorParam, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART}},
-                {null,               null,     "Start", System_Threading_Thread_Start, Type.TYPE_SYSTEM_VOID, 0},
-                {null,               null,     "Sleep", System_Threading_Thread_Sleep, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_INT32}},
-                {null,               null,     "get_CurrentThread", System_Threading_Thread_get_CurrentThread, Type.TYPE_SYSTEM_THREADING_THREAD, 0},
+                /*
+                new tInternalCall {nameSpace = new S("System.Threading"), type = new S("Thread"), method = new S(".ctor"), System_Threading_Thread_ctor, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_THREADING_THREADSTART}},
+                new tInternalCall {nameSpace = null, type = null, method = new S(".ctor"), System_Threading_Thread.ctorParam, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART}},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Start"), System_Threading_Thread.Start, Type.TYPE_SYSTEM_VOID, 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Sleep"), System_Threading_Thread.Sleep, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_INT32}},
+                new tInternalCall {nameSpace = null, type = null, method = new S("get_CurrentThread"), System_Threading_Thread.get_CurrentThread, Type.TYPE_SYSTEM_THREADING_THREAD, 0},
+                */
 
-                {null, "Monitor", "Internal_TryEnter", System_Threading_Monitor_Internal_TryEnter, Type.TYPE_SYSTEM_BOOLEAN, 2, {Type.TYPE_SYSTEM_OBJECT, Type.TYPE_SYSTEM_INT32}},
-                {null, null,      "Internal_Exit", System_Threading_Monitor_Internal_Exit, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_OBJECT}},
+                new tInternalCall {nameSpace = null, type = new S("Monitor"), method = new S("Internal_TryEnter"), fn = new H(System_Threading_Monitor.Internal_TryEnter), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT, Type.TYPE_SYSTEM_INT32)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Internal_Exit"), fn = new H(System_Threading_Monitor.Internal_Exit), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_OBJECT)},
 
-                {null, "Interlocked", "CompareExchange", System_Threading_Interlocked_CompareExchange_Int32, Type.TYPE_SYSTEM_INT32, 3, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32}},
-                {null, null,          "Increment", System_Threading_Interlocked_Increment_Int32, Type.TYPE_SYSTEM_INT32, 1, {Type.TYPE_SYSTEM_INTPTR}},
-                {null, null,          "Decrement", System_Threading_Interlocked_Decrement_Int32, Type.TYPE_SYSTEM_INT32, 1, {Type.TYPE_SYSTEM_INTPTR}},
-                {null, null,          "Add", System_Threading_Interlocked_Add_Int32, Type.TYPE_SYSTEM_INT32, 2, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32}},
-                {null, null,          "Exchange", System_Threading_Interlocked_Exchange_Int32, Type.TYPE_SYSTEM_INT32, 2, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32}},
+                new tInternalCall {nameSpace = null, type = new S("Interlocked"), method = new S("CompareExchange"), fn = new H(System_Threading_Interlocked.CompareExchange_Int32), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Increment"), fn = new H(System_Threading_Interlocked.Increment_Int32), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_INTPTR)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Decrement"), fn = new H(System_Threading_Interlocked.Decrement_Int32), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_INTPTR)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Add"), fn = new H(System_Threading_Interlocked.Add_Int32), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Exchange"), fn = new H(System_Threading_Interlocked.Exchange_Int32), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INT32)},
 
+                /*
                 {"System.IO", "FileInternal", "Open", System_IO_FileInternal_Open, Type.TYPE_SYSTEM_INTPTR, 5, {Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_IO_FILEMODE, Type.TYPE_SYSTEM_IO_FILEACCESS, Type.TYPE_SYSTEM_IO_FILESHARE, Type.TYPE_SYSTEM_INTPTR}},
                 {null,        null,           "Read", System_IO_FileInternal_Read, Type.TYPE_SYSTEM_INT32, 5, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_ARRAY_BYTE, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INTPTR}},
                 {null,        null,           "Close", System_IO_FileInternal_Close, Type.TYPE_SYSTEM_VOID, 2, {Type.TYPE_SYSTEM_INTPTR, Type.TYPE_SYSTEM_INTPTR}},
                 {null,        null,           "GetCurrentDirectory", System_IO_FileInternal_GetCurrentDirectory, Type.TYPE_SYSTEM_STRING, 1, {Type.TYPE_SYSTEM_INTPTR}},
                 {null,        null,           "GetFileAttributes", System_IO_FileInternal_GetFileAttributes, Type.TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, 2, {Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_INTPTR}},
                 {null,        null,           "GetFileSystemEntries", System_IO_FileInternal_GetFileSystemEntries, Type.TYPE_SYSTEM_ARRAY_STRING, 5, {Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, Type.TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES, Type.TYPE_SYSTEM_INTPTR}},
+                */
 
-                {"System.Runtime.CompilerServices", "RuntimeHelpers", "InitializeArray", System_Runtime_CompilerServices_InitializeArray, Type.TYPE_SYSTEM_VOID, 2, {Type.TYPE_SYSTEM_ARRAY_NO_TYPE, Type.TYPE_SYSTEM_RUNTIMEFIELDHANDLE}},
+                new tInternalCall {nameSpace = new S("System.Runtime.CompilerServices"), type = new S("RuntimeHelpers"), method = new S("InitializeArray"), fn = new H(System_Runtime_CompilerServices.InitializeArray), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_NO_TYPE, Type.TYPE_SYSTEM_RUNTIMEFIELDHANDLE)}, 
 
-                {"System.Diagnostics", "Debugger", "Break", System_Diagnostics_Debugger_Break, Type.TYPE_SYSTEM_VOID, 0},
+                new tInternalCall {nameSpace = new S("System.Diagnostics"), type = new S("Debugger"), method = new S("Break"), fn = new H(System_Diagnostics_Debugger.Break), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 0},
 
-                {"System.Runtime.InteropServices",  "GCHandle",     "ToHeapRef", Framework_JSInterop_ToHeapRef, Type.TYPE_SYSTEM_INT32, 1, {Type.TYPE_SYSTEM_OBJECT}}, 
-                {null,                              null,           "FromHeapRef", Framework_JSInterop_FromHeapRefImpl, Type.TYPE_SYSTEM_OBJECT, 1, {Type.TYPE_SYSTEM_INT32}}, 
-*/
             };
         }
 

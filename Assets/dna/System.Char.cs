@@ -24,7 +24,8 @@ namespace DnaUnity
     public unsafe static class System_Char
     {
 
-        public static tAsyncCall* System_Char_GetUnicodeCategory(byte* pThis_, byte* pParams, byte* pReturnValue) {
+        public static tAsyncCall* GetUnicodeCategory(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
         	uint paramCodePoint = ((uint*)pParams)[0];
         	// Do a binary search on the UC_Index array
             uint curOfs = (uint)System_Char_UC_IndexRuns.UC_Index.Length / 2;
@@ -60,7 +61,8 @@ namespace DnaUnity
         }
 
         // Return -1 if not found
-        static int SearchCaseArray(ushort[] pCaseArray, ushort find) {
+        static int SearchCaseArray(ushort[] pCaseArray, ushort find) 
+        {
         	uint lower = 0;
             uint upper = (uint)pCaseArray.Length;
             uint curOfs = (uint)pCaseArray.Length / 2;
@@ -92,7 +94,8 @@ namespace DnaUnity
         	}
         }
 
-        public static tAsyncCall* ToLowerInvariant(byte* pThis_, byte* pParams, byte* pReturnValue) {
+        public static tAsyncCall* ToLowerInvariant(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
         	uint paramCodePoint = ((uint*)pParams)[0];
         	int pos;
 
@@ -102,7 +105,8 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* ToUpperInvariant(byte* pThis_, byte* pParams, byte* pReturnValue) {
+        public static tAsyncCall* ToUpperInvariant(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        {
         	uint paramCodePoint = ((uint*)pParams)[0];
         	int pos;
 
