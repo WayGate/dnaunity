@@ -55,9 +55,6 @@ namespace DnaUnity
             pCurOp = null;
             pCurEvalStack = null;
             pThrowExcept = null;
-
-            // Initialise the JIT code addresses
-            Execute(null, 0);
         }
 
         // Get the next op-code

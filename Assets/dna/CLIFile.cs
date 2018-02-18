@@ -69,7 +69,7 @@ namespace DnaUnity
 
         public static void Init()
         {
-            scCorlib = null;
+            scCorlib = new S("corlib");
 
             assembliesMappedToDnaCorlib = S.buildArray(
                 "mscorlib",
@@ -118,7 +118,7 @@ namespace DnaUnity
         	// (e.g., mscorlib, System.Runtime, etc.)
             for (int i = 0; i < MAPPED_ASSEMBLIES_COUNT; i++) {
                 if (S.strcmp(pAssemblyName, assembliesMappedToDnaCorlib[i]) == 0) {
-                    pAssemblyName = new S(ref scCorlib, "corlib");
+                    pAssemblyName = scCorlib;
         			break;
         		}
         	}
@@ -143,7 +143,7 @@ namespace DnaUnity
         	{
         		tCLIFile *pCLIFile;
                 byte* fileName = stackalloc byte[128];
-                S.sprintf(fileName, "%s.dll", (PTR)pAssemblyName);
+                S.snprintf(fileName, 128, "%s.dll", (PTR)pAssemblyName);
         		pCLIFile = CLIFile.Load(fileName);
         		if (pCLIFile == null) {
                     Sys.Crash("Cannot load required assembly file: %s", (PTR)fileName);
@@ -260,15 +260,15 @@ namespace DnaUnity
         			byte *pStreamName = &pRawMetaData[ofs+8];
         			void *pStream = pRawMetaData + streamOffset;
         			ofs += (uint)((S.strlen(pStreamName)+4) & (~0x3)) + 8;
-                    if (S.strcasecmp(pStreamName, new S("#Strings")) == 0) {
+                    if (S.strcasecmp(pStreamName, "#Strings") == 0) {
         				MetaData.LoadStrings(pMetaData, pStream, streamSize);
-                    } else if (S.strcasecmp(pStreamName, new S("#US")) == 0) {
+                    } else if (S.strcasecmp(pStreamName, "#US") == 0) {
         				MetaData.LoadUserStrings(pMetaData, pStream, streamSize);
-                    } else if (S.strcasecmp(pStreamName, new S("#Blob")) == 0) {
+                    } else if (S.strcasecmp(pStreamName, "#Blob") == 0) {
         				MetaData.LoadBlobs(pMetaData, pStream, streamSize);
-                    } else if (S.strcasecmp(pStreamName, new S("#GUID")) == 0) {
+                    } else if (S.strcasecmp(pStreamName, "#GUID") == 0) {
         				MetaData.LoadGUIDs(pMetaData, pStream, streamSize);
-                    } else if (S.strcasecmp(pStreamName, new S("#~")) == 0) {
+                    } else if (S.strcasecmp(pStreamName, "#~") == 0) {
         				pTableStream = pStream;
         				tableStreamSize = streamSize;
         			}
@@ -336,8 +336,9 @@ namespace DnaUnity
             Sys.log_f(1, "\nLoading file: %s\n", (PTR)pFileName);
 
         	pRet = LoadPEFile(pRawFile);
-        	pRet->pFileName = (byte*)Mem.mallocForever((uint)S.strlen(pFileName) + 1);
-        	S.strcpy(pRet->pFileName, pFileName);
+            int filenameLen = S.strlen(pFileName) + 1;
+            pRet->pFileName = (byte*)Mem.mallocForever((uint)filenameLen);
+            S.strncpy(pRet->pFileName, pFileName, filenameLen);
 
         	// Record that we've loaded this file
             pNewFile = ((tFilesLoaded*)Mem.mallocForever((SIZE_T)sizeof(tFilesLoaded)));

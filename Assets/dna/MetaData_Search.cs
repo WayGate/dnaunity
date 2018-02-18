@@ -84,6 +84,8 @@ namespace DnaUnity
         	return 0;
         }
 
+        const int MSG_BUF_SIZE = 2048;
+
         static tMD_MethodDef* FindMethodInType(tMD_TypeDef *pTypeDef, /*STRING*/byte* name, tMetaData *pSigMetaData, 
             /*BLOB_*/byte* sigBlob, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
         {
@@ -104,15 +106,16 @@ namespace DnaUnity
         		// Error reporting!!
         		uint entry, numParams, j;
         		/*SIG*/byte* sig;
-        		/*char**/byte *pMsg;
-        		tMD_TypeDef *pParamTypeDef;
+                /*char**/byte* pMsg, pMsgPos, pMsgEnd;
+        		tMD_TypeDef* pParamTypeDef;
 
-        		pMsg = (byte*)Mem.malloc(2048);
+                pMsgPos = pMsg = (byte*)Mem.malloc(MSG_BUF_SIZE);
+                pMsgEnd = pMsg + MSG_BUF_SIZE;
         		*pMsg = 0;
         		sig = MetaData.GetBlob(sigBlob, &j);
         		entry = MetaData.DecodeSigEntry(&sig);
         		if ((entry & SIG_METHODDEF_HASTHIS) == 0) {
-                    S.sprintf(pMsg, "static ");
+                    pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, "static ");
         		}
                 if ((entry & SIG_METHODDEF_GENERIC) != 0) {
         			// read number of generic type args - don't care what it is
@@ -121,18 +124,18 @@ namespace DnaUnity
         		numParams = MetaData.DecodeSigEntry(&sig);
         		pParamTypeDef = Type.GetTypeFromSig(pSigMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs); // return type
         		if (pParamTypeDef != null) {
-                    S.sprintf(pMsg, "%s ", (PTR)pParamTypeDef->name);
+                    pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, "%s ", (PTR)pParamTypeDef->name);
         		}
-                S.sprintf(pMsg, "%s.%s.%s(", (PTR)pTypeDef->nameSpace, (PTR)pTypeDef->name, (PTR)name);
+                pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, "%s.%s.%s(", (PTR)pTypeDef->nameSpace, (PTR)pTypeDef->name, (PTR)name);
         		for (j=0; j<numParams; j++) {
         			pParamTypeDef = Type.GetTypeFromSig(pSigMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs);
         			if (j > 0) {
-                        S.sprintf(pMsg, ",");
+                        pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, ",");
         			}
         			if (pParamTypeDef != null) {
-                        S.sprintf(pMsg, "%s", (PTR)pParamTypeDef->name);
+                        pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, "%s", (PTR)pParamTypeDef->name);
         			} else {
-                        S.sprintf(pMsg, "???");
+                        pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, "???");
         			}
         		}
                 Sys.Crash("FindMethodInType(): Cannot find method %s)", (PTR)pMsg);

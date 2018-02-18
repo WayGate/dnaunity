@@ -90,8 +90,8 @@ namespace DnaUnity
 
         public static void printf(string format, params object[] args)
         {
-            byte* buf = stackalloc byte[256];
-            S.sprintf(buf, format, args);
+            byte* buf = stackalloc byte[2048];
+            S.snprintf(buf, 2048, format, args);
             string msg = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)buf);
             UnityEngine.Debug.Log(msg);
         }

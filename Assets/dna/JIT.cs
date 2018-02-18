@@ -163,11 +163,8 @@ namespace DnaUnity
         static uConvDouble convDouble;
         static tMetaData* pMetaData;
 
-        static byte* scInvoke, scConstr;
-
         public static void Init()
         {
-            scInvoke = scConstr = null;
             pJITOffsets = null;
             ppTypeStacks = null;
             pFinalOps = null;
@@ -724,7 +721,7 @@ cilCallVirtConstrained:
                                 PushOp(JitOps.JIT_CALL_INTERFACE);
         					} else if (pCallMethod->pParentType->pParent == Type.types[Type.TYPE_SYSTEM_MULTICASTDELEGATE]) {
                                 PushOp(JitOps.JIT_INVOKE_DELEGATE);
-                            } else if (pCallMethod->pParentType == Type.types[Type.TYPE_SYSTEM_REFLECTION_METHODBASE] && S.strcmp(pCallMethod->name, new S(ref scInvoke, "Invoke")) == 0) {
+                            } else if (pCallMethod->pParentType == Type.types[Type.TYPE_SYSTEM_REFLECTION_METHODBASE] && S.strcmp(pCallMethod->name, "Invoke") == 0) {
                                 PushOp(JitOps.JIT_INVOKE_SYSTEM_REFLECTION_METHODBASE);
         						dynamicallyBoxReturnValue = 1;
         					} else {
@@ -1656,7 +1653,7 @@ cilCallVirtConstrained:
                 tJITCallNative* pCallNative;
 
         		// Internal call
-                if (S.strcmp(pMethodDef->name, new S(ref scConstr, ".ctor")) == 0) {
+                if (S.strcmp(pMethodDef->name, ".ctor") == 0) {
         			// Internal constructor needs enough evaluation stack space to return itself
         			pJITted->maxStack = pMethodDef->pParentType->stackSize;
         		} else {

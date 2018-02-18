@@ -195,9 +195,6 @@ namespace DnaUnity
         	return null;
         }
 
-        static byte* scCctor;
-        static byte* scFinalize;
-
         public static void Fill_TypeDef(tMD_TypeDef *pTypeDef, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
         {
         	/*IDX_TABLE*/uint firstIdx, lastIdx, token;
@@ -392,12 +389,12 @@ namespace DnaUnity
                         Mem.memcpy(pMethodCopy, pMethodDef, (SIZE_T)sizeof(tMD_MethodDef));
         				pMethodDef = pMethodCopy;
         			}
-                    if (MetaData.METHOD_ISSTATIC(pMethodDef) && S.strcmp(pMethodDef->name, new S(ref scCctor, ".cctor")) == 0) {
+                    if (MetaData.METHOD_ISSTATIC(pMethodDef) && S.strcmp(pMethodDef->name, ".cctor") == 0) {
         				// This is a static constructor
         				pTypeDef->pStaticConstructor = pMethodDef;
         			}
         			if (!MetaData.METHOD_ISSTATIC(pMethodDef) && pTypeDef->pParent != null &&
-                        S.strcmp(pMethodDef->name, new S(ref scFinalize, "Finalize")) == 0) {
+                        S.strcmp(pMethodDef->name, "Finalize") == 0) {
         				// This is a Finalizer method, but not for Object.
         				// Delibrately miss out Object's Finalizer because it's empty and will cause every object
         				// of any type to have a Finalizer which will be terrible for performance.

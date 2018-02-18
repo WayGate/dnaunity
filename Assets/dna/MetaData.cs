@@ -231,9 +231,6 @@ namespace DnaUnity
 
         public static void Init() 
         {
-            // Clear const ptrs
-            scCctor = scFinalize = null;
-
             /*
         Format of definition strings:
         Always 2 characters to togther. 1st character defines source, 2nd defines destination.

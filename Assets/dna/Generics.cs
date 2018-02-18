@@ -63,11 +63,11 @@ namespace DnaUnity
     [StructLayout(LayoutKind.Sequential)]
     public unsafe static class Generics
     {
-        static byte* scBracket, scComma, scNsDotName, scGenericName, scQuestion, scEndBracket;
+        static byte* scNsDotName, scGenericName, scQuestion, scEndBracket;
 
         public static void Init()
         {
-            scBracket = scComma = scNsDotName = scGenericName = scQuestion = scEndBracket = null;
+            scNsDotName = scGenericName = scQuestion = scEndBracket = null;
         }
 
         public static void GetHeapRoots(tHeapRoots *pHeapRoots, tMD_TypeDef *pTypeDef) 
@@ -124,12 +124,15 @@ namespace DnaUnity
         	return null;
         }
 
+        const int NAME_BUF_SIZE = 2048;
+
         public static tMD_TypeDef* GetGenericTypeFromCoreType(tMD_TypeDef *pCoreType, uint numTypeArgs, tMD_TypeDef **ppTypeArgs) 
         {
         	tGenericInstance *pInst;
         	tMD_TypeDef *pTypeDef;
         	uint i;
-            byte* name = stackalloc byte[2048];
+            byte* name = stackalloc byte[NAME_BUF_SIZE];
+            byte* namePos, nameEnd;
         	tMetaData *pMetaData;
 
         	pMetaData = pCoreType->pMetaData;
@@ -158,24 +161,26 @@ namespace DnaUnity
             pInst->pInstanceTypeDef = pTypeDef = ((tMD_TypeDef*)Mem.mallocForever((SIZE_T)sizeof(tMD_TypeDef)));
             Mem.memset(pTypeDef, 0, (SIZE_T)sizeof(tMD_TypeDef));
         	// Make the name of the instantiation.
-        	S.strcpy(name, pCoreType->name);
-            S.strcat(name, new S(ref scBracket, "["));
+            namePos = name;
+            nameEnd = namePos + NAME_BUF_SIZE - 1;
+            namePos = S.scatprintf(namePos, nameEnd, "%s", (PTR)pCoreType->name);
+            namePos = S.scatprintf(namePos, nameEnd, "[");
         	for (i=0; i<numTypeArgs; i++) {
         		if (i > 0) {
-                    S.strcat(name, new S(ref scComma, ","));
+                    namePos = S.scatprintf(namePos, nameEnd, ",");
         		}
         		if (ppTypeArgs[i] != null) {
-                    S.sprintf(S.strchr(name, 0), "%s.%s", (PTR)ppTypeArgs[i]->nameSpace, (PTR)ppTypeArgs[i]->name);
+                    namePos = S.scatprintf(namePos, nameEnd, "%s.%s", (PTR)ppTypeArgs[i]->nameSpace, (PTR)ppTypeArgs[i]->name);
         		} else {
         			tMD_GenericParam *pGenericParam = FindGenericParam(pCoreType, i);
         			if (pGenericParam != null) {
-                        S.sprintf(S.strchr(name, 0), "%s", (PTR)pGenericParam->name);
+                        namePos = S.scatprintf(namePos, nameEnd, "%s", (PTR)pGenericParam->name);
         			} else {
-                        S.sprintf(S.strchr(name, 0), "???");
+                        namePos = S.scatprintf(namePos, nameEnd, "???");
         			}
         		}
         	}
-            S.strcat(name, new S(ref scEndBracket, "]"));
+            S.strncat(name, new S(ref scEndBracket, "]"), 2048);
         	// Fill in the basic bits of the new type def.
         	pTypeDef->pTypeDef = pTypeDef;
         	pTypeDef->pMetaData = pMetaData;
@@ -188,8 +193,9 @@ namespace DnaUnity
         		}
         	}
         	pTypeDef->nameSpace = pCoreType->nameSpace;
-            pTypeDef->name = (/*STRING*/byte*)Mem.mallocForever((SIZE_T)((uint)S.strlen(name)+1));
-        	S.strcpy(pTypeDef->name, name);
+            int nameLen = S.strlen(name)+1;
+            pTypeDef->name = (/*STRING*/byte*)Mem.mallocForever((SIZE_T)nameLen);
+        	S.strncpy(pTypeDef->name, name, nameLen);
             pTypeDef->ppClassTypeArgs = (tMD_TypeDef**)pInst->pTypeArgs;
         	pTypeDef->extends = pCoreType->extends;
         	pTypeDef->tableIndex = pCoreType->tableIndex;

@@ -14,48 +14,62 @@
 
         public S(string s)
         {
-            if (s == null)
-                throw new System.ArgumentNullException();   
-            _s = (byte*)Mem.malloc((SIZE_T)s.Length + 1);
-            for (int i = 0; i < s.Length; i++)
+            if (s != null)
             {
-                *_s = (byte)s[i];
-                _s++;
+                _s = (byte*)Mem.malloc((SIZE_T)s.Length + 1);
+                for (int i = 0; i < s.Length; i++)
+                {
+                    *_s = (byte)s[i];
+                    _s++;
+                }
+                *_s = 0;
             }
-            *_s = 0;
+            else
+            {
+                _s = null;
+            }
         }
 
         public S(ref byte* sc, string s)
         {
-            if (s == null)
-                throw new System.ArgumentNullException();   
-            if (sc != null)
+            if (s != null)
             {
-                _s = sc;
+                if (sc != null)
+                {
+                    _s = sc;
+                }
+                else
+                {
+                    byte* p = _s = (byte*)Mem.malloc((SIZE_T)s.Length + 1);
+                    sc = _s;
+                    for (int i = 0; i < s.Length; i++)
+                    {
+                        *p++ = (byte)s[i];
+                    }
+                    *p = 0;
+                }
             }
             else
             {
-                byte* p = _s = (byte*)Mem.malloc((SIZE_T)s.Length + 1);
-                sc = _s;
-                for (int i = 0; i < s.Length; i++)
-                {
-                    *p++ = (byte)s[i];
-                }
-                *p = 0;
+                _s = null;
             }
         }
 
-        public static implicit operator byte*(S s)  // explicit byte to digit conversion operator
+        public static implicit operator byte*(S s)  // explicit byte to ptr conversion operator
         {
             return s._s;
         }
 
         public static byte** buildArray(params string[] args)
         {
-            byte** arry = (byte**)Mem.malloc((SIZE_T)(sizeof(byte*) * args.Length));
-            for (int i = 0; i < args.Length; i++)
+            byte** arry = null;
+            if (args != null && args.Length > 0)
             {
-                arry[i] = new S(args[i]);
+                arry = (byte**)Mem.malloc((SIZE_T)(sizeof(byte*) * args.Length));
+                for (int i = 0; i < args.Length; i++)
+                {
+                    arry[i] = new S(args[i]);
+                }
             }
             return arry;
         }
@@ -83,7 +97,28 @@
                     return -1;
                 else if (*a > *b)
                     return 1;
+                a++;
+                b++;
             } while (*a != 0 && *b != 0);
+            return 0;
+        }
+
+        public static int strcmp(byte* a, string b)
+        {
+            if (a == null || b == null)
+                throw new System.ArgumentNullException();
+            int i = 0;
+            int len = b.Length;
+            do 
+            {
+                byte ch = (i < len) ? (byte)b[i] : (byte)0;
+                if (*a < ch)
+                    return -1;
+                else if (*a > ch)
+                    return 1;
+                a++;
+                i++;
+            } while (*a != 0 && i < len);
             return 0;
         }
 
@@ -99,51 +134,91 @@
                     return 1;
                 if (*a == 0 || *b == 0)
                     break;
+                a++;
+                b++;
                 len--;
             }
             return 0;
         }
 
-        public static int strcasecmp(byte* a, byte* b)
+        public static int strcasecmp(byte* a, string b)
         {
             if (a == null || b == null)
                 throw new System.ArgumentNullException();
+            int i = 0;
+            int len = b.Length;            
             do 
             {
                 byte _a = *a;
                 if (_a >= 'a' && _a <= 'z')
                     _a -= 32;
-                byte _b = *b;
+                byte _b = (i < len) ? (byte)b[i] : (byte)0;
                 if (_b >= 'a' && _b <= 'z')
                     _b -= 32;
                 if (_a < _b)
                     return -1;
                 else if (_a > _b)
                     return 1;
-            } while (*a != 0 && *b != 0);
+                a++;
+                i++;
+            } while (*a != 0 && i < len);
             return 0;
         }
 
-        public static byte* strcpy(byte* a, byte* b)
+        public static byte* strncpy(byte* a, byte* b, int size)
         {
             if (a == null || b == null)
                 throw new System.NullReferenceException();
             byte* dst = a;
+            byte* end = a + (size - 1);
             while (*b != 0)
             {
+                if (a >=  end)
+                    throw new System.IndexOutOfRangeException();                
                 *a++ = *b++;
             }
             *a = 0;
             return dst;
         }
 
-        public static byte* strcat(byte* a, byte* b)
+        public static byte* strncpy(byte* a, string b, int size)
+        {
+            if (a == null || b == null)
+                throw new System.NullReferenceException();
+            byte* dst = a;
+            byte* end = a + (size - 1);
+            int len = b.Length;
+            for (int i = 0; i < len; i++)
+            {
+                if (a >=  end)
+                    throw new System.IndexOutOfRangeException();                
+                *a++ = (byte)b[i];
+            }
+            *a = 0;
+            return dst;
+        }
+
+        public static byte* strncat(byte* a, byte* b, int size)
         {
             if (a == null || b == null)
                 throw new System.NullReferenceException();
             byte* dst = a;
             int len = strlen(a);
-            strcpy(a + len, b);
+            if (len + 1 >= size)
+                throw new System.IndexOutOfRangeException();
+            strncpy(a + len, b, size - len);
+            return dst;
+        }
+
+        public static byte* strncat(byte* a, string b, int size)
+        {
+            if (a == null || b == null)
+                throw new System.NullReferenceException();
+            byte* dst = a;
+            int len = strlen(a);
+            if (len + 1 >= size)
+                throw new System.IndexOutOfRangeException();
+            strncpy(a + len, b, size - len);
             return dst;
         }
 
@@ -161,7 +236,7 @@
             return *s == b ? s : null;
         }
 
-        public static byte* sprintf(byte* bfr, string fmt, params object[] args)
+        public static byte* scatprintf(byte* bfr, byte* end, string fmt, params object[] args)
         {
             if (bfr == null || fmt == null)
                 throw new System.NullReferenceException(); 
@@ -169,6 +244,7 @@
             int i = 0;
             int fmtLen = fmt.Length;
             byte* b = bfr;
+            byte* e = end;
             while (i < fmtLen)
             {
                 char ch = fmt[i];
@@ -178,21 +254,40 @@
                     ch = fmt[i];
                     if (ch == 's')
                     {
-                        byte* s = (byte*)(PTR)args[curarg];
+                        object sarg = args[curarg];
                         curarg++;
-                        if (s == null)
+                        if (sarg == null)
                         {
+                            if (b + 4 > e)
+                                throw new System.IndexOutOfRangeException();
                             *b++ = (byte)'n';
                             *b++ = (byte)'u';
                             *b++ = (byte)'l';
                             *b++ = (byte)'l';
                         }
-                        else
+                        else if (sarg is string)
                         {
+                            string str = (string)sarg;
+                            for (int j = 0; j < str.Length; j++)
+                            {
+                                if (b >= e)
+                                    throw new System.IndexOutOfRangeException();
+                                *b++ = (byte)str[j];
+                            }                            
+                        }
+                        else if (sarg is PTR)
+                        {
+                            byte* s = (byte*)((PTR)sarg);
                             while (*s != 0)
                             {
+                                if (b >= e)
+                                    throw new System.IndexOutOfRangeException();
                                 *b++ = *s++;
                             }
+                        }
+                        else
+                        {
+                            throw new System.ArgumentException();
                         }
                     } 
                     else if (ch == 'x' || ch == 'd')
@@ -202,6 +297,8 @@
                         string vs = (ch == 'x' ? v.ToString("X") : v.ToString());
                         for (int j = 0; j < vs.Length; j++)
                         {
+                            if (b >= e)
+                                throw new System.IndexOutOfRangeException();
                             *b++ = (byte)vs[j];
                         }
                     }
@@ -214,6 +311,8 @@
                         string lvs = (ch == 'x' ? lv.ToString("X") : lv.ToString());
                         for (int j = 0; j < lvs.Length; j++)
                         {
+                            if (b >= e)
+                                throw new System.IndexOutOfRangeException();
                             *b++ = (byte)lvs[j];
                         }
                     }
@@ -227,21 +326,36 @@
                         string vs0 = (ch == 'x' ? v0.ToString("X" + l0) : v0.ToString("D" + l0));
                         for (int j = 0; j < vs0.Length; j++)
                         {
+                            if (b >= e)
+                                throw new System.IndexOutOfRangeException();
                             *b++ = (byte)vs0[j];
                         }                        
                     }
                     else
                     {
+                        if (b >= e)
+                            throw new System.IndexOutOfRangeException();
                         *b++ = (byte)ch;
                     }
                 }
                 else
                 {
+                    if (b >= e)
+                        throw new System.IndexOutOfRangeException();
                     *b++ = (byte)ch;
                 }
                 i++;
             }
 
+            // Null terminator
+            *bfr = 0;
+
+            return bfr;
+        }
+
+        public static byte* snprintf(byte* bfr, int len, string fmt, params object[] args)
+        {
+            scatprintf(bfr, bfr + len, fmt, args);
             return bfr;
         }
 
