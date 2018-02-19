@@ -32,22 +32,54 @@ namespace DnaUnity
     {
         static bool isInitialized;
 
-        public static void Init(int memsize = 256 * 1024)
+        public const int DEFAULT_MEM_SIZE = 256 * 1024;
+
+        #if UNITY_EDITOR
+        public static string[] defaultAssemblySearchPaths = new string[] {
+            "${UNITY_DIR}/Mono/Lib/mono/unity",
+            "${UNITY_DIR}/Managed",
+            "${PROJECT_DIR}/Library/ScriptAssemblies"
+        };
+        #else
+        // Resources path
+        public static string[] defaultAssemblySearchPaths = new string[] {
+            "UnityDna"
+        };
+        #endif
+
+        public static void Init(int memsize = DEFAULT_MEM_SIZE, string[] assemblySearchPaths = null)
         {
-            if (!isInitialized)
+            if (isInitialized)
+                throw new System.InvalidOperationException("Dna has already been initialized.  Use Dna.Reset() to reset the interpreter");
+
+            if (assemblySearchPaths == null)
+                assemblySearchPaths = defaultAssemblySearchPaths;
+            #if UNITY_EDITOR
+            string[] finalAssemblySearchPaths = new string[assemblySearchPaths.Length];
+            string unityDir = UnityEditor.EditorApplication.applicationContentsPath;
+            string projectDir = System.IO.Path.GetDirectoryName(UnityEngine.Application.dataPath);
+            for (int i = 0; i < assemblySearchPaths.Length; i++)
             {
-                Mem.Init(memsize);
-                JIT.Init();
-                JIT_Execute.Init();
-                MetaData.Init();
-                Generics.Init();
-                Type.Init();
-                Heap.Init();
-                Finalizer.Init();
-                InternalCall.Init();
-                CLIFile.Init();
-                isInitialized = true;
+                finalAssemblySearchPaths[i] = assemblySearchPaths[i]
+                    .Replace("${UNITY_DIR}", unityDir)
+                    .Replace("${PROJECT_DIR}", projectDir);
             }
+            #else
+            string[] finalAssemblySearchPaths = assemblySearchPaths;
+            #endif
+
+            Mem.Init(memsize);
+            JIT.Init();
+            JIT_Execute.Init();
+            MetaData.Init();
+            Generics.Init();
+            Heap.Init();
+            Finalizer.Init();
+            InternalCall.Init();
+            CLIFile.Init(finalAssemblySearchPaths);
+            Type.Init();
+
+            isInitialized = true;
         }
 
         public static void Reset()
@@ -55,6 +87,8 @@ namespace DnaUnity
             if (isInitialized)
             {
                 Mem.Clear();
+                H.Clear();
+                CLIFile.Clear();
                 isInitialized = false;
             }
         }
@@ -81,7 +115,7 @@ namespace DnaUnity
         	Mem.memset(opcodeNumUses, 0, sizeof(opcodeNumUses));
         #endif
 
-            pCLIFile = CLIFile.Load(pFileName);
+            pCLIFile = CLIFile.Load(pFileName, /*FALSE*/0);
 
         #if DIAG_TOTAL_TIME
         	startTime = microTime();

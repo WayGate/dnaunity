@@ -63,11 +63,8 @@ namespace DnaUnity
     [StructLayout(LayoutKind.Sequential)]
     public unsafe static class Generics
     {
-        static byte* scNsDotName, scGenericName, scQuestion, scEndBracket;
-
         public static void Init()
         {
-            scNsDotName = scGenericName = scQuestion = scEndBracket = null;
         }
 
         public static void GetHeapRoots(tHeapRoots *pHeapRoots, tMD_TypeDef *pTypeDef) 
@@ -180,7 +177,7 @@ namespace DnaUnity
         			}
         		}
         	}
-            S.strncat(name, new S(ref scEndBracket, "]"), 2048);
+            namePos = S.scatprintf(namePos, nameEnd, "]");
         	// Fill in the basic bits of the new type def.
         	pTypeDef->pTypeDef = pTypeDef;
         	pTypeDef->pMetaData = pMetaData;

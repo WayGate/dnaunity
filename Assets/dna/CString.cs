@@ -16,13 +16,13 @@
         {
             if (s != null)
             {
-                _s = (byte*)Mem.malloc((SIZE_T)s.Length + 1);
+                byte* p = _s = (byte*)Mem.malloc((SIZE_T)s.Length + 1);
                 for (int i = 0; i < s.Length; i++)
                 {
-                    *_s = (byte)s[i];
-                    _s++;
+                    *p = (byte)s[i];
+                    p++;
                 }
-                *_s = 0;
+                *p = 0;
             }
             else
             {
@@ -40,8 +40,7 @@
                 }
                 else
                 {
-                    byte* p = _s = (byte*)Mem.malloc((SIZE_T)s.Length + 1);
-                    sc = _s;
+                    byte* p = sc = _s = (byte*)Mem.malloc((SIZE_T)s.Length + 1);
                     for (int i = 0; i < s.Length; i++)
                     {
                         *p++ = (byte)s[i];
@@ -78,28 +77,32 @@
         {
             if (s == null)
                 throw new System.ArgumentNullException();
-            int len = 0;
-            while (*s != 0)
+            byte* p = s;
+            char ch = (char)*p;
+            while (ch != '\x0')
             {
-                s++;
-                len++;
+                p++;
+                ch = (char)*p;
             }
-            return len;
+            return (int)(p - s);
         }
 
         public static int strcmp(byte* a, byte* b)
         {
             if (a == null || b == null)
                 throw new System.ArgumentNullException();
+            char _a, _b;
             do 
             {
-                if (*a < *b)
+                _a = (char)*a;
+                _b = (char)*b;
+                if (_a < _b)
                     return -1;
-                else if (*a > *b)
+                else if (_a > _b)
                     return 1;
                 a++;
                 b++;
-            } while (*a != 0 && *b != 0);
+            } while (_a != '\x0' && *b != 0);
             return 0;
         }
 
@@ -111,10 +114,11 @@
             int len = b.Length;
             do 
             {
-                byte ch = (i < len) ? (byte)b[i] : (byte)0;
-                if (*a < ch)
+                char _a = (char)*a;
+                char _b = (i < len) ? b[i] : (char)0;
+                if (_a < _b)
                     return -1;
-                else if (*a > ch)
+                else if (_a > _b)
                     return 1;
                 a++;
                 i++;
@@ -128,11 +132,13 @@
                 throw new System.ArgumentNullException();
             while (len > 0) 
             {
-                if (*a < *b)
+                char _a = (char)*a;
+                char _b = (char)*b;
+                if (_a < _b)
                     return -1;
-                else if (*a > *b)
+                else if (_a > _b)
                     return 1;
-                if (*a == 0 || *b == 0)
+                if (_a == '\x0' || _b == '\x0')
                     break;
                 a++;
                 b++;
@@ -146,22 +152,23 @@
             if (a == null || b == null)
                 throw new System.ArgumentNullException();
             int i = 0;
-            int len = b.Length;            
+            int len = b.Length;
+            char _a, _b;
             do 
             {
-                byte _a = *a;
+                _a = (char)*a;
                 if (_a >= 'a' && _a <= 'z')
-                    _a -= 32;
-                byte _b = (i < len) ? (byte)b[i] : (byte)0;
+                    _a -= (char)32;
+                _b = (i < len) ? b[i] : (char)0;
                 if (_b >= 'a' && _b <= 'z')
-                    _b -= 32;
+                    _b -= (char)32;
                 if (_a < _b)
                     return -1;
                 else if (_a > _b)
                     return 1;
                 a++;
                 i++;
-            } while (*a != 0 && i < len);
+            } while (_a != '\x0' && i < len);
             return 0;
         }
 
@@ -348,7 +355,7 @@
             }
 
             // Null terminator
-            *bfr = 0;
+            *b = 0;
 
             return bfr;
         }

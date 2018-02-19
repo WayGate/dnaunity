@@ -35,6 +35,8 @@ namespace DnaUnity
     {
         // The filename
         public /*char**/byte *pFileName;
+        // The gchandle for the bytes for the file
+        public PTR gcHandle;
         // The RVA sections of this file
         public tRVA *pRVA;
         // null-terminated UTF8 string of file version
@@ -58,37 +60,54 @@ namespace DnaUnity
 
         // In .NET Core, the core libraries are split over numerous assemblies. For simplicity,
         // the DNA corlib just puts them in one assembly
-        static /*char**/byte** assembliesMappedToDnaCorlib = null;
+        static /*char**/byte** monoUnityAssemblies = null;
+
+        // Paths to search for assemblies
+        static /*char**/byte** assemblySearchPaths = null;
+        static int assemblySearchPathsCount = 0;
 
         const int MAPPED_ASSEMBLIES_COUNT = 15;
 
         // Keep track of all the files currently loaded
         static tFilesLoaded *pFilesLoaded = null;
 
-        static byte* scCorlib;
-
-        public static void Init()
+        public static void Init(string[] searchPaths)
         {
-            scCorlib = new S("corlib");
-
-            assembliesMappedToDnaCorlib = S.buildArray(
+            #if UNITY_EDITOR
+            monoUnityAssemblies = S.buildArray(
                 "mscorlib",
-                "System.Collections",
-                "System.Console",
-                "System.IO",
-                "System.Linq",
-                "System.Net.Http",
-                "System.Private.CoreLib",
-                "System.Private.Uri",
-                "System.Reflection",
-                "System.Reflection.Extensions",
-                "System.Runtime",
-                "System.Runtime.Extensions",
-                "System.Runtime.InteropServices",
-                "System.Threading",
-                "System.Threading.Tasks"
+                "System",
+                "System.Core",
+                "UnityEditor",
+                "UnityEditor.UI",
+                "UnityEngine",
+                "UnityEngine.UI"
             );
+            #else
+            monoUnityAssemblies = S.buildArray(
+                "mscorlib",
+                "System",
+                "System.Core",
+                "UnityEngine",
+                "UnityEngine.UI"
+            );
+            #endif
 
+            assemblySearchPaths = S.buildArray(searchPaths);
+            assemblySearchPathsCount = searchPaths.Length;
+
+            pFilesLoaded = null;
+        }
+
+        public static void Clear()
+        {
+            // Release metadata images
+            tFilesLoaded* pFiles = pFilesLoaded;
+            while (pFiles != null) {
+                System.Runtime.InteropServices.GCHandle handle = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)pFiles->pCLIFile->gcHandle);
+                handle.Free();
+                pFiles = pFiles->pNext;
+            }
             pFilesLoaded = null;
         }
 
@@ -113,12 +132,14 @@ namespace DnaUnity
         public static tMetaData* GetMetaDataForAssembly(byte *pAssemblyName) 
         {
         	tFilesLoaded *pFiles;
+            int metadataOnly = 0;
+            tCLIFile *pCLIFile = null;
+            tMD_Assembly *pThisAssembly = null;
 
-        	// Where applicable, redirect this assembly lookup into DNA's corlib
-        	// (e.g., mscorlib, System.Runtime, etc.)
+        	// Mono/Unity assemblies only load metadata, no code
             for (int i = 0; i < MAPPED_ASSEMBLIES_COUNT; i++) {
-                if (S.strcmp(pAssemblyName, assembliesMappedToDnaCorlib[i]) == 0) {
-                    pAssemblyName = scCorlib;
+                if (S.strcmp(pAssemblyName, monoUnityAssemblies[i]) == 0) {
+                    metadataOnly = 1;
         			break;
         		}
         	}
@@ -126,9 +147,6 @@ namespace DnaUnity
         	// Look in already-loaded files first
         	pFiles = pFilesLoaded;
         	while (pFiles != null) {
-        		tCLIFile *pCLIFile;
-        		tMD_Assembly *pThisAssembly;
-
         		pCLIFile = pFiles->pCLIFile;
         		// Get the assembly info - there is only ever one of these in the each file's metadata
                 pThisAssembly = (tMD_Assembly*)MetaData.GetTableRow(pCLIFile->pMetaData, MetaData.MAKE_TABLE_INDEX(0x20, 1));
@@ -140,16 +158,12 @@ namespace DnaUnity
         	}
 
         	// Assembly not loaded, so load it if possible
-        	{
-        		tCLIFile *pCLIFile;
-                byte* fileName = stackalloc byte[128];
-                S.snprintf(fileName, 128, "%s.dll", (PTR)pAssemblyName);
-        		pCLIFile = CLIFile.Load(fileName);
-        		if (pCLIFile == null) {
-                    Sys.Crash("Cannot load required assembly file: %s", (PTR)fileName);
-        		}
-        		return pCLIFile->pMetaData;
-        	}
+            byte* fileName = stackalloc byte[256];
+            S.snprintf(fileName, 256, "%s.dll", (PTR)pAssemblyName);
+            pCLIFile = CLIFile.Load(fileName, metadataOnly);
+            if (pCLIFile == null)
+                Sys.Crash("Cannot load required assembly file: %s.dll", (PTR)pAssemblyName);
+            return pCLIFile->pMetaData;
         }
 
         public static tMD_TypeDef* FindTypeInAllLoadedAssemblies(/*STRING*/byte* nameSpace, /*STRING*/byte* name) 
@@ -170,26 +184,20 @@ namespace DnaUnity
         	return null;
         }
 
-        private static void* LoadFileFromDisk(byte* fileName) 
+        private static byte[] LoadFileFromDisk(byte* fileName) 
         {
             string fileNameStr = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)fileName);
             if (!System.IO.File.Exists(fileNameStr))
-                throw new System.InvalidOperationException("File doesn't exist");
-
-
-            byte[] data = System.IO.File.ReadAllBytes(fileNameStr);
-            byte* buf = (byte*)Mem.malloc((SIZE_T)data.Length);
-            fixed (byte* ptr = &data[0])
-            {
-                Mem.memcpy(buf, ptr, (SIZE_T)data.Length);
-            }
-
-            return buf;
+                return null;
+            return System.IO.File.ReadAllBytes(fileNameStr);
         }
 
-        private static tCLIFile* LoadPEFile(void *pData) 
+        private static tCLIFile* LoadPEFile(byte[] image, int metadataOnly) 
         {
             tCLIFile *pRet = ((tCLIFile*)Mem.malloc((SIZE_T)sizeof(tCLIFile)));
+
+            System.Runtime.InteropServices.GCHandle handle = System.Runtime.InteropServices.GCHandle.Alloc(image, GCHandleType.Pinned);
+            byte* pData = (byte*)handle.AddrOfPinnedObject();
 
         	byte *pMSDOSHeader = (byte*)&(((byte*)pData)[0]);
         	byte *pPEHeader;
@@ -211,6 +219,7 @@ namespace DnaUnity
         	tMetaData *pMetaData;
 
         	pRet->pRVA = RVA.New();
+            pRet->gcHandle = (PTR)(System.IntPtr)handle;
         	pRet->pMetaData = pMetaData = MetaData.New();
 
         	lfanew = *(uint*)&(pMSDOSHeader[0x3c]);
@@ -321,21 +330,27 @@ namespace DnaUnity
         	return pRet;
         }
 
-        public static tCLIFile* Load(/*char**/byte *pFileName) 
+        public static tCLIFile* Load(/*char**/byte *pFileName, int metadataOnly) 
         {
-        	void *pRawFile;
+            byte[] rawData;
         	tCLIFile *pRet;
         	tFilesLoaded *pNewFile;
+            byte* filepath = stackalloc byte[512];
 
-        	pRawFile = LoadFileFromDisk(pFileName);
-
-        	if (pRawFile == null) {
-                Sys.Crash("Cannot load file: %s", (PTR)pFileName);
-        	}
+            rawData = null;
+            for (int i = 0; i < assemblySearchPathsCount; i++)
+            {
+                S.snprintf(filepath, 512, "%s/%s", (PTR)assemblySearchPaths[i], (PTR)pFileName);
+                rawData = LoadFileFromDisk(filepath);
+                if (rawData != null)
+                    break;
+            }
+            if (rawData == null)
+                Sys.Crash("Unable to load assembly file %s", (PTR)pFileName);
 
             Sys.log_f(1, "\nLoading file: %s\n", (PTR)pFileName);
 
-        	pRet = LoadPEFile(pRawFile);
+            pRet = LoadPEFile(rawData, metadataOnly);
             int filenameLen = S.strlen(pFileName) + 1;
             pRet->pFileName = (byte*)Mem.mallocForever((uint)filenameLen);
             S.strncpy(pRet->pFileName, pFileName, filenameLen);

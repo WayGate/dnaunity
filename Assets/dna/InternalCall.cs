@@ -48,9 +48,34 @@ namespace DnaUnity
     {
         public static tInternalCall[] internalCalls = null;
 
-        public static byte* PTypes(byte a, byte b = 0, byte c = 0, byte d = 0, byte e = 0, byte f = 0)
+        public static byte* PTypes(byte a, byte b = 255, byte c = 255, byte d = 255, byte e = 255, byte f = 255)
         {
-            throw new System.NotImplementedException();
+            int count;
+            if (b == 255)
+                count = 1;
+            else if (c == 255)
+                count = 2;
+            else if (d == 255)
+                count = 3;
+            else if (e == 255)
+                count = 4;
+            else if (f == 255)
+                count = 5;
+            else
+                count = 6;
+            byte* types = (byte*)Mem.malloc((SIZE_T)(sizeof(byte*) * count));
+            types[0] = a;
+            if (count > 1)
+                types[1] = b;
+            if (count > 2)
+                types[2] = c;
+            if (count > 3)
+                types[3] = d;
+            if (count > 4)
+                types[4] = e;
+            if (count > 5)
+                types[5] = f;
+            return types;
         }
 
         public static void Init()

@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System.Collections.Generic;
+
 namespace DnaUnity
 {
     #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
@@ -30,32 +32,38 @@ namespace DnaUnity
 
     public unsafe struct H
     {
-        public System.IntPtr _p;
+        public PTR _p;
+
+        private static List<PTR> gcHandles = new List<PTR>();
 
         public H(object o)
         {
-            _p = System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal).AddrOfPinnedObject();
+            _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
+            gcHandles.Add(_p);
         }
 
         public H(fnInternalCall o)
         {
-            _p = System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal).AddrOfPinnedObject();
+            _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
+            gcHandles.Add(_p);
         }
 
         public H(fnInternalCallCheck o)
         {
-            _p = System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal).AddrOfPinnedObject();
+            _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
+            gcHandles.Add(_p);
         }
 
         public H(ref void* p, object o)
         {
             if (p != null)
             {
-                _p = (System.IntPtr)p;
+                _p = (PTR)p;
             }
             else
             {
-                _p = System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal).AddrOfPinnedObject();
+                _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
+                gcHandles.Add(_p);
                 p = (void*)_p;
             }
         }
@@ -76,6 +84,16 @@ namespace DnaUnity
                 return System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)p).Target;
             else
                 return null;
+        }
+
+        public static void Clear()
+        {
+            foreach (PTR p in gcHandles)
+            {
+                System.Runtime.InteropServices.GCHandle h = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)p);
+                h.Free();
+            }
+            gcHandles.Clear();
         }
 
     }
