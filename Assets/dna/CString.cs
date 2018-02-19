@@ -299,7 +299,7 @@
                     } 
                     else if (ch == 'x' || ch == 'd')
                     {
-                        int v = (int)args[curarg];
+                        int v = System.Convert.ToInt32(args[curarg]);
                         curarg++;
                         string vs = (ch == 'x' ? v.ToString("X") : v.ToString());
                         for (int j = 0; j < vs.Length; j++)
@@ -309,13 +309,13 @@
                             *b++ = (byte)vs[j];
                         }
                     }
-                    else if (ch == 'l' && i + 2 < fmtLen && fmt[i + 1] == 'l' && (fmt[i + 2] == 'x' || fmt[i + 2] == 'd'))
+                    else if (ch == 'l' && i + 2 < fmtLen && fmt[i + 1] == 'l' && (fmt[i + 2] == 'x' || fmt[i + 2] == 'X' || fmt[i + 2] == 'd'))
                     {
                         i += 2;
                         ch = fmt[i];
-                        long lv = (long)args[curarg];
+                        long lv = System.Convert.ToInt64(args[curarg]);
                         curarg++;
-                        string lvs = (ch == 'x' ? lv.ToString("X") : lv.ToString());
+                        string lvs = (ch == 'x' || ch == 'X' ? lv.ToString("X") : lv.ToString());
                         for (int j = 0; j < lvs.Length; j++)
                         {
                             if (b >= e)
@@ -323,14 +323,14 @@
                             *b++ = (byte)lvs[j];
                         }
                     }
-                    else if (ch == '0' && i + 2 < fmtLen && (fmt[i + 1] >= '0' && fmt[i + 1] <= '9') && (fmt[i + 2] == 'x' || fmt[i + 2] == 'd'))
+                    else if (ch == '0' && i + 2 < fmtLen && (fmt[i + 1] >= '0' && fmt[i + 1] <= '9') && (fmt[i + 2] == 'x' || fmt[i + 2] == 'X' || fmt[i + 2] == 'd'))
                     {
-                        i += 2;
                         char l0 = fmt[i + 1];
+                        i += 2;
                         ch = fmt[i];                        
-                        int v0 = (int)args[curarg];
+                        int v0 = System.Convert.ToInt32(args[curarg]);
                         curarg++;
-                        string vs0 = (ch == 'x' ? v0.ToString("X" + l0) : v0.ToString("D" + l0));
+                        string vs0 = (ch == 'x' || ch == 'X' ? v0.ToString("X" + l0) : v0.ToString("D" + l0));
                         for (int j = 0; j < vs0.Length; j++)
                         {
                             if (b >= e)
