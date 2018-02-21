@@ -34,9 +34,12 @@ namespace DnaUnity
         static int memSize;
         static int memUsed;
 
+        const ulong HEAP_DEAD_BEEF = 0xDEADBEEFDEADBEEFUL;
+
         public static void Init(int size)
         {
             pMem = (byte*)System.Runtime.InteropServices.Marshal.AllocHGlobal(size);
+            *(ulong*)pMem = HEAP_DEAD_BEEF;
             memSize = size;
             memUsed = 0;
         }
@@ -53,22 +56,44 @@ namespace DnaUnity
 
         public static void* malloc(SIZE_T size)
         {
+            heapcheck();
             if (size == 0)
                 return null;
-            if (memUsed + (int)size > memSize)
+            if (memUsed + (int)size > memSize - 8)
                 throw new System.OutOfMemoryException();
-            SIZE_T realSize = 8 + ((size + 7) & 0xFFFFFFF8);
+            SIZE_T realSize = 16 + ((size + 7) & 0xFFFFFFF8);
             if (pMem == null)
                 Init((int)DEFAULT_SIZE);
             byte* p = pMem + memUsed;
             memUsed += (int)realSize;
-            *(uint*)p = (uint)size;
-            *(uint*)(p + 4) = (uint)0;
-            return p + 8;
+            *(ulong*)p = HEAP_DEAD_BEEF;
+            *(uint*)(p + 8) = (uint)size;
+            *(uint*)(p + 12) = (uint)0;
+            *(ulong*)(p + realSize) = HEAP_DEAD_BEEF;
+            return p + 16;
+        }
+
+        public static void heapcheck()
+        {
+            if (Sys.isCrashed == 1)
+                return;
+            byte* p = pMem;
+            byte* e = pMem + memUsed;
+            for (;;) {
+                if (*(ulong*)p != HEAP_DEAD_BEEF) {
+                    Sys.Crash("ERROR: Heap corruption detected!");
+                }
+                if (p >= e)
+                    break;
+                uint size = *(uint*)(p + 8);
+                SIZE_T realSize = 16 + ((size + 7) & 0xFFFFFFF8);
+                p += realSize;
+            }
         }
 
         public static void* realloc(void* p, SIZE_T size)
         {
+            heapcheck();
             ulong* a = (ulong*)p;
             ulong* b = (ulong*)malloc(size);
             int oldWords = (int)(((*(int*)(a - 8)) + 7) & 0xFFFFFFF8) >> 3;
@@ -86,21 +111,25 @@ namespace DnaUnity
 
         public static void free(void* p)
         {
+            heapcheck();
             // DO NOTHING FOR NOW
         }
 
         public static void memcpy(void* p1, void* p2, SIZE_T size)
         {
+            heapcheck();
             // For now.. slow but simple - accurate
             byte* a = (byte*)p1;
             byte* b = (byte*)p2;
             int len = (int)size;
             for (int i = 0; i < len; i++)
                 *a++ = *b++;
+            heapcheck();
         }
 
         public static void memmove(void* p1, void* p2, SIZE_T size)
         {
+            heapcheck();
             // Handle overlapping regions correctly!
             if (p1 > p2)
             {
@@ -115,16 +144,19 @@ namespace DnaUnity
                 for (int i = 0; i < len; i++)
                     *a-- = *b--;                
             }
+            heapcheck();
         }
 
         public static void memset(void* p, int v, SIZE_T size)
         {
+            heapcheck();
             // For now.. slow but simple - accurate
             byte* a = (byte*)p;
             byte b = (byte)v;
             int len = (int)size;
             for (int i = 0; i < len; i++)
                 *a++ = b;
+            heapcheck();
         }
 
         public static int memcmp(void* p1, void* p2, SIZE_T size)
