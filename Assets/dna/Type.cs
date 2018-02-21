@@ -304,6 +304,10 @@ namespace DnaUnity
 
         static void CreateNewArrayType(tMD_TypeDef *pNewArrayType, tMD_TypeDef *pElementType, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
         {
+            if (pNewArrayType->isFilled == 1) {
+                return;
+            }
+
         	MetaData.Fill_TypeDef(types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], null, null);
 
             Mem.memcpy(pNewArrayType, types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], (SIZE_T)sizeof(tMD_TypeDef));
@@ -334,7 +338,8 @@ namespace DnaUnity
         		pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
                 pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
-        		pMethod = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GetGenericEnumerator], pNewArrayType, 1, &pElementType);
+                tMD_MethodDef* pGenericEnumeratorMethod = ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GetGenericEnumerator];
+                pMethod = Generics.GetMethodDefFromCoreMethod(pGenericEnumeratorMethod, pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[0] = pMethod;
 
         		// Get the ICollection<T> interface

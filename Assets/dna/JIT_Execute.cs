@@ -1048,7 +1048,7 @@ namespace DnaUnity
                                         // Found the right interface map
                                         if (pThisType->pInterfaceMaps[i].pVTableLookup != null) {
                                             vIndex = pThisType->pInterfaceMaps[i].pVTableLookup[pCallMethod->vTableOfs];
-                                            UnityEngine.Assertions.Assert.IsTrue(vIndex != 0xffffffff);
+                                            System.Diagnostics.Debug.Assert(vIndex != 0xffffffff);
                                             pCallMethod = pThisType->pVTable[vIndex];
                                         } else {
                                             pCallMethod = pThisType->pInterfaceMaps[i].ppMethodVLookup[pCallMethod->vTableOfs];

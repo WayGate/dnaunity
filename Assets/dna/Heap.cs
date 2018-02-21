@@ -458,7 +458,7 @@ namespace DnaUnity
         {
         	tHeapRootEntry *pRootEntry;
 
-            UnityEngine.Assertions.Assert.IsTrue((sizeInBytes & 0x3) == 0);
+            System.Diagnostics.Debug.Assert((sizeInBytes & 0x3) == 0);
         	if (pHeapRoots->num >= pHeapRoots->capacity) {
         		pHeapRoots->capacity <<= 1;
                 pHeapRoots->pHeapEntries = (tHeapRootEntry*)Mem.realloc(pHeapRoots->pHeapEntries, (SIZE_T)(pHeapRoots->capacity * sizeof(tHeapRootEntry)));

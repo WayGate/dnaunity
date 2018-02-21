@@ -56,7 +56,7 @@ namespace DnaUnity
         public static void Crash(string pMsg, params object[] args) 
         {
             printf(pMsg, args);
-            throw new UnityEngine.UnityException("DnaUnity CRASH!");
+            throw new System.InvalidOperationException("DnaUnity CRASH!");
         }
   
         public static /*char*/byte* GetMethodDesc(tMD_MethodDef *pMethod) 
@@ -93,7 +93,11 @@ namespace DnaUnity
             byte* buf = stackalloc byte[2048];
             S.snprintf(buf, 2048, format, args);
             string msg = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)buf);
+            #if !UNITY_EDITOR && !UNITY_IOS && !UNITY_ANDROID && !UNITY_WEBGL && !UNITY_STANDALONE
+            System.Console.WriteLine(msg);
+            #else
             UnityEngine.Debug.Log(msg);
+            #endif
         }
     }
 }

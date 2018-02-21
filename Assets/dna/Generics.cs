@@ -42,7 +42,7 @@ namespace DnaUnity
         // The number of type arguments for this instance
         public uint numTypeArgs;
         // The type arguments for this instantiation
-        public tMD_TypeDef *pTypeArgs;
+        public tMD_TypeDef** ppTypeArgs;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -139,7 +139,7 @@ namespace DnaUnity
         	pInst = pCoreType->pGenericInstances;
         	while (pInst != null) {
         		if (pInst->numTypeArgs == numTypeArgs &&
-                    Mem.memcmp(pInst->pTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*))) == 0) {
+                    Mem.memcmp(pInst->ppTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*))) == 0) {
         			return pInst->pInstanceTypeDef;
         		}
         		pInst = pInst->pNext;
@@ -152,7 +152,8 @@ namespace DnaUnity
         	pCoreType->pGenericInstances = pInst;
         	// Copy the type args into the instantiation.
         	pInst->numTypeArgs = numTypeArgs;
-            Mem.memcpy(pInst->pTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
+            pInst->ppTypeArgs = (tMD_TypeDef**)Mem.malloc((SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
+            Mem.memcpy(pInst->ppTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
 
         	// Create the new instantiated type
             pInst->pInstanceTypeDef = pTypeDef = ((tMD_TypeDef*)Mem.mallocForever((SIZE_T)sizeof(tMD_TypeDef)));
@@ -193,7 +194,7 @@ namespace DnaUnity
             int nameLen = S.strlen(name)+1;
             pTypeDef->name = (/*STRING*/byte*)Mem.mallocForever((SIZE_T)nameLen);
         	S.strncpy(pTypeDef->name, name, nameLen);
-            pTypeDef->ppClassTypeArgs = (tMD_TypeDef**)pInst->pTypeArgs;
+            pTypeDef->ppClassTypeArgs = (tMD_TypeDef**)pInst->ppTypeArgs;
         	pTypeDef->extends = pCoreType->extends;
         	pTypeDef->tableIndex = pCoreType->tableIndex;
         	pTypeDef->fieldList = pCoreType->fieldList;

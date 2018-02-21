@@ -93,6 +93,10 @@ namespace DnaUnity
         	/*SIG*/byte* sig;
         	uint i, entry, totalSize, start;
 
+            if (pMethodDef->isFilled == 1) {
+                return;
+            }
+
         	pMethodDef->pParentType = pParentType;
         	pMethodDef->pMethodDef = pMethodDef;
         	pMethodDef->isFilled = 1;
@@ -202,7 +206,11 @@ namespace DnaUnity
         	tMetaData *pMetaData;
         	tMD_TypeDef *pParent;
 
-        	pMetaData = pTypeDef->pMetaData;
+            if (pTypeDef->isFilled == 1) {
+                return;
+            }
+
+            pMetaData = pTypeDef->pMetaData;
         	pTypeDef->isFilled = 1;
         	pTypeDef->pTypeDef = pTypeDef;
 
@@ -257,7 +265,7 @@ namespace DnaUnity
         					tMD_MethodDef *pVirtualOveriddenMethod;
 
         					pVirtualOveriddenMethod = FindVirtualOverriddenMethod(pTypeDef->pParent, pMethodDef);
-                            UnityEngine.Assertions.Assert.IsTrue(pVirtualOveriddenMethod != null);
+                            System.Diagnostics.Debug.Assert(pVirtualOveriddenMethod != null);
         					pMethodDef->vTableOfs = pVirtualOveriddenMethod->vTableOfs;
         				}
         			} else {
@@ -477,7 +485,7 @@ namespace DnaUnity
 
         								pInterfaceMethod = pInterface->pVTable[i];
         								pOverriddenMethod = FindVirtualOverriddenMethod(pTypeDef, pInterfaceMethod);
-                                        UnityEngine.Assertions.Assert.IsTrue(pOverriddenMethod != null);
+                                        System.Diagnostics.Debug.Assert(pOverriddenMethod != null);
         								pMap->pVTableLookup[i] = pOverriddenMethod->vTableOfs;
         							}
         						} else {

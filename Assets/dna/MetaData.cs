@@ -521,9 +521,6 @@ namespace DnaUnity
         	uint v = 0;
             SIZE_T p = 0;
 
-            if (tableID == 40)
-                tableID = tableID * 1;
-
         	// Calculate the destination row size from table definition, if it hasn't already been calculated
         	if (tableRowSize[tableID] == 0) {
         		for (i=0; i<defLen; i += 2) {
@@ -704,7 +701,9 @@ namespace DnaUnity
                             break;
         			}
         		}
-                srcLen = (int)(pSource - pSrcStart);
+                if (srcLen == 0) {
+                    srcLen = (int)(pSource - pSrcStart);
+                }
         	}
 
         	Sys.log_f(1, "Loaded MetaData table 0x%02X; %d rows %d len\n", tableID, numRows, srcLen);
@@ -810,7 +809,7 @@ namespace DnaUnity
 
         public static void GetConstant(tMetaData *pThis, /*IDX_TABLE*/uint idx, byte* pResultMem) 
         {
-        	tMD_Constant *pConst;
+        	tMD_Constant *pConst = null;
 
         	switch (MetaData.TABLE_ID(idx)) {
         	case MetaDataTable.MD_TABLE_FIELDDEF:

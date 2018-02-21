@@ -681,7 +681,7 @@ cilCallVirtConstrained:
         									break;
         								}
         							}
-                                    UnityEngine.Assertions.Assert.IsTrue(u32Value2 != 0xffffffff);
+                                    System.Diagnostics.Debug.Assert(u32Value2 != 0xffffffff);
         							if (pConstrainedType->pVTable[u32Value2]->pParentType == pConstrainedType) {
         								// This method is implemented on this class, so make it a normal CALL op
         								op = OpCodes.CALL;
