@@ -32,7 +32,12 @@ namespace DnaUnity
         public const int MD_TABLE_MEMBERREF                = 0x0a;
         public const int MD_TABLE_CONSTANT                 = 0x0b;
         public const int MD_TABLE_CUSTOMATTRIBUTE          = 0x0c;
-        public const int MD_TABLE_DECLSECURITY             = 0x0e;
+        public const int MD_TABLE_FIELDMARSHAL             = 0x0d;
+        public const int MD_TABLE_CLASSLAYOUT              = 0x0f;
+        public const int MD_TABLE_FIELDLAYOUT              = 0x10;
+        public const int MD_TABLE_STANDALONESIG            = 0x11;
+        public const int MD_TABLE_EVENTMAP                 = 0x12;
+        public const int MD_TABLE_EVENT                    = 0x14;
         public const int MD_TABLE_PROPERTYMAP              = 0x15;
         public const int MD_TABLE_PROPERTY                 = 0x17;
         public const int MD_TABLE_METHODSEMANTICS          = 0x18;
@@ -43,6 +48,7 @@ namespace DnaUnity
         public const int MD_TABLE_FIELDRVA                 = 0x1d;
         public const int MD_TABLE_ASSEMBLY                 = 0x20;
         public const int MD_TABLE_ASSEMBLYREF              = 0x23;
+        public const int MD_TABLE_MANIFESTRESOURCE         = 0x28;
         public const int MD_TABLE_NESTEDCLASS              = 0x29;
         public const int MD_TABLE_GENERICPARAM             = 0x2A;
         public const int MD_TABLE_METHODSPEC               = 0x2B;
@@ -194,6 +200,7 @@ namespace DnaUnity
         public /*HEAP_PTR*/byte* typeObject;
     }
 
+    // Table 0x04 - FieldDef
     public unsafe struct tMD_FieldDef
     {
     	// Combined
@@ -320,7 +327,7 @@ namespace DnaUnity
     public unsafe struct tMD_MemberRef
     {
         // Combined (tMD_MethodDef and tMD_FieldDef)
-        public tMD_MethodDef *pMethodDef;
+        public tMD_MethodDef *pMethodOrFieldDef;
     //	tMD_FieldDef *pFieldDef;
 
     	// Type of member, coded index: MemberRefParent
@@ -357,6 +364,18 @@ namespace DnaUnity
         public /*BLOB_*/byte* value;
     };
 
+    // Table 0x0D - FieldMarshal
+    public unsafe struct tMD_FieldMarshal
+    {
+        // Parent
+        public /*IDX_TABLE*/uint parent;
+        // Padding 
+        public uint padding;
+        // value of attribute
+        public /*BLOB_*/byte* nativeType;
+    };
+
+    // Table 0x0E - DEclSecurity
     public unsafe struct tMD_DeclSecurity
     {
     	// The security action
@@ -375,11 +394,20 @@ namespace DnaUnity
     	// The packing size
         public ushort packingSize;
     	// Padding
-        public ushort padding0;
+        public ushort padding;
     	// The class size
         public uint classSize;
     	// The parent TypeDef
         public /*IDX_TABLE*/uint parent;
+    };
+
+    // Table 0x10 - FieldLayout
+    public unsafe struct tMD_FieldLayout
+    {
+        // The field offset
+        public uint offset;
+        // The field index
+        public /*IDX_TABLE*/uint field;
     };
 
     // Table 0x11 - StandAloneSig
@@ -443,7 +471,7 @@ namespace DnaUnity
     	// semantics flags - MethodSemanticsAttributes
         public /*FLAGS16*/ushort semantics;
     	// Padding dummy entry
-        public short padding0;
+        public short padding;
     	// method - entry into MethodDef table
         public /*IDX_TABLE*/uint method;
     	// HasSemantics coded entry - index into Event or Property tables
@@ -461,6 +489,7 @@ namespace DnaUnity
         public /*IDX_TABLE*/uint methodDeclaration;
     }
 
+    // Table 0x1A - ModuleRef
     public unsafe struct tMD_ModuleRef
     {
     	// The module name referenced
@@ -479,6 +508,7 @@ namespace DnaUnity
         public /*BLOB_*/byte* signature;
     }
 
+    // Table 0x1C - ImplMap
     public unsafe struct tMD_ImplMap
     {
     	// Mapping flags of type PInvokeAttributes
@@ -519,6 +549,7 @@ namespace DnaUnity
         public /*STRING*/byte* culture;
     }
 
+    // Table 0x23 - AssemblyRef
     public unsafe struct tMD_AssemblyRef
     {
     	// Version info
@@ -537,6 +568,20 @@ namespace DnaUnity
         public /*BLOB_*/byte* hashValue;
     }
 
+    // Table 0x28 - ManifestResource
+    public unsafe struct tMD_ManifestResource
+    {
+        // Resource offset
+        public /*IDX_TABLE*/uint offset;
+        // Manifest resource flags (1 public, 2 private)
+        public /*IDX_TABLE*/uint flags;
+        // Name
+        public /*STRING*/byte* name;
+        // A coded index into File, AssemblyRef, or ExportedType table
+        public /*IDX_TABLE*/uint implementation;
+    }
+
+    // Table 0x29 - NestedClass
     public unsafe struct tMD_NestedClass
     {
     	// The TypeDef of the class that is nested

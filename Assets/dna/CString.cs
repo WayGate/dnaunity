@@ -59,6 +59,24 @@
             return s._s;
         }
 
+        // check for corrupt string
+        public static int isvalidstr(byte* s)
+        {
+            try {
+                if (s == null)
+                    return 0;
+                while (*s != 0)
+                {
+                    if (!(*s == '\r' || *s == '\n' || *s == '\t' || (*s >= ' ' && *s <= '~')))
+                        return 0;
+                    s++;
+                }
+            } catch (System.Exception e) {
+                return 0;
+            }
+            return 1;
+        }
+
         public static byte** buildArray(params string[] args)
         {
             byte** arry = null;

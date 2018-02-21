@@ -302,13 +302,13 @@ namespace DnaUnity
                 // 0x0C
                 "2i:iB*",
                 // 0x0D
-                null,
+                "3ixiB*",
                 // 0x0E
                 "ssxs4iB*",
                 // 0x0F
                 "ssxsii\x02i",
                 // 0x10
-                null,
+                "ii\x04i",
                 // 0x11
                 "B*",
                 // 0x12
@@ -324,7 +324,7 @@ namespace DnaUnity
                 // 0x17
                 "ssxsxiS*B*",
                 // 0x18
-                "ssxs\06i6i",
+                "ssxs\x06i6i",
                 // 0x19
                 "\x02i7i7i",
                 // 0x1A
@@ -356,7 +356,7 @@ namespace DnaUnity
                 // 0x27
                 null,
                 // 0x28
-                null,
+                "iiiiS*9i",
                 // 0x29
                 "\x02i\x02i",
                 // 0x2A
@@ -382,7 +382,7 @@ namespace DnaUnity
                 // HasDeclSecurity
                 "\x02\x06\x20z",
                 // MemberRefParent
-                "z\x01\x1A\x06\x1Bzzz",
+                "\x02\x01\x1A\x06\x1Bzzz",
                 // HasSemantics
                 "\x14\x17",
                 // MethodDefOrRef
@@ -521,6 +521,9 @@ namespace DnaUnity
         	uint v = 0;
             SIZE_T p = 0;
 
+            if (tableID == 40)
+                tableID = tableID * 1;
+
         	// Calculate the destination row size from table definition, if it hasn't already been calculated
         	if (tableRowSize[tableID] == 0) {
         		for (i=0; i<defLen; i += 2) {
@@ -555,7 +558,9 @@ namespace DnaUnity
             pDest = (byte*)pRet;
 
         	// Load table
+            int srcLen = 0;
         	for (row=0; row<numRows; row++) {
+                byte* pSrcStart = pSource;
         		for (i=0; i<defLen; i += 2) {
         			byte d = pDef[i];
         			if (d < MAX_TABLES) {
@@ -625,7 +630,11 @@ namespace DnaUnity
         							v = GetU16(pSource);
         							pSource += 2;
         						}
-        						p = (SIZE_T)(pThis->strings.pStart + v);
+        						p = (PTR)(pThis->strings.pStart + v);
+                                // NOTE: Quick way to validate metadata loading, check if all strings are valid!
+                                if (S.isvalidstr((byte*)p) == 0) {
+                                    Sys.Crash("Invalid string %s", (PTR)p);
+                                }
         						break;
         					case 'G': // index into GUID heap
         						if (pThis->index32BitGUID != 0) {
@@ -635,7 +644,7 @@ namespace DnaUnity
         							v = GetU16(pSource);
         							pSource += 2;
         						}
-        						p = (SIZE_T)(pThis->GUIDs.pGUID1 + ((v-1) * 16));
+        						p = (PTR)(pThis->GUIDs.pGUID1 + ((v-1) * 16));
         						break;
         					case 'B': // index into BLOB heap
         						if (pThis->index32BitBlob != 0) {
@@ -645,15 +654,15 @@ namespace DnaUnity
         							v = GetU16(pSource);
         							pSource += 2;
         						}
-        						p = (SIZE_T)(pThis->blobs.pStart + v);
+        						p = (PTR)(pThis->blobs.pStart + v);
         						break;
         					case '^': // RVA to convert to pointer
         						v = GetU32(pSource);
         						pSource += 4;
-        						p = (SIZE_T)RVA.FindData(pRVA, v);
+        						p = (PTR)RVA.FindData(pRVA, v);
         						break;
         					case 'm': // Pointer to this metadata
-        						p = (SIZE_T)pThis;
+        						p = (PTR)pThis;
         						break;
         					case 'l': // Is this the last table entry?
                                 v = (row == numRows - 1) ? (uint)1 : (uint)0;
@@ -695,9 +704,10 @@ namespace DnaUnity
                             break;
         			}
         		}
+                srcLen = (int)(pSource - pSrcStart);
         	}
 
-        	Sys.log_f(1, "Loaded MetaData table 0x%02X; %d rows\n", tableID, numRows);
+        	Sys.log_f(1, "Loaded MetaData table 0x%02X; %d rows %d len\n", tableID, numRows, srcLen);
 
         	// Update the parameter to the position after this table
         	*ppTable = pSource;

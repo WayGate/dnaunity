@@ -8,7 +8,7 @@ namespace DnaUnity
 
     public class RunScript : MonoBehaviour 
     {
-        public int heapSize = 256000;
+        public int heapSize = 10000000;
         public string[] assemblySearchPaths = new string[] {
             "${UNITY_DIR}/Mono/Lib/mono/unity",
             "${UNITY_DIR}/Managed",

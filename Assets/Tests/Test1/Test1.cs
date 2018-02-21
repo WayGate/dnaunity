@@ -6,6 +6,6 @@ public static class Test1
 {
     public static void Test()
     {
-        string s = "Blah";
+        int i = 100 * 300 + 20;
     }
 }
