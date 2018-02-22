@@ -210,7 +210,7 @@ namespace DnaUnity
                 return;
             }
 
-            Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
+            //Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
 
             pMetaData = pTypeDef->pMetaData;
         	pTypeDef->isFilled = 1;
@@ -255,7 +255,7 @@ namespace DnaUnity
 
         			pMethodDef = MetaData.GetMethodDefFromDefRefOrSpec(pMetaData, token, ppClassTypeArgs, ppMethodTypeArgs);
 
-                    Sys.printf("Method: %s\n", (PTR)pMethodDef->name);
+                    //Sys.printf("Method: %s\n", (PTR)pMethodDef->name);
 
         			// This is needed, so array resolution can work correctly and FindVirtualOverriddenMethod() can work.
         			pMethodDef->pParentType = pTypeDef;

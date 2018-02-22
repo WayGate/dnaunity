@@ -20,6 +20,8 @@
 
 using System.Runtime.InteropServices;
 
+#pragma warning disable CS0649
+
 namespace DnaUnity
 {
     #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
@@ -84,16 +86,14 @@ namespace DnaUnity
             public byte needToFinalize;
 
             // unused
-            public byte padding;
+            public byte padding1;
+            public uint padding2;
 
             // The type in this heap entry
             public tMD_TypeDef *pTypeDef;
 
             // Used for locking sync, and tracking WeakReference that point to this object
             public tSync *pSync;
-
-            // The user memory
-            public fixed byte memory[1];
         }
 
         // Get the tHeapEntry pointer when given a /*HEAP_PTR*/byte* object
@@ -281,9 +281,11 @@ namespace DnaUnity
         	tHeapEntry *pToDelete = null;
         	SIZE_T orgHeapSize = trackHeapSize;
         	uint orgNumNodes = numNodes;
-        #if DIAG_GC
+            #if DIAG_GC
         	ulong startTime;
-        #endif
+            #endif
+
+            Mem.heapcheck();
 
         	numCollections++;
 
@@ -352,7 +354,7 @@ namespace DnaUnity
         								pType->pArrayElementType->stackType == EvalStack.EVALSTACK_PTR)) {
 
         								if (pType != Type.types[Type.TYPE_SYSTEM_WEAKREFERENCE]) {
-        									Heap.SetRoots(&heapRoots,pNode->memory, GetSize(pNode));
+        									Heap.SetRoots(&heapRoots,((byte*)&pNode->pSync + sizeof(PTR)), GetSize(pNode));
         									moreRootsAdded = 1;
         								}
         							}
@@ -427,6 +429,8 @@ namespace DnaUnity
         		Mem.free(pThis);
         	}
 
+            Mem.heapcheck();
+
         #if DIAG_GC
         	gcTotalTime += microTime() - startTime;
         #endif
@@ -472,6 +476,7 @@ namespace DnaUnity
         {
         	tHeapEntry *pHeapEntry;
         	uint totalSize;
+            byte* pMem;
 
             totalSize = (uint)sizeof(tHeapEntry) + size;
 
@@ -493,13 +498,14 @@ namespace DnaUnity
         	pHeapEntry->pTypeDef = pTypeDef;
         	pHeapEntry->pSync = null;
             pHeapEntry->needToFinalize = (byte)((pTypeDef->pFinalizer != null) ? 1 : 0);
-        	Mem.memset(&pHeapEntry->memory[0], 0, size);
+            pMem = (byte*)&pHeapEntry->pSync + sizeof(PTR);
+            Mem.memset(pMem, 0, size);
         	trackHeapSize += totalSize;
 
         	pHeapTreeRoot = TreeInsert(pHeapTreeRoot, pHeapEntry);
         	numNodes++;
 
-        	return pHeapEntry->memory;
+        	return pMem;
         }
 
         public static /*HEAP_PTR*/byte* AllocType(tMD_TypeDef *pTypeDef) 
@@ -541,9 +547,12 @@ namespace DnaUnity
         	tHeapEntry *pObj = GET_HEAPENTRY(obj);
         	/*HEAP_PTR*/byte* clone;
         	uint size = GetSize(pObj);
+            byte* pMem;
 
-        	clone = Alloc(pObj->pTypeDef, size);
-            Mem.memcpy((void*)clone, (void*)pObj->memory, size);
+            clone = Alloc(pObj->pTypeDef, size);
+
+            pMem = (byte*)&pObj->pSync + sizeof(PTR);
+            Mem.memcpy((void*)clone, pMem, size);
 
         	return clone;
         }

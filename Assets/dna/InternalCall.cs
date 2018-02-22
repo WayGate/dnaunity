@@ -208,10 +208,10 @@ namespace DnaUnity
         		}
         	} else {
 
+                /*STRING*/ byte* curNameSpace = null;
+                /*STRING*/ byte* curType = null;
                 for (int i = 0; i < internalCalls.Length; i++) {
                     fixed (tInternalCall *pCall = &internalCalls[i]) {
-                        /*STRING*/byte* curNameSpace = null;
-                        /*STRING*/byte* curType = null;
             			if (pCall->nameSpace != null) {
             				curNameSpace = pCall->nameSpace;
             			}

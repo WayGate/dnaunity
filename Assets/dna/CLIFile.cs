@@ -70,6 +70,8 @@ namespace DnaUnity
         // Keep track of all the files currently loaded
         static tFilesLoaded *pFilesLoaded = null;
 
+        static byte* /*char**/ scCorLib; 
+
         public static void Init(string[] searchPaths)
         {
             #if UNITY_EDITOR
@@ -97,6 +99,8 @@ namespace DnaUnity
             assemblySearchPaths = S.buildArray(searchPaths);
             assemblySearchPathsCount = searchPaths.Length;
 
+            scCorLib = new S("corlib");
+
             pFilesLoaded = null;
         }
 
@@ -110,6 +114,7 @@ namespace DnaUnity
                 pFiles = pFiles->pNext;
             }
             pFilesLoaded = null;
+            scCorLib = null;
         }
 
         public static tMetaData* GetMetaDataForLoadedAssembly(byte *pLoadedAssemblyName) 
@@ -137,10 +142,8 @@ namespace DnaUnity
             tCLIFile *pCLIFile = null;
             tMD_Assembly *pThisAssembly = null;
 
-            #if DNA_CORLIB
             if (S.strcmp(pAssemblyName, "mscorlib") == 0)
                 pAssemblyName = scCorLib;
-            #endif
 
             // Mono/Unity assemblies only load metadata, no code
             int i = 0;
