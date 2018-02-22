@@ -1,0 +1,17 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "corlib", "corlib.csproj", "{3AC031E6-064C-43A9-A7EF-99A772C8F306}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3AC031E6-064C-43A9-A7EF-99A772C8F306}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3AC031E6-064C-43A9-A7EF-99A772C8F306}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3AC031E6-064C-43A9-A7EF-99A772C8F306}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3AC031E6-064C-43A9-A7EF-99A772C8F306}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

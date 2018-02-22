@@ -26,6 +26,8 @@ ExportedObj/
 
 !test.sln
 !test.csproj
+!corlib.sln
+!corlib.csproj
 
 # Unity3D generated meta files
 *.pidb.meta
