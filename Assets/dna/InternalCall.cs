@@ -107,11 +107,11 @@ namespace DnaUnity
                 new tInternalCall {nameSpace = null, type = null,    method = new S("Reverse"), fn = new H(System_Array.Reverse), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_ARRAY_NO_TYPE, Type.TYPE_SYSTEM_INT32, Type.TYPE_SYSTEM_INT32)},
                 new tInternalCall {nameSpace = null, type = null,    method = new S("CreateInstance"), fn = new H(System_Array.CreateInstance), returnType = Type.TYPE_SYSTEM_ARRAY_NO_TYPE, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_TYPE, Type.TYPE_SYSTEM_INT32)},
 
-                /*{null, "Console", "Write", System_Console_Write, Type.TYPE_SYSTEM_VOID, 1, {Type.TYPE_SYSTEM_STRING}},
-                {null, null     , "Internal_ReadKey", System_Console_Internal_ReadKey, Type.TYPE_SYSTEM_INT32, 0},
-                {null, null     , "Internal_KeyAvailable", System_Console_Internal_KeyAvailable, Type.TYPE_SYSTEM_BOOLEAN, 0},
+                new tInternalCall {nameSpace = null, type = new S("Console"), method = new S("Write"), fn = new H(System_Console.Write), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING)},
+                new tInternalCall {nameSpace = null, type = null,    method = new S("Internal_ReadKey"), fn = new H(System_Console.Internal_ReadKey), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null,    method = new S("Internal_KeyAvailable"), fn = new H(System_Console.Internal_KeyAvailable), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 0},
 
-                {null, "Environment", "get_TickCount", System_Environment_get_TickCount, Type.TYPE_SYSTEM_INT32, 0},
+                /*{null, "Environment", "get_TickCount", System_Environment_get_TickCount, Type.TYPE_SYSTEM_INT32, 0},
                 {null, null         , "GetOSVersionString", System_Environment_GetOSVersionString, Type.TYPE_SYSTEM_STRING, 0},
                 {null, null         , "get_Platform", System_Environment_get_Platform, Type.TYPE_SYSTEM_PLATFORMID, 0}, */
 

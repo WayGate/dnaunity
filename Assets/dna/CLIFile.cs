@@ -52,8 +52,6 @@ namespace DnaUnity
         // Is this exe/dll file for the .NET virtual machine?
         const int DOT_NET_MACHINE = 0x14c;
 
-        static byte* /*char*/ scCorLib = null;
-
         private unsafe struct tFilesLoaded 
         {
         	public tCLIFile *pCLIFile;
@@ -99,8 +97,6 @@ namespace DnaUnity
             assemblySearchPaths = S.buildArray(searchPaths);
             assemblySearchPathsCount = searchPaths.Length;
 
-            scCorLib = new S("corlib");
-
             pFilesLoaded = null;
         }
 
@@ -114,7 +110,6 @@ namespace DnaUnity
                 pFiles = pFiles->pNext;
             }
             pFilesLoaded = null;
-            scCorLib = null;
         }
 
         public static tMetaData* GetMetaDataForLoadedAssembly(byte *pLoadedAssemblyName) 

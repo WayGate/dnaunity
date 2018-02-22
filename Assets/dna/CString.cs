@@ -71,7 +71,7 @@
                         return 0;
                     s++;
                 }
-            } catch (System.Exception e) {
+            } catch (System.Exception) {
                 return 0;
             }
             return 1;
