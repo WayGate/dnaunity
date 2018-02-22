@@ -114,6 +114,9 @@ namespace DnaUnity
                 pFiles = pFiles->pNext;
             }
             pFilesLoaded = null;
+            monoUnityAssemblies = null;
+            assemblySearchPaths = null;
+            assemblySearchPathsCount = 0;
             scCorLib = null;
         }
 

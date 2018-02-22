@@ -136,6 +136,15 @@ namespace DnaUnity
         	pHeapTreeRoot = nil;
         }
 
+        public static void Clear()
+        {
+            pHeapTreeRoot = nil = null;
+            trackHeapSize = 0;
+            heapSizeMax = 0;
+            numNodes = 0;
+            numCollections = 0;
+        }
+
         // Get the size of a heap entry, NOT including the header
         // This works by returning the size of the type, unless the type is an array or a string,
         // which are the only two type that can have variable sizes

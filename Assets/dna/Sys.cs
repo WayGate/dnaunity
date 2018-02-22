@@ -65,7 +65,7 @@ namespace DnaUnity
         #endif 
         public const int S_INT = 4;
 
-        public static uint logLevel;
+        public static uint logLevel = 3;
 
         public static void log_f(uint level, string pMsg, params object[] args)
         {

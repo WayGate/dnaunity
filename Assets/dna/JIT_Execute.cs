@@ -57,6 +57,19 @@ namespace DnaUnity
             pThrowExcept = null;
         }
 
+        public static void Clear()
+        {
+            pThread = null;
+            pJIT = null;
+            pCurrentMethodState = null;
+            pParamsLocals = null;
+            scNone = null;
+            pOps = null;
+            pCurOp = null;
+            pCurEvalStack = null;
+            pThrowExcept = null;
+        }
+
         // Get the next op-code
         static uint GET_OP()
         {
@@ -358,7 +371,7 @@ namespace DnaUnity
 
         #else
 
-        [System.Diagnostics.Conditional("TRACE")]
+        [System.Diagnostics.Conditional("TRACE_OPCODES")]
         static void OPCODE_USE(uint op) 
         {
             Sys.printf("%s %X op \n", (PTR)pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack));

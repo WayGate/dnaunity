@@ -23,6 +23,22 @@ namespace DnaUnity
             Dna.Load("Test1.dll");
             Dna.Call("Test1.Test");
 
+            Dna.Reset();
+            Dna.Init(10000000, assemblySearchPaths);
+            Dna.Load("Test1.dll");
+            Dna.Call("Test1.Test");
+
+            Dna.Reset();
+            Dna.Init(10000000, assemblySearchPaths);
+            Dna.Load("Test1.dll");
+            Dna.Call("Test1.Test");
+
+            Dna.Reset();
+            Dna.Init(10000000, assemblySearchPaths);
+            Dna.Load("Test1.dll");
+            Dna.Call("Test1.Test");
+
+
         }
     }
 }

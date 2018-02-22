@@ -172,6 +172,22 @@ namespace DnaUnity
             pMetaData = null;
         }
 
+        public static void Clear()
+        {
+            maxStack = 0;
+            cilOfs = 0;
+            ops = new tOps();
+            branchOffsets = new tOps();
+            pJITOffsets = null;
+            ppTypeStacks = null;
+            pFinalOps = null;
+            pStackType = null;
+            typeStack = new tTypeStack();
+            convFloat = new uConvFloat();
+            convDouble = new uConvDouble();
+            pMetaData = null;
+        }
+
         static void InitOps(ref tOps ops, uint initialCapacity) 
         {
             ops.capacity = initialCapacity; 

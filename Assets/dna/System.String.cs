@@ -38,7 +38,7 @@ namespace DnaUnity
 
         public static char* GetChars(tSystemString* str)
         {
-            return (char*)str + 4;
+            return (char*)((byte*)str + sizeof(uint));
         }
     };
 
@@ -51,7 +51,7 @@ namespace DnaUnity
         	tSystemString* pSystemString;
         	uint totalSize;
         	
-            totalSize = (uint)(sizeof(tSystemString) + (len << 1));
+            totalSize = (uint)(sizeof(uint) + (len << 1));
         	pSystemString = (tSystemString*)Heap.Alloc(Type.types[Type.TYPE_SYSTEM_STRING], totalSize);
         	pSystemString->length = len;
         	return pSystemString;
@@ -464,7 +464,7 @@ namespace DnaUnity
 
         public static uint GetNumBytes(/*HEAP_PTR*/byte* pThis_) 
         {
-            return (uint)((((tSystemString*)pThis_)->length << 1) + sizeof(tSystemString));
+            return (uint)((((tSystemString*)pThis_)->length << 1) + sizeof(uint));
         }
     }
 }

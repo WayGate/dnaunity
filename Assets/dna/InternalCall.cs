@@ -188,6 +188,11 @@ namespace DnaUnity
             };
         }
 
+        public static void Clear()
+        {
+            internalCalls = null;
+        }
+
         static void* /*fnInternalCall*/ Map_Delegate(tMD_MethodDef *pMethod)
         {
 //            // Note that it is not neccessary to check argument type here, as delegates are very tightly controlled

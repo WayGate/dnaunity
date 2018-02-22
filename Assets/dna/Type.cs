@@ -152,7 +152,7 @@ namespace DnaUnity
         const int GENERICARRAYMETHODS_Internal_GenericSetItem           = 12;
         static /*char**/ byte** pGenericArrayMethodsInit = null;
 
-        public static tMD_TypeDef **types;
+        public static tMD_TypeDef **types = null;
 
         [StructLayout(LayoutKind.Sequential)]
         unsafe struct tTypeInit
@@ -276,6 +276,18 @@ namespace DnaUnity
                 }
             }
             //CorLibDone = 1;
+        }
+
+        public static void Clear()
+        {
+            pArrays = null;
+            genericArrayMethodsInited = 0;
+            ppGenericArrayMethods = null;
+            pGenericArrayMethodsInit = null;
+            types = null;
+            scMscorlib = scSystemCollectionsGeneric = scSystemReflection = scSystemThreading =
+                scSystemIO = scSystemGlobalization = scSystem = scValueType = scObject = null;
+            typeInit = null;
         }
 
         static void GetMethodDefs() 

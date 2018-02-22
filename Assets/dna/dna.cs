@@ -69,6 +69,7 @@ namespace DnaUnity
             #endif
 
             Mem.Init(memsize);
+            H.Init();
             Sys.Init();
             JIT.Init();
             JIT_Execute.Init();
@@ -87,10 +88,18 @@ namespace DnaUnity
         {
             if (isInitialized)
             {
-                Mem.Clear();
+                Type.Clear();
+                CLIFile.Clear();
+                InternalCall.Clear();
+                Finalizer.Clear();
+                Heap.Clear();
+                Generics.Clear();
+                MetaData.Clear();
+                JIT_Execute.Clear();
+                JIT.Clear();
                 Sys.Clear();
                 H.Clear();
-                CLIFile.Clear();
+                Mem.Clear();
                 isInitialized = false;
             }
         }

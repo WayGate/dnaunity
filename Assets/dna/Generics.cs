@@ -67,6 +67,10 @@ namespace DnaUnity
         {
         }
 
+        public static void Clear()
+        {
+        }
+
         public static void GetHeapRoots(tHeapRoots *pHeapRoots, tMD_TypeDef *pTypeDef) 
         {
         	tGenericInstance *pInst = pTypeDef->pGenericInstances;

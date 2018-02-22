@@ -411,6 +411,14 @@ namespace DnaUnity
             }
         }
 
+        public static void Clear()
+        {
+            tableDefs = null;
+            codedTags = null;
+            codedTagBits = null;
+            tableRowSize = null;
+        }
+
         public static uint DecodeSigEntry(/*SIG*/byte* *pSig) {
         	byte a,b,c,d;
         	a = *(*pSig)++;

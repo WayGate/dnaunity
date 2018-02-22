@@ -38,16 +38,21 @@ namespace DnaUnity
 
         	_string = *(byte**)pParams;
         	if (_string != null) {
+                #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
+                wStr = System_String.GetString(_string, &strLen);
+                if (wStr != null && strLen > 0 && !(strLen == 1 && wStr[0] == '\n') && !(strLen == 2 && wStr[0] == '\r' && wStr[1] == '\n'))
+                {
+                    string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
+                    UnityEngine.Debug.Log(netStr);
+                }
+                #else
                 wStr = System_String.GetString(_string, &strLen);
                 string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
-                #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
-                UnityEngine.Debug.Log(netStr);
-                #else
                 System.Console.Write(netStr);
                 #endif
-        	}
+            }
 
-        	return null;
+            return null;
         }
 
         static uint Internal_ReadKey_Check(byte* pThis_, byte* pParams, byte* pReturnValue, tAsyncCall *pAsync) 

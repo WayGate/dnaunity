@@ -41,6 +41,12 @@ namespace DnaUnity
         	toFinalizeOfs = 0;
         }
 
+        public static void Clear()
+        {
+            ppToFinalize = null;
+            toFinalizeOfs = toFinalizeCapacity = 0;
+        }
+
         public static void AddFinalizer(/*HEAP_PTR*/byte* ptr) 
         {
         	if (toFinalizeOfs >= toFinalizeCapacity) {

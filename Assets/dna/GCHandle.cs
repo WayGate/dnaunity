@@ -34,7 +34,7 @@ namespace DnaUnity
     {
         public PTR _p;
 
-        private static List<PTR> gcHandles = new List<PTR>();
+        private static List<PTR> gcHandles = null;
 
         public H(object o)
         {
@@ -86,6 +86,11 @@ namespace DnaUnity
                 return null;
         }
 
+        public static void Init()
+        {
+            gcHandles = new List<PTR>();
+        }
+
         public static void Clear()
         {
             foreach (PTR p in gcHandles)
@@ -93,7 +98,7 @@ namespace DnaUnity
                 System.Runtime.InteropServices.GCHandle h = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)p);
                 h.Free();
             }
-            gcHandles.Clear();
+            gcHandles = null;
         }
 
     }
