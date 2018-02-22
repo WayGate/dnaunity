@@ -6,6 +6,7 @@ public static class Test1
 {
     public static void Test()
     {
-        System.Console.WriteLine("Hello World!");
+        for (int i = 0; i < 20; i++)
+            System.Console.WriteLine("Hello Carlo!");
     }
 }
