@@ -111,9 +111,9 @@ namespace DnaUnity
                 new tInternalCall {nameSpace = null, type = null,    method = new S("Internal_ReadKey"), fn = new H(System_Console.Internal_ReadKey), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 0},
                 new tInternalCall {nameSpace = null, type = null,    method = new S("Internal_KeyAvailable"), fn = new H(System_Console.Internal_KeyAvailable), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 0},
 
-                /*{null, "Environment", "get_TickCount", System_Environment_get_TickCount, Type.TYPE_SYSTEM_INT32, 0},
-                {null, null         , "GetOSVersionString", System_Environment_GetOSVersionString, Type.TYPE_SYSTEM_STRING, 0},
-                {null, null         , "get_Platform", System_Environment_get_Platform, Type.TYPE_SYSTEM_PLATFORMID, 0}, */
+                new tInternalCall {nameSpace = null, type = new S("Environment"), method = new S("get_TickCount"), fn = new H(System_Environment.get_TickCount), returnType = Type.TYPE_SYSTEM_INT32, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("GetOSVersionString"), fn = new H(System_Environment.GetOSVersionString), returnType = Type.TYPE_SYSTEM_STRING, numParameters = 0},
+                new tInternalCall {nameSpace = null, type = null, method = new S("get_Platform"), fn = new H(System_Environment.get_Platform), returnType = Type.TYPE_SYSTEM_PLATFORMID, numParameters = 0},
 
                 new tInternalCall {nameSpace = null, type = new S("Type"), method = new S("GetTypeFromHandle"), fn = new H(System_Type.GetTypeFromHandle), returnType = Type.TYPE_SYSTEM_TYPE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_RUNTIMETYPEHANDLE)},
                 new tInternalCall {nameSpace = null, type = null, method = new S("EnsureAssemblyLoaded"), fn = new H(System_Type.EnsureAssemblyLoaded), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING)},

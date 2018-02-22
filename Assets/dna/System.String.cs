@@ -389,6 +389,24 @@ namespace DnaUnity
         	return null;
         }
 
+        public static /*HEAP_PTR*/byte* FromMonoString(string s)
+        {
+            tSystemString *pSystemString;
+            if (s != null) {
+                int strLen = s.Length;
+                char* pSystemStringChars;
+
+                pSystemString = CreateStringHeapObj((uint)strLen);
+                pSystemStringChars = tSystemString.GetChars(pSystemString);
+                for (int i=0; i<strLen; i++) {
+                    pSystemStringChars[i] = s[i];
+                }
+            } else {
+                pSystemString = null;
+            }
+            return (/*HEAP_PTR*/byte*)pSystemString;
+        }
+
         public static /*HEAP_PTR*/byte* FromUserStrings(tMetaData *pMetaData, /*IDX_USERSTRINGS*/uint index) 
         {
         	uint stringLen;
