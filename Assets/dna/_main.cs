@@ -21,7 +21,7 @@ namespace DnaUnity
         {
             Dna.Init(10000000, assemblySearchPaths);
             Dna.Load("Test1.dll");
-            Dna.Call("Test.Test");
+            Dna.Call("Test1.Test");
 
         }
     }

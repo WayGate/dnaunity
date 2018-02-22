@@ -82,6 +82,8 @@ namespace DnaUnity
         {
         	tMethodState *pThis;
 
+            Mem.heapcheck();
+
         	if (pMethod->isFilled == 0) {
         		tMD_TypeDef *pTypeDef;
 
@@ -109,13 +111,15 @@ namespace DnaUnity
         	pThis->pParamsLocals = (byte*)Thread.StackAlloc(pThread, pMethod->parameterStackSize + pMethod->pJITted->localsStackSize);
         	Mem.memset(pThis->pParamsLocals, 0, pMethod->parameterStackSize + pMethod->pJITted->localsStackSize);
 
-        #if DIAG_METHOD_CALLS
+#if DIAG_METHOD_CALLS
         	// Keep track of the number of times this method is called
         	pMethod->callCount++;
         	pThis->startTime = microTime();
-        #endif
+#endif
 
-        	return pThis;
+            Mem.heapcheck();
+
+            return pThis;
         }
 
         public static tMethodState* New(tThread *pThread, tMetaData *pMetaData, /*IDX_TABLE*/uint methodToken, tMethodState *pCaller) 

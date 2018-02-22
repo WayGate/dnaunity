@@ -110,7 +110,7 @@
             if (a == null || b == null)
                 throw new System.ArgumentNullException();
             char _a, _b;
-            do 
+            for (;;) 
             {
                 _a = (char)*a;
                 _b = (char)*b;
@@ -118,9 +118,11 @@
                     return -1;
                 else if (_a > _b)
                     return 1;
+                else if (_a == '\x0' || _b == '\x0')
+                    break;
                 a++;
                 b++;
-            } while (_a != '\x0' && *b != 0);
+            } 
             return 0;
         }
 
@@ -130,7 +132,7 @@
                 throw new System.ArgumentNullException();
             int i = 0;
             int len = b.Length;
-            do 
+            for (;;)
             {
                 char _a = (char)*a;
                 char _b = (i < len) ? b[i] : (char)0;
@@ -138,9 +140,11 @@
                     return -1;
                 else if (_a > _b)
                     return 1;
+                else if (_a == '\x0' || _b == '\x0')
+                    break;
                 a++;
                 i++;
-            } while (*a != 0 && i < len);
+            }
             return 0;
         }
 
@@ -148,7 +152,7 @@
         {
             if (a == null || b == null)
                 throw new System.ArgumentNullException();
-            while (len > 0) 
+            while (len > 0)
             {
                 char _a = (char)*a;
                 char _b = (char)*b;
@@ -156,7 +160,7 @@
                     return -1;
                 else if (_a > _b)
                     return 1;
-                if (_a == '\x0' || _b == '\x0')
+                else if (_a == '\x0' || _b == '\x0')
                     break;
                 a++;
                 b++;
@@ -172,7 +176,7 @@
             int i = 0;
             int len = b.Length;
             char _a, _b;
-            do 
+            for (;;)
             {
                 _a = (char)*a;
                 if (_a >= 'a' && _a <= 'z')
@@ -184,9 +188,11 @@
                     return -1;
                 else if (_a > _b)
                     return 1;
+                else if (_a == '\x0' || _b == '\x0')
+                    break;
                 a++;
                 i++;
-            } while (_a != '\x0' && i < len);
+            }
             return 0;
         }
 
@@ -253,6 +259,15 @@
             strncpy(a + len, b, size - len);
             Mem.heapcheck();
             return dst;
+        }
+
+        public static byte* strdup(byte* s)
+        {
+            Mem.heapcheck();
+            int len = strlen(s) + 1;
+            byte* p = (byte*)Mem.malloc((SIZE_T)len);
+            strncpy(p, s, len);
+            return p;
         }
 
         public static byte* strchr(byte* s, int ch)
@@ -386,7 +401,7 @@
 
             Mem.heapcheck();
 
-            return bfr;
+            return b;
         }
 
         public static byte* snprintf(byte* bfr, int len, string fmt, params object[] args)

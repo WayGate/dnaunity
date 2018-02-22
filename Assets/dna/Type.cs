@@ -120,6 +120,8 @@ namespace DnaUnity
         public const int TYPE_SYSTEM_REFLECTION_METHODINFO              = 49;
         public const int TYPE_SYSTEM_REFLECTION_METHODBASE              = 50;
 
+        public const int NUM_INIT_TYPES = 51;
+
         [StructLayout(LayoutKind.Sequential)]
         unsafe struct tArrayTypeDefs 
         {
@@ -151,7 +153,6 @@ namespace DnaUnity
         static /*char**/ byte** pGenericArrayMethodsInit = null;
 
         public static tMD_TypeDef **types;
-        static uint numInitTypes;
 
         [StructLayout(LayoutKind.Sequential)]
         unsafe struct tTypeInit
@@ -251,10 +252,11 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodBase"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodBase)},
             };
 
+            System.Diagnostics.Debug.Assert(typeInit.Length == NUM_INIT_TYPES);
+
             // Build all the types needed by the interpreter.
-            numInitTypes = (uint)typeInit.Length;
-            types = (tMD_TypeDef**)Mem.mallocForever((SIZE_T)(numInitTypes * sizeof(tMD_TypeDef*)));
-            for (i=0; i<numInitTypes; i++) {
+            types = (tMD_TypeDef**)Mem.mallocForever((SIZE_T)(NUM_INIT_TYPES * sizeof(tMD_TypeDef*)));
+            for (i=0; i<NUM_INIT_TYPES; i++) {
                 if (typeInit[i].assemblyName != null) {
                     // Normal type initialisation
                     types[i] = MetaData.GetTypeDefFromFullName(typeInit[i].assemblyName, typeInit[i].nameSpace, typeInit[i].name);
@@ -265,7 +267,7 @@ namespace DnaUnity
                     types[i]->instanceMemSize = typeInit[i].instanceMemSize;
                 }
             }
-            for (i=0; i<numInitTypes; i++) {
+            for (i=0; i< NUM_INIT_TYPES; i++) {
                 if (typeInit[i].assemblyName != null) {
                     MetaData.Fill_TypeDef(types[i], null, null);
                 } else {
@@ -344,33 +346,27 @@ namespace DnaUnity
                 pMethod = Generics.GetMethodDefFromCoreMethod(pGenericEnumeratorMethod, pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[0] = pMethod;
 
-                Mem.heapcheck();
-
         		// Get the ICollection<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 1];
         		pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ICOLLECTION_T], 1, &pElementType);
-                Mem.heapcheck();
                 pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
+                System.Diagnostics.Debug.Assert(pInterfaceT->numVirtualMethods >= 7);
                 pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
         		pInterfaceMap->ppMethodVLookup[0] = ppGenericArrayMethods[GENERICARRAYMETHODS_get_Length];
         		pInterfaceMap->ppMethodVLookup[1] = ppGenericArrayMethods[GENERICARRAYMETHODS_get_IsReadOnly];
-                Mem.heapcheck();
                 pInterfaceMap->ppMethodVLookup[2] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericAdd], pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[3] = ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericClear];
         		pInterfaceMap->ppMethodVLookup[4] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericContains], pNewArrayType, 1, &pElementType);
-                Mem.heapcheck();
                 pInterfaceMap->ppMethodVLookup[5] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericCopyTo], pNewArrayType, 1, &pElementType);
-                Mem.heapcheck();
                 pInterfaceMap->ppMethodVLookup[6] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericRemove], pNewArrayType, 1, &pElementType);
-
-                Mem.heapcheck();
 
         		// Get the IList<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 2];
-        		pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ILIST_T], 1, &pElementType); //, ppClassTypeArgs, ppMethodTypeArgs);
+                pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ILIST_T], 1, &pElementType); //, ppClassTypeArgs, ppMethodTypeArgs);
         		pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
+                System.Diagnostics.Debug.Assert(pInterfaceT->numVirtualMethods >= 5);
                 pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
         		pInterfaceMap->ppMethodVLookup[0] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericIndexOf], pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[1] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericInsert], pNewArrayType, 1, &pElementType);

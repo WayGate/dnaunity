@@ -45,7 +45,7 @@ namespace DnaUnity
         public static string[] defaultAssemblySearchPaths = new string[] {
             "UnityDna"
         };
-        #endif
+#endif
 
         public static void Init(int memsize = DEFAULT_MEM_SIZE, string[] assemblySearchPaths = null)
         {
@@ -69,6 +69,7 @@ namespace DnaUnity
             #endif
 
             Mem.Init(memsize);
+            Sys.Init();
             JIT.Init();
             JIT_Execute.Init();
             MetaData.Init();
@@ -87,6 +88,7 @@ namespace DnaUnity
             if (isInitialized)
             {
                 Mem.Clear();
+                Sys.Clear();
                 H.Clear();
                 CLIFile.Clear();
                 isInitialized = false;
@@ -248,14 +250,30 @@ namespace DnaUnity
 
         public static int Call(string method) 
         {
+            int result = 1;
+
             if (!isInitialized)
                 Init();
 
             string[] split = method.Split('.');
 
-            byte* nameSpace = new S(split[0]);
-            byte* className = new S(split[1]);
-            byte* methodName = new S(split[2]);
+            if (split.Length < 2)
+                throw new System.ArgumentException("Method must have at least class name and method name");
+
+            byte* nameSpace = new S("");
+            if (split.Length > 2) {
+                System.Text.StringBuilder sb = new System.Text.StringBuilder();
+                for (int i = 0; i < split.Length - 2; i++) {
+                    if (i > 0)
+                        sb.Append('.');
+                    sb.Append(split[i]);
+                }
+                nameSpace = new S(sb.ToString());
+            } else {
+                nameSpace = new S("");
+            }
+            byte* className = new S(split[split.Length - 2]);
+            byte* methodName = new S(split[split.Length - 1]);
             // TODO: Can't we reuse threads? Need to reset their state somehow.
             tThread *pThread = Thread.New();
 
@@ -263,22 +281,27 @@ namespace DnaUnity
             // Specifying it exactly (type generic args, method generic args, arguments themselves, picking the
             // inherited methods if needed), is complex and not required at the moment.
             tMD_TypeDef *pTypeDef = CLIFile.FindTypeInAllLoadedAssemblies(nameSpace, className);
-            if (pTypeDef == null)
-                return 1;
-            MetaData.Fill_TypeDef(pTypeDef, null, null);
-            for (int i=0; i<pTypeDef->numMethods; i++) {
-                if (S.strcmp(pTypeDef->ppMethods[i]->name, methodName) == 0) {
-                    tMD_MethodDef *pMethodDef = pTypeDef->ppMethods[i];
+            if (pTypeDef == null) {
+                result = 1;
+            } else { 
+                MetaData.Fill_TypeDef(pTypeDef, null, null);
+                for (int i=0; i<pTypeDef->numMethods; i++) {
+                    if (S.strcmp(pTypeDef->ppMethods[i]->name, methodName) == 0) {
+                        tMD_MethodDef *pMethodDef = pTypeDef->ppMethods[i];
 
-                    // We found the method - now call it
-                    Thread.SetEntryPoint(pThread, pTypeDef->pMetaData, pMethodDef->tableIndex, null, 0);
-                    int result = Thread.Execute();
-
-                    return result;
+                        // We found the method - now call it
+                        Thread.SetEntryPoint(pThread, pTypeDef->pMetaData, pMethodDef->tableIndex, null, 0);
+                        result = Thread.Execute();
+                        break;
+                    }
                 }
             }
 
-            return 1;
+            Mem.free(nameSpace);
+            Mem.free(className);
+            Mem.free(methodName);
+
+            return result;
         }
 
     }

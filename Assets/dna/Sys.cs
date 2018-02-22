@@ -20,9 +20,29 @@
 
 namespace DnaUnity
 {
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+    using SIZE_T = System.UInt32;
+    using PTR = System.UInt32;
+    #else
+    using SIZE_T = System.UInt64;
+    using PTR = System.UInt64;
+    #endif
 
     public unsafe static class Sys
     {
+        const int METHOD_NAME_BUF_SIZE = 1024;
+        static byte* /*char*/ methodNameBuf;
+
+        public static void Init()
+        {
+            methodNameBuf = (byte*)Mem.malloc((SIZE_T)METHOD_NAME_BUF_SIZE);
+        }
+
+        public static void Clear()
+        {
+            methodNameBuf = null;
+        }
+
         public static uint INTERNALCALL_RESULT_U32(void* r, uint val)
         {
             return *(uint*)r = (val); 
@@ -64,21 +84,22 @@ namespace DnaUnity
   
         public static /*char*/byte* GetMethodDesc(tMD_MethodDef *pMethod) 
         {
-            throw new System.NotImplementedException();
-            #if NO
-        	uint i;
+        	int i;
 
-            S.sprintf(methodName, new S("%s.%s.%s("), pMethod->pParentType->nameSpace, pMethod->pParentType->name, pMethod->name);
+            byte* namePos = methodNameBuf;
+            byte* nameEnd = namePos + METHOD_NAME_BUF_SIZE;
+
+            namePos = S.scatprintf(namePos, nameEnd, "%s.%s.%s(", (PTR)pMethod->pParentType->nameSpace, (PTR)pMethod->pParentType->name, (PTR)pMethod->name);
         	for (i=MetaData.METHOD_ISSTATIC(pMethod)?0:1; i<pMethod->numberOfParameters; i++) {
-        		if (i > (uint)(MetaData.MetaData.METHOD_ISSTATIC(pMethod)?0:1)) {
-        			S.sprintf(S.strchr(methodName, 0), ",");
+        		if (i > (int)(MetaData.METHOD_ISSTATIC(pMethod)?0:1)) {
+        			namePos = S.scatprintf(namePos, nameEnd, ",");
         		}
                 tParameter *param = &(pMethod->pParams[i]);
-                S.sprintf(S.strchr(methodName, 0), "%s", param->pTypeDef->name);
+                namePos = S.scatprintf(namePos, nameEnd, "%s", (PTR)param->pTypeDef->name);
         	}
-        	S.sprintf(S.strchr(methodName, 0), ")");
-        	return methodName;
-            #endif
+        	S.scatprintf(namePos, nameEnd, ")");
+
+        	return methodNameBuf;
         }
 
         public static ulong msTime() 

@@ -1644,6 +1644,8 @@ cilCallVirtConstrained:
 
             Sys.log_f(2, "JIT:   %s\n", (PTR)Sys.GetMethodDesc(pMethodDef));
 
+            Mem.heapcheck();
+
         	//pMetaData = pMethodDef->pMetaData;
             pJITted = (genCombinedOpcodes != 0)?((tJITted*)Mem.malloc((SIZE_T)sizeof(tJITted))) : ((tJITted*)Mem.mallocForever((SIZE_T)sizeof(tJITted)));
         	pMethodDef->pJITted = pJITted;
@@ -1798,12 +1800,16 @@ cilCallVirtConstrained:
         		pJITted->localsStackSize = totalSize;
         	}
 
-        	// JIT the CIL code
-        	pJITted->pOps = JITit(pMethodDef, pCIL, codeSize, pLocals, pJITted, genCombinedOpcodes);
-            
+            // JIT the CIL code
+            Mem.heapcheck();
+            pJITted->pOps = JITit(pMethodDef, pCIL, codeSize, pLocals, pJITted, genCombinedOpcodes);
+            Mem.heapcheck();
+
             pJITted->maxStack += 64;
             
         	Mem.free(pLocals);
+
+            Mem.heapcheck();
         }
           
     }

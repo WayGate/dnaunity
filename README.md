@@ -7,14 +7,12 @@
 - [x] Successfully builds in Unity
 - [x] Successfully builds with IL2CPP for iOS target and WebGL target
 - [x] Stub functions (memory, string, gchandle, sprintf, printf, etc.) minimally working (no NotImplementedExceptions)
-- [ ] CLIFile load works loading a HelloWorld assembly.
-- [ ] Basic metadata tests pass.
-- [ ] String, Array, Type, other basic internal .NET types switched to Mono versions.
+- [X] CLIFile loading works loading a HelloWorld assembly.
+- [X] Basic metadata tests pass.
+- [X] Simple call method test works.
 - [ ] Simple "HelloWorld" prints to Unity console.
-- [ ] Wrapping of Mono/Unity classes and structs working (COW value types works)
-- [ ] Fastcall and slowcall to Mono/Unity methods works.
-- [ ] Basic mapping of Mono/Unity API's works for both fast/slow calling.
-- [ ] 32 bit and 64 bit mode works
+- [ ] Basic mapping of Mono/Unity API's.
+- [ ] 32 bit and 64 bit mode tested/works
 - [ ] Basic unit test suite runs
 - [ ] More extensive unit test suite runs
 - [ ] Utility to convert existing scenes/prefabs to scenes/prefabs which interface with loadable scripts working.

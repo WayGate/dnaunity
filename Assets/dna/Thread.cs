@@ -360,13 +360,16 @@ namespace DnaUnity
 
         public static int Execute() 
         {
+            Mem.heapcheck();
             int returnCode = 0;
         	for (;;) {
                 uint status = Thread.Update(maxInstrPerThread, &returnCode);
                 if (status == THREADSTATE_STOPPED) {
-                    return returnCode;
+                    break;
                 }
             }
+            Mem.heapcheck();
+            return returnCode;
         }
 
         public static int Call(tMD_MethodDef *pMethod, byte* pParams, byte* pReturnValue) 
