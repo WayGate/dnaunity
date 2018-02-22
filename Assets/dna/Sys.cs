@@ -53,8 +53,11 @@ namespace DnaUnity
                 printf(pMsg, args);
         }
 
+        public static int isCrashed;
+
         public static void Crash(string pMsg, params object[] args) 
         {
+            isCrashed = 1;
             printf(pMsg, args);
             throw new System.InvalidOperationException("DnaUnity CRASH!");
         }

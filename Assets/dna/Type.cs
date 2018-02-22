@@ -224,7 +224,7 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Double"), stackType = EvalStack.EVALSTACK_F64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8},
-//                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeType"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tRuntimeType)},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeType"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tRuntimeType)},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Type"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeTypeHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeMethodHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0},
@@ -308,6 +308,8 @@ namespace DnaUnity
                 return;
             }
 
+            Mem.heapcheck();
+
         	MetaData.Fill_TypeDef(types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], null, null);
 
             Mem.memcpy(pNewArrayType, types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], (SIZE_T)sizeof(tMD_TypeDef));
@@ -342,19 +344,27 @@ namespace DnaUnity
                 pMethod = Generics.GetMethodDefFromCoreMethod(pGenericEnumeratorMethod, pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[0] = pMethod;
 
+                Mem.heapcheck();
+
         		// Get the ICollection<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 1];
         		pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ICOLLECTION_T], 1, &pElementType);
-        		pInterfaceMap->pInterface = pInterfaceT;
+                Mem.heapcheck();
+                pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
                 pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
         		pInterfaceMap->ppMethodVLookup[0] = ppGenericArrayMethods[GENERICARRAYMETHODS_get_Length];
         		pInterfaceMap->ppMethodVLookup[1] = ppGenericArrayMethods[GENERICARRAYMETHODS_get_IsReadOnly];
-        		pInterfaceMap->ppMethodVLookup[2] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericAdd], pNewArrayType, 1, &pElementType);
+                Mem.heapcheck();
+                pInterfaceMap->ppMethodVLookup[2] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericAdd], pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[3] = ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericClear];
         		pInterfaceMap->ppMethodVLookup[4] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericContains], pNewArrayType, 1, &pElementType);
-        		pInterfaceMap->ppMethodVLookup[5] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericCopyTo], pNewArrayType, 1, &pElementType);
-        		pInterfaceMap->ppMethodVLookup[6] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericRemove], pNewArrayType, 1, &pElementType);
+                Mem.heapcheck();
+                pInterfaceMap->ppMethodVLookup[5] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericCopyTo], pNewArrayType, 1, &pElementType);
+                Mem.heapcheck();
+                pInterfaceMap->ppMethodVLookup[6] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericRemove], pNewArrayType, 1, &pElementType);
+
+                Mem.heapcheck();
 
         		// Get the IList<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 2];
@@ -368,6 +378,8 @@ namespace DnaUnity
         		pInterfaceMap->ppMethodVLookup[3] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericGetItem], pNewArrayType, 1, &pElementType);
         		pInterfaceMap->ppMethodVLookup[4] = Generics.GetMethodDefFromCoreMethod(ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GenericSetItem], pNewArrayType, 1, &pElementType);
         	}
+
+            Mem.heapcheck();
 
             Sys.log_f(2, "Array: Array[%s.%s]\n", (PTR)pElementType->nameSpace, (PTR)pElementType->name);
         }

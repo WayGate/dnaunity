@@ -52,6 +52,8 @@ namespace DnaUnity
         // Is this exe/dll file for the .NET virtual machine?
         const int DOT_NET_MACHINE = 0x14c;
 
+        static byte* /*char*/ scCorLib = null;
+
         private unsafe struct tFilesLoaded 
         {
         	public tCLIFile *pCLIFile;
@@ -66,7 +68,6 @@ namespace DnaUnity
         static /*char**/byte** assemblySearchPaths = null;
         static int assemblySearchPathsCount = 0;
 
-        const int MAPPED_ASSEMBLIES_COUNT = 15;
 
         // Keep track of all the files currently loaded
         static tFilesLoaded *pFilesLoaded = null;
@@ -81,7 +82,8 @@ namespace DnaUnity
                 "UnityEditor",
                 "UnityEditor.UI",
                 "UnityEngine",
-                "UnityEngine.UI"
+                "UnityEngine.UI",
+                null
             );
             #else
             monoUnityAssemblies = S.buildArray(
@@ -89,12 +91,15 @@ namespace DnaUnity
                 "System",
                 "System.Core",
                 "UnityEngine",
-                "UnityEngine.UI"
+                "UnityEngine.UI",
+                null
             );
             #endif
 
             assemblySearchPaths = S.buildArray(searchPaths);
             assemblySearchPathsCount = searchPaths.Length;
+
+            scCorLib = new S("corlib");
 
             pFilesLoaded = null;
         }
@@ -109,6 +114,7 @@ namespace DnaUnity
                 pFiles = pFiles->pNext;
             }
             pFilesLoaded = null;
+            scCorLib = null;
         }
 
         public static tMetaData* GetMetaDataForLoadedAssembly(byte *pLoadedAssemblyName) 
@@ -136,12 +142,19 @@ namespace DnaUnity
             tCLIFile *pCLIFile = null;
             tMD_Assembly *pThisAssembly = null;
 
-        	// Mono/Unity assemblies only load metadata, no code
-            for (int i = 0; i < MAPPED_ASSEMBLIES_COUNT; i++) {
+            #if DNA_CORLIB
+            if (S.strcmp(pAssemblyName, "mscorlib") == 0)
+                pAssemblyName = scCorLib;
+            #endif
+
+            // Mono/Unity assemblies only load metadata, no code
+            int i = 0;
+            while (monoUnityAssemblies[i] != null) {
                 if (S.strcmp(pAssemblyName, monoUnityAssemblies[i]) == 0) {
                     metadataOnly = 1;
         			break;
         		}
+                i++;
         	}
 
         	// Look in already-loaded files first
@@ -368,7 +381,7 @@ namespace DnaUnity
         {
             throw new System.NotImplementedException();
 
-            #if NO
+#if NO
 
         	tThread *pThread;
         	/*HEAP_PTR*/byte* args;
@@ -390,7 +403,7 @@ namespace DnaUnity
         	Thread.SetEntryPoint(pThread, pThis->pMetaData, pThis->entryPoint, (byte*)&args, sizeof(void*));
 
         	return Thread.Execute();
-            #endif
+#endif
         }
 
         public static void GetHeapRoots(tHeapRoots *pHeapRoots) 

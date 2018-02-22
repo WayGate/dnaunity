@@ -192,6 +192,7 @@
 
         public static byte* strncpy(byte* a, byte* b, int size)
         {
+            Mem.heapcheck();
             if (a == null || b == null)
                 throw new System.NullReferenceException();
             byte* dst = a;
@@ -203,11 +204,13 @@
                 *a++ = *b++;
             }
             *a = 0;
+            Mem.heapcheck();
             return dst;
         }
 
         public static byte* strncpy(byte* a, string b, int size)
         {
+            Mem.heapcheck();
             if (a == null || b == null)
                 throw new System.NullReferenceException();
             byte* dst = a;
@@ -220,11 +223,13 @@
                 *a++ = (byte)b[i];
             }
             *a = 0;
+            Mem.heapcheck();
             return dst;
         }
 
         public static byte* strncat(byte* a, byte* b, int size)
         {
+            Mem.heapcheck();
             if (a == null || b == null)
                 throw new System.NullReferenceException();
             byte* dst = a;
@@ -232,11 +237,13 @@
             if (len + 1 >= size)
                 throw new System.IndexOutOfRangeException();
             strncpy(a + len, b, size - len);
+            Mem.heapcheck();
             return dst;
         }
 
         public static byte* strncat(byte* a, string b, int size)
         {
+            Mem.heapcheck();
             if (a == null || b == null)
                 throw new System.NullReferenceException();
             byte* dst = a;
@@ -244,6 +251,7 @@
             if (len + 1 >= size)
                 throw new System.IndexOutOfRangeException();
             strncpy(a + len, b, size - len);
+            Mem.heapcheck();
             return dst;
         }
 
@@ -264,7 +272,8 @@
         public static byte* scatprintf(byte* bfr, byte* end, string fmt, params object[] args)
         {
             if (bfr == null || fmt == null)
-                throw new System.NullReferenceException(); 
+                throw new System.NullReferenceException();
+            Mem.heapcheck();
             int curarg = 0;
             int i = 0;
             int fmtLen = fmt.Length;
@@ -374,6 +383,8 @@
 
             // Null terminator
             *b = 0;
+
+            Mem.heapcheck();
 
             return bfr;
         }

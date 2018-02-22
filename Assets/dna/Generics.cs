@@ -57,7 +57,7 @@ namespace DnaUnity
         // The number of type arguments for this instance
         public uint numTypeArgs;
         // The method type arguments for this instance
-        public tMD_TypeDef *pTypeArgs;
+        public tMD_TypeDef** ppTypeArgs;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -87,7 +87,9 @@ namespace DnaUnity
         	uint numTypeArgs, i;
         	tMD_TypeDef **ppTypeArgs;
 
-        	pCoreType = Type.GetTypeFromSig(pMetaData, pSig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
+            Mem.heapcheck();
+
+            pCoreType = Type.GetTypeFromSig(pMetaData, pSig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
         	MetaData.Fill_TypeDef(pCoreType, ppCallingClassTypeArgs, ppCallingMethodTypeArgs); //null, null);
 
         	numTypeArgs = MetaData.DecodeSigEntry(pSig);
@@ -101,7 +103,10 @@ namespace DnaUnity
 
         	pRet = GetGenericTypeFromCoreType(pCoreType, numTypeArgs, ppTypeArgs);
         	Mem.free(ppTypeArgs);
-        	return pRet;
+
+            Mem.heapcheck();
+
+            return pRet;
         }
 
         // TODO: This is not the most efficient way of doing this, as it has to search through all the
@@ -132,7 +137,9 @@ namespace DnaUnity
             byte* namePos, nameEnd;
         	tMetaData *pMetaData;
 
-        	pMetaData = pCoreType->pMetaData;
+            Mem.heapcheck();
+
+            pMetaData = pCoreType->pMetaData;
         	MetaData.Fill_TypeDef(pCoreType, null, null);
 
         	// See if we have already built an instantiation of this type with the given type args.
@@ -146,7 +153,7 @@ namespace DnaUnity
         	}
 
         	// This has not already been instantiated, so instantiate it now.
-            pInst = (tGenericInstance*)Mem.mallocForever((SIZE_T)(sizeof(tGenericInstance) + numTypeArgs * sizeof(tMD_TypeDef*)));
+            pInst = (tGenericInstance*)Mem.mallocForever((SIZE_T)sizeof(tGenericInstance));
         	// Insert this into the chain of instantiations.
         	pInst->pNext = pCoreType->pGenericInstances;
         	pCoreType->pGenericInstances = pInst;
@@ -155,7 +162,9 @@ namespace DnaUnity
             pInst->ppTypeArgs = (tMD_TypeDef**)Mem.malloc((SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
             Mem.memcpy(pInst->ppTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
 
-        	// Create the new instantiated type
+            Mem.heapcheck();
+
+            // Create the new instantiated type
             pInst->pInstanceTypeDef = pTypeDef = ((tMD_TypeDef*)Mem.mallocForever((SIZE_T)sizeof(tMD_TypeDef)));
             Mem.memset(pTypeDef, 0, (SIZE_T)sizeof(tMD_TypeDef));
         	// Make the name of the instantiation.
@@ -194,7 +203,7 @@ namespace DnaUnity
             int nameLen = S.strlen(name)+1;
             pTypeDef->name = (/*STRING*/byte*)Mem.mallocForever((SIZE_T)nameLen);
         	S.strncpy(pTypeDef->name, name, nameLen);
-            pTypeDef->ppClassTypeArgs = (tMD_TypeDef**)pInst->ppTypeArgs;
+            pTypeDef->ppClassTypeArgs = pInst->ppTypeArgs;
         	pTypeDef->extends = pCoreType->extends;
         	pTypeDef->tableIndex = pCoreType->tableIndex;
         	pTypeDef->fieldList = pCoreType->fieldList;
@@ -207,7 +216,9 @@ namespace DnaUnity
 
         	MetaData.Fill_TypeDef(pTypeDef, ppTypeArgs, null);
 
-        	return pTypeDef;
+            Mem.heapcheck();
+
+            return pTypeDef;
         }
 
         public static tMD_MethodDef* GetMethodDefFromSpec(tMD_MethodSpec *pMethodSpec, 
@@ -220,7 +231,9 @@ namespace DnaUnity
         	uint argCount, i;
         	tMD_TypeDef **ppTypeArgs;
 
-        	pCoreMethod = MetaData.GetMethodDefFromDefRefOrSpec(pMethodSpec->pMetaData, pMethodSpec->method, null, null);//ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
+            Mem.heapcheck();
+
+            pCoreMethod = MetaData.GetMethodDefFromDefRefOrSpec(pMethodSpec->pMetaData, pMethodSpec->method, null, null);//ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
 
         	//ppClassTypeArgs = pCoreMethod->pParentType->ppClassTypeArgs;
         	sig = MetaData.GetBlob(pMethodSpec->instantiation, null);
@@ -238,32 +251,36 @@ namespace DnaUnity
         	pMethod = Generics.GetMethodDefFromCoreMethod(pCoreMethod, pCoreMethod->pParentType, argCount, ppTypeArgs);
         	Mem.free(ppTypeArgs);
 
-        	return pMethod;
+            Mem.heapcheck();
+
+            return pMethod;
         }
 
         public static tMD_MethodDef* GetMethodDefFromCoreMethod(tMD_MethodDef *pCoreMethod, 
             tMD_TypeDef *pParentType, uint numTypeArgs, tMD_TypeDef **ppTypeArgs) 
         {
-
         	tGenericMethodInstance *pInst;
         	tMD_MethodDef *pMethod;
 
-        	// See if we already have an instance with the given type args
-        	pInst = pCoreMethod->pGenericMethodInstances;
+            Mem.heapcheck();
+
+            // See if we already have an instance with the given type args
+            pInst = pCoreMethod->pGenericMethodInstances;
         	while (pInst != null) {
         		if (pInst->numTypeArgs == numTypeArgs &&
-                    Mem.memcmp(pInst->pTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*))) == 0) {
+                    Mem.memcmp(pInst->ppTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*))) == 0) {
         			return pInst->pInstanceMethodDef;
         		}
         		pInst = pInst->pNext;
         	}
 
         	// We don't have an instance so create one now.
-            pInst = (tGenericMethodInstance*)Mem.mallocForever((SIZE_T)(sizeof(tGenericMethodInstance) + numTypeArgs * sizeof(tMD_TypeDef*)));
+            pInst = (tGenericMethodInstance*)Mem.mallocForever((SIZE_T)(sizeof(tGenericMethodInstance)));
         	pInst->pNext = pCoreMethod->pGenericMethodInstances;
         	pCoreMethod->pGenericMethodInstances = pInst;
         	pInst->numTypeArgs = numTypeArgs;
-            Mem.memcpy(pInst->pTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
+            pInst->ppTypeArgs = (tMD_TypeDef**)Mem.malloc((SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
+            Mem.memcpy(pInst->ppTypeArgs, ppTypeArgs, (SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
 
             pInst->pInstanceMethodDef = pMethod = ((tMD_MethodDef*)Mem.mallocForever((SIZE_T)sizeof(tMD_MethodDef)));
             Mem.memset(pMethod, 0, (SIZE_T)sizeof(tMD_MethodDef));
@@ -275,11 +292,13 @@ namespace DnaUnity
         	pMethod->name = pCoreMethod->name;
         	pMethod->signature = pCoreMethod->signature;
         	pMethod->vTableOfs = pCoreMethod->vTableOfs;
-            pMethod->ppMethodTypeArgs = (tMD_TypeDef**)pInst->pTypeArgs; // IS THIS RIGHT??
+            pMethod->ppMethodTypeArgs = pInst->ppTypeArgs;
 
-            MetaData.Fill_MethodDef(pParentType, pMethod, pParentType->ppClassTypeArgs, (tMD_TypeDef**)pInst->pTypeArgs /* IS THIS RIGHT?? */);
+            MetaData.Fill_MethodDef(pParentType, pMethod, pParentType->ppClassTypeArgs, pInst->ppTypeArgs);
 
-        	return pMethod;
+            Mem.heapcheck();
+
+            return pMethod;
         }
 
     }
