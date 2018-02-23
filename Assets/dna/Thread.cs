@@ -110,7 +110,7 @@ namespace DnaUnity
         public const int THREADSTATE_STOPPED           = 0x0010;
         public const int THREADSTATE_SUSPENDED         = 0x0040;
 
-        static uint maxInstrPerThread = 100;
+        static uint maxInstrPerThread = 200;
         static tThread *pAllThreads = null;
         static tThread *pCurrentThread = null;
         static tThread *pCallThread = null;

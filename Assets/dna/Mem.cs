@@ -73,6 +73,7 @@ namespace DnaUnity
             return p + 16;
         }
 
+        [System.Diagnostics.Conditional("CHECK_HEAP")]
         public static void heapcheck()
         {
             if (Sys.isCrashed == 1)
@@ -95,13 +96,15 @@ namespace DnaUnity
         {
             heapcheck();
             ulong* a = (ulong*)p;
-            ulong* b = (ulong*)malloc(size);
-            int oldWords = (int)(((*(int*)(a - 8)) + 7) & 0xFFFFFFF8) >> 3;
+            ulong* newP = (ulong*)malloc(size);
+            ulong* b = newP;
+            int oldsize = *(int*)((byte*)a - 8);
+            int oldWords = (int)((oldsize + 7) & 0xFFFFFFF8) >> 3;
             int newWords = (int)((size + 7) & 0xFFFFFFF8) >> 3;
             int minWords = newWords < oldWords ? newWords : oldWords;
             for (int i = 0; i < minWords; i++)
                 *b++ = *a++;
-            return b;
+            return newP;
         }
 
         public static void* mallocForever(SIZE_T size)

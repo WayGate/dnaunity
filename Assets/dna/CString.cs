@@ -339,11 +339,22 @@
                             throw new System.ArgumentException();
                         }
                     } 
-                    else if (ch == 'x' || ch == 'd')
+                    else if (ch == 'x' || ch == 'X' || ch == 'd')
                     {
-                        int v = System.Convert.ToInt32(args[curarg]);
+                        int v;
+                        object arg = args[curarg];
+                        if (arg is int)
+                            v = (int)arg;
+                        else if (arg is uint)
+                            v = (int)(uint)arg;
+                        else if (arg is long)
+                            v = (int)(long)arg;
+                        else if (arg is ulong)
+                            v = (int)(ulong)arg;
+                        else
+                            throw new System.ArgumentException();
                         curarg++;
-                        string vs = (ch == 'x' ? v.ToString("X") : v.ToString());
+                        string vs = (ch == 'x' || ch == 'X' ? v.ToString("X") : v.ToString());
                         for (int j = 0; j < vs.Length; j++)
                         {
                             if (b >= e)
@@ -369,8 +380,19 @@
                     {
                         char l0 = fmt[i + 1];
                         i += 2;
-                        ch = fmt[i];                        
-                        int v0 = System.Convert.ToInt32(args[curarg]);
+                        ch = fmt[i];
+                        int v0;
+                        object arg = args[curarg];
+                        if (arg is int)
+                            v0 = (int)arg;
+                        else if (arg is uint)
+                            v0 = (int)(uint)arg;
+                        else if (arg is long)
+                            v0 = (int)(long)arg;
+                        else if (arg is ulong)
+                            v0 = (int)(ulong)arg;
+                        else
+                            throw new System.ArgumentException();
                         curarg++;
                         string vs0 = (ch == 'x' || ch == 'X' ? v0.ToString("X" + l0) : v0.ToString("D" + l0));
                         for (int j = 0; j < vs0.Length; j++)

@@ -87,19 +87,19 @@ namespace DnaUnity
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct tJITCallNative
     {
-        public uint opCode;
+        public JitOps opCode;
         // The method meta-data
         public tMD_MethodDef *pMethodDef;
         // the native pointer to the function
         public /*fnInternalCall*/void* fn;
         // The RET instruction. This is needed when the native function has blocking IO or sleep
-        public uint retOpCode;
+        public JitOps retOpCode;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct tJITCallPInvoke
     {
-        public uint opCode;
+        public JitOps opCode;
         // The native function to call
         public /*fnPInvoke*/ void* fn;
         // The method that is being called
@@ -255,12 +255,12 @@ namespace DnaUnity
 
         #endif
 
-        static void PushOp(uint op)
+        static void PushOp(JitOps op)
         {
             PushU32_(ref ops, (uint)(op));
         }
 
-        static void PushOpParam(uint op, uint param)
+        static void PushOpParam(JitOps op, uint param)
         {
             PushOp(op); 
             PushU32_(ref ops, (uint)(param));
@@ -411,12 +411,12 @@ namespace DnaUnity
         	cilOfs = 0;
 
         	do {
-        		byte op;
+        		OpCodes op;
 
         		// Set the JIT offset for this CIL opcode
         		pJITOffsets[cilOfs] = ops.ofs;
 
-        		op = pCIL[cilOfs++];
+        		op = (OpCodes)pCIL[cilOfs++];
         		//printf("Opcode: 0x%02x\n", op);
 
         		switch (op) {
@@ -476,7 +476,7 @@ namespace DnaUnity
         				i32Value = (int)GetUnalignedU32(pCIL, ref cilOfs);
         cilLdcI4:
         				if (i32Value >= -1 && i32Value <= 2) {
-                            PushOp((uint)(JitOps.JIT_LOAD_I4_0 + i32Value));
+                            PushOp((JitOps)((uint)JitOps.JIT_LOAD_I4_0 + i32Value));
         				} else {
         					PushOp(JitOps.JIT_LOAD_I32);
         					PushI32(i32Value);
@@ -645,7 +645,7 @@ namespace DnaUnity
         				u32Value = Type.TYPE_SYSTEM_INTPTR;
         cilLdInd:
         				PopStackTypeDontCare(); // don't care what it is
-                        PushOp((uint)(JitOps.JIT_LOADINDIRECT_I8 + (op - OpCodes.LDIND_I1)));
+                        PushOp((JitOps)(JitOps.JIT_LOADINDIRECT_I8 + (op - OpCodes.LDIND_I1)));
         				PushStackType(Type.types[u32Value]);
         				break;
 
@@ -654,7 +654,7 @@ namespace DnaUnity
         			case OpCodes.STIND_I2:
         			case OpCodes.STIND_I4:
         				PopStackTypeMulti(2); // Don't care what they are
-                        PushOp((uint)(JitOps.JIT_STOREINDIRECT_REF + (op - OpCodes.STIND_REF)));
+                        PushOp((JitOps)(JitOps.JIT_STOREINDIRECT_REF + (op - OpCodes.STIND_REF)));
         				break;
 
         			case OpCodes.RET:
@@ -837,7 +837,7 @@ cilCallVirtConstrained:
         				// Put a temporary CIL offset value into the JITted code. This will be updated later
                         u32Value = (uint)(cilOfs + (int)u32Value);
         				MayCopyTypeStack(u32Value);
-        				PushOp(u32Value2);
+        				PushOp((JitOps)u32Value2);
         				PushBranch();
         				PushU32(u32Value);
         				break;
@@ -853,7 +853,7 @@ cilCallVirtConstrained:
         			case OpCodes.BLE_UN_S:
         			case OpCodes.BLT_UN_S:
                         u32Value = (uint)((sbyte)pCIL[cilOfs++]);
-        				u32Value2 = OpCodes.BEQ_S;
+        				u32Value2 = (uint)OpCodes.BEQ_S;
         				goto cilBrCond;
 
         			case OpCodes.BEQ:
@@ -867,7 +867,7 @@ cilCallVirtConstrained:
         			case OpCodes.BLE_UN:
         			case OpCodes.BLT_UN:
         				u32Value = GetUnalignedU32(pCIL, ref cilOfs);
-        				u32Value2 = OpCodes.BEQ;
+        				u32Value2 = (uint)OpCodes.BEQ;
         cilBrCond:
         				pTypeB = PopStackType();
         				pTypeA = PopStackType();
@@ -879,18 +879,18 @@ cilCallVirtConstrained:
         #else
                         if (pTypeA->stackType == EvalStack.EVALSTACK_INT32 && pTypeB->stackType == EvalStack.EVALSTACK_INT32) {
         #endif
-        					PushOp(JitOps.JIT_BEQ_I32I32 + (op - u32Value2));
+        					PushOp((JitOps)((uint)JitOps.JIT_BEQ_I32I32 + (op - u32Value2)));
         #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64 && pTypeB->stackType == EvalStack.EVALSTACK_INT64) {
         #else
                         } else if ((pTypeA->stackType == EvalStack.EVALSTACK_INT64 && pTypeB->stackType == EvalStack.EVALSTACK_INT64) ||
                                    (pTypeA->stackType == EvalStack.EVALSTACK_O && pTypeB->stackType == EvalStack.EVALSTACK_O)) {
         #endif
-        					PushOp(JitOps.JIT_BEQ_I64I64 + (op - u32Value2));
+        					PushOp((JitOps)((uint)JitOps.JIT_BEQ_I64I64 + (op - u32Value2)));
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_F32 && pTypeB->stackType == EvalStack.EVALSTACK_F32) {
-        					PushOp(JitOps.JIT_BEQ_F32F32 + (op - u32Value2));
+        					PushOp((JitOps)((uint)JitOps.JIT_BEQ_F32F32 + (op - u32Value2)));
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_F64 && pTypeB->stackType == EvalStack.EVALSTACK_F64) {
-        					PushOp(JitOps.JIT_BEQ_F64F64 + (op - u32Value2));
+        					PushOp((JitOps)((uint)JitOps.JIT_BEQ_F64F64 + (op - u32Value2)));
         				} else {
         					Sys.Crash("JITit(): Cannot perform conditional branch on stack Type.types: %d and %d", pTypeA->stackType, pTypeB->stackType);
         				}
@@ -921,16 +921,16 @@ cilCallVirtConstrained:
         				pTypeB = PopStackType();
         				pTypeA = PopStackType();
         				if (pTypeA->stackType == EvalStack.EVALSTACK_INT32 && pTypeB->stackType == EvalStack.EVALSTACK_INT32) {
-                            PushOp((uint)(JitOps.JIT_ADD_I32I32 + (op - OpCodes.ADD) - u32Value));
+                            PushOp((JitOps)(JitOps.JIT_ADD_I32I32 + (op - OpCodes.ADD) - u32Value));
         					PushStackType(Type.types[Type.TYPE_SYSTEM_INT32]);
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64 && pTypeB->stackType == EvalStack.EVALSTACK_INT64) {
-                            PushOp((uint)(JitOps.JIT_ADD_I64I64 + (op - OpCodes.ADD) - u32Value));
+                            PushOp((JitOps)(JitOps.JIT_ADD_I64I64 + (op - OpCodes.ADD) - u32Value));
         					PushStackType(Type.types[Type.TYPE_SYSTEM_INT64]);
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_F32 && pTypeB->stackType == EvalStack.EVALSTACK_F32) {
-                            PushOp((uint)(JitOps.JIT_ADD_F32F32 + (op - OpCodes.ADD) - u32Value));
+                            PushOp((JitOps)(JitOps.JIT_ADD_F32F32 + (op - OpCodes.ADD) - u32Value));
         					PushStackType(pTypeA);
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_F64 && pTypeB->stackType == EvalStack.EVALSTACK_F64) {
-                            PushOp((uint)(JitOps.JIT_ADD_F64F64 + (op - OpCodes.ADD) - u32Value));
+                            PushOp((JitOps)(JitOps.JIT_ADD_F64F64 + (op - OpCodes.ADD) - u32Value));
         					PushStackType(pTypeA);
         				} else {
         					Sys.Crash("JITit(): Cannot perform binary numeric operand on stack Type.types: %d and %d", pTypeA->stackType, pTypeB->stackType);
@@ -941,10 +941,10 @@ cilCallVirtConstrained:
         			case OpCodes.NOT:
         				pTypeA = PopStackType();
         				if (pTypeA->stackType == EvalStack.EVALSTACK_INT32) {
-                            PushOp((uint)(JitOps.JIT_NEG_I32 + (op - OpCodes.NEG)));
+                            PushOp((JitOps)(JitOps.JIT_NEG_I32 + (op - OpCodes.NEG)));
         					PushStackType(Type.types[Type.TYPE_SYSTEM_INT32]);
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64) {
-                            PushOp((uint)(JitOps.JIT_NEG_I64 + (op - OpCodes.NEG)));
+                            PushOp((JitOps)(JitOps.JIT_NEG_I64 + (op - OpCodes.NEG)));
         					PushStackType(Type.types[Type.TYPE_SYSTEM_INT64]);
         				} else {
         					Sys.Crash("JITit(): Cannot perform unary operand on stack Type.types: %d", pTypeA->stackType);
@@ -957,10 +957,10 @@ cilCallVirtConstrained:
         				PopStackTypeDontCare(); // Don't care about the shift amount
         				pTypeA = PopStackType(); // Do care about the value to shift
         				if (pTypeA->stackType == EvalStack.EVALSTACK_INT32) {
-        					PushOp(JitOps.JIT_SHL_I32 - OpCodes.SHL + op);
+        					PushOp((JitOps)((uint)JitOps.JIT_SHL_I32 - (uint)OpCodes.SHL + (uint)op));
         					PushStackType(Type.types[Type.TYPE_SYSTEM_INT32]);
         				} else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64) {
-        					PushOp(JitOps.JIT_SHL_I64 - OpCodes.SHL + op);
+        					PushOp((JitOps)((uint)JitOps.JIT_SHL_I64 - (uint)OpCodes.SHL + (uint)op));
         					PushStackType(Type.types[Type.TYPE_SYSTEM_INT64]);
         				} else {
                             Sys.Crash("JITit(): Cannot perform shift operation on type: %s", (PTR)pTypeA->name);
@@ -991,7 +991,7 @@ cilCallVirtConstrained:
         				toBitCount = 32;
         				toType = Type.TYPE_SYSTEM_INT32;
         cilConvInt32:
-        				convOpOffset = JitOps.JIT_CONV_OFFSET_I32;
+        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_I32;
         				goto cilConv;
         			case OpCodes.CONV_U1:
         			case OpCodes.CONV_OVF_U1: // Fix this later - will never overflow
@@ -1015,7 +1015,7 @@ cilCallVirtConstrained:
         				toBitCount = 32;
         				toType = Type.TYPE_SYSTEM_UINT32;
         cilConvUInt32:
-        				convOpOffset = JitOps.JIT_CONV_OFFSET_U32;
+        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_U32;
         				goto cilConv;
                             
         			case OpCodes.CONV_I8:
@@ -1026,7 +1026,7 @@ cilCallVirtConstrained:
                     case OpCodes.CONV_OVF_I_UN:
         #endif
         				toType = Type.TYPE_SYSTEM_INT64;
-        				convOpOffset = JitOps.JIT_CONV_OFFSET_I64;
+        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_I64;
         				goto cilConv;
         			case OpCodes.CONV_U8:
         			case OpCodes.CONV_OVF_U8: // Fix this later - will never overflow
@@ -1036,21 +1036,21 @@ cilCallVirtConstrained:
                     case OpCodes.CONV_OVF_U_UN:
         #endif
         				toType = Type.TYPE_SYSTEM_UINT64;
-        				convOpOffset = JitOps.JIT_CONV_OFFSET_U64;
+        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_U64;
         				goto cilConv;
         			case OpCodes.CONV_R4:
         				toType = Type.TYPE_SYSTEM_SINGLE;
-        				convOpOffset = JitOps.JIT_CONV_OFFSET_R32;
+        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_R32;
         				goto cilConv;
         			case OpCodes.CONV_R8:
         			case OpCodes.CONV_R_UN:
         				toType = Type.TYPE_SYSTEM_DOUBLE;
-        				convOpOffset = JitOps.JIT_CONV_OFFSET_R64;
+        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_R64;
         				goto cilConv;
         cilConv:
         				pStackType = PopStackType();
         				{
-        					uint opCodeBase;
+        					JitOps opCodeBase;
                             uint useParam = 0;
                             uint param = 0;
         					// This is the type that the conversion is from.
@@ -1063,7 +1063,7 @@ cilCallVirtConstrained:
                                     (pStackType == Type.types[Type.TYPE_SYSTEM_BYTE] ||
                                      pStackType == Type.types[Type.TYPE_SYSTEM_UINT16] ||
                                      pStackType == Type.types[Type.TYPE_SYSTEM_UINT32])
-                                        ?JitOps.JIT_CONV_FROM_U32:JitOps.JIT_CONV_FROM_I32;
+                                        ? JitOps.JIT_CONV_FROM_U32:JitOps.JIT_CONV_FROM_I32;
                                     break;
         					case EvalStack.EVALSTACK_PTR:
         						opCodeBase =
@@ -1086,7 +1086,7 @@ cilCallVirtConstrained:
                                 break;
         					}
         					// This is the type that the conversion is to.
-        					switch (convOpOffset) {
+        					switch ((JitOps)convOpOffset) {
         					case JitOps.JIT_CONV_OFFSET_I32:
         						useParam = 1;
         						param = 32 - toBitCount;
@@ -1106,7 +1106,7 @@ cilCallVirtConstrained:
         						Sys.Crash("JITit() Conv cannot handle convOpOffset %d", convOpOffset);
                                 break;
         					}
-        					PushOp(opCodeBase + convOpOffset);
+        					PushOp((JitOps)(opCodeBase + convOpOffset));
         					if (useParam != 0) {
         						PushU32(param);
         					}
@@ -1225,7 +1225,7 @@ cilCallVirtConstrained:
         			case OpCodes.LDELEM_I4:
         			case OpCodes.LDELEM_U4:
         				PopStackTypeMulti(2); // Don't care what any of these are
-                        PushOp((uint)(JitOps.JIT_LOAD_ELEMENT_I8 + (op - OpCodes.LDELEM_I1)));
+                        PushOp((JitOps)(JitOps.JIT_LOAD_ELEMENT_I8 + (op - OpCodes.LDELEM_I1)));
         				PushStackType(Type.types[Type.TYPE_SYSTEM_INT32]);
         				break;
 
@@ -1501,7 +1501,7 @@ cilCallVirtConstrained:
         				break;
 
         			case OpCodes.EXTENDED:
-        				op = pCIL[cilOfs++];
+        				op = (OpCodes)pCIL[cilOfs++];
 
         				switch (op)
         				{
@@ -1547,7 +1547,7 @@ cilCallVirtConstrained:
         #else
                                 if (pTypeA->stackType == EvalStack.EVALSTACK_INT32 && pTypeB->stackType == EvalStack.EVALSTACK_INT32) {
         #endif
-                                PushOp((uint)(JitOps.JIT_CEQ_I32I32 + (op - OpCodes.X_CEQ)));
+                                PushOp((JitOps)(JitOps.JIT_CEQ_I32I32 + (op - OpCodes.X_CEQ)));
         #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             } else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64 && pTypeB->stackType == EvalStack.EVALSTACK_INT64) {
         #else
@@ -1555,11 +1555,11 @@ cilCallVirtConstrained:
                                 (pTypeA->stackType == EvalStack.EVALSTACK_O && pTypeB->stackType == EvalStack.EVALSTACK_O) ||
                                 (pTypeA->stackType == EvalStack.EVALSTACK_PTR && pTypeB->stackType == EvalStack.EVALSTACK_PTR)) {
         #endif
-                                PushOp((uint)(JitOps.JIT_CEQ_I64I64 + (op - OpCodes.X_CEQ)));
+                                PushOp((JitOps)(JitOps.JIT_CEQ_I64I64 + (op - OpCodes.X_CEQ)));
         					} else if (pTypeA->stackType == EvalStack.EVALSTACK_F32 && pTypeB->stackType == EvalStack.EVALSTACK_F32) {
-                                PushOp((uint)(JitOps.JIT_CEQ_F32F32 + (op - OpCodes.X_CEQ)));
+                                PushOp((JitOps)(JitOps.JIT_CEQ_F32F32 + (op - OpCodes.X_CEQ)));
         					} else if (pTypeA->stackType == EvalStack.EVALSTACK_F64 && pTypeB->stackType == EvalStack.EVALSTACK_F64) {
-                                PushOp((uint)(JitOps.JIT_CEQ_F64F64 + (op - OpCodes.X_CEQ)));
+                                PushOp((JitOps)(JitOps.JIT_CEQ_F64F64 + (op - OpCodes.X_CEQ)));
         					} else {
                                 Sys.Crash("JITit(): Cannot perform comparison operand on stack Type.types: %s and %s", (PTR)pTypeA->name, (PTR)pTypeB->name);
         					}

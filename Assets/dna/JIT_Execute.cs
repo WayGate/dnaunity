@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-//#define TRACE
+//#define TRACE_OPCODES
 
 namespace DnaUnity
 {
@@ -47,6 +47,8 @@ namespace DnaUnity
         static byte* pCurEvalStack;
         static byte* pThrowExcept;
 
+        static byte** /*char**/ opNames = null;
+
         public static void Init()
         {
             scNone = null;
@@ -55,6 +57,12 @@ namespace DnaUnity
             pCurOp = null;
             pCurEvalStack = null;
             pThrowExcept = null;
+
+            string[] opnameStrs = new string[JitOpsConsts.JIT_OPCODE_MAXNUM];
+            for (int i = 0; i < JitOpsConsts.JIT_OPCODE_MAXNUM; i++) {
+                opnameStrs[i] = System.Enum.GetName(typeof(JitOps), (JitOps)i);
+            }
+            opNames = S.buildArray(opnameStrs);
         }
 
         public static void Clear()
@@ -68,6 +76,7 @@ namespace DnaUnity
             pCurOp = null;
             pCurEvalStack = null;
             pThrowExcept = null;
+            opNames = null;
         }
 
         // Get the next op-code
@@ -350,31 +359,43 @@ namespace DnaUnity
             return null;
         }
 
-        #if DIAG_OPCODE_TIMES
+#if DIAG_OPCODE_TIMES
         ulong opcodeTimes[JitOps.JIT_OPCODE_MAXNUM];
         static __inline unsigned __int64 __cdecl rdtsc() {
             __asm {
                 rdtsc
             }
         }
-        #endif
+#endif
 
-        #if DIAG_OPCODE_USE
+#if DIAG_OPCODE_USE
         static uint opcodeNumUses[JitOps.JIT_OPCODE_MAXNUM];
 
-        [System.Diagnostics.Conditional("TRACE")]
+        [System.Diagnostics.Conditional("TRACE_OPCODES")]
         static void OPCODE_USE(uint op) 
         {
             S.printf("%s %X op \n", (PTR)pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack)); 
             opcodeNumUses[op]++;
         }
 
-        #else
+#else
 
         [System.Diagnostics.Conditional("TRACE_OPCODES")]
-        static void OPCODE_USE(uint op) 
+        static void OPCODE_USE(JitOps op)
         {
-            Sys.printf("%s %X op \n", (PTR)pCurrentMethodState->pMethod->name, (int)(pCurEvalStack - pCurrentMethodState->pEvalStack));
+            int stackpos = (int)(pCurEvalStack - pCurrentMethodState->pEvalStack);
+            uint a, b;
+            if (stackpos < 4) {
+                a = 0xDEADBEEF;
+                b = 0xDEADBEEF;
+            } else if (stackpos < 8) {
+                a = 0xDEADBEEF;
+                b = *(uint*)(pCurEvalStack - 4);
+            } else {
+                a = *(uint*)(pCurEvalStack - 8);
+                b = *(uint*)(pCurEvalStack - 4);
+            }
+            Sys.printf("%s: %d %08X %08X %s \n", (PTR)pCurrentMethodState->pMethod->name, stackpos, (int)a, (int)b, (PTR)opNames[(int)op]);
         }
 
         #endif
@@ -390,7 +411,7 @@ namespace DnaUnity
         public static uint Execute(tThread *pThread, uint numInst) 
         {
             JIT_Execute.pThread = pThread;
-            uint op = 0;
+            JitOps op = 0;
             uint u32Value = 0;
 
             if (pThread == null) {
@@ -406,7 +427,7 @@ namespace DnaUnity
          
             for(;;)
             {
-                switch (*pCurOp++)
+                switch ((JitOps)(*pCurOp++))
                 {
                     case JitOps.JIT_NOP:
                     case JitOps.JIT_CONV_R32_R32:
@@ -816,9 +837,9 @@ namespace DnaUnity
                     JIT_RETURN_start:
                         OPCODE_USE(JitOps.JIT_RETURN);
                         {
-                        #if TRACE
+#if TRACE_OPCODES
                                 Sys.log_f(2, "Returned from %s() to %s()\n", (PTR)pCurrentMethodState->pMethod->name, (pCurrentMethodState->pCaller != null)?(PTR)pCurrentMethodState->pCaller->pMethod->name:(PTR)((byte*)(new S(ref scNone, "<none>"))));
-                        #endif
+#endif
                             if (pCurrentMethodState->pCaller == null) {
                                 // End of thread!
                                 if (pCurrentMethodState->pMethod->pReturnType == Type.types[Type.TYPE_SYSTEM_INT32]) {
@@ -1001,7 +1022,7 @@ namespace DnaUnity
                     case JitOps.JIT_CALL_INTERFACE:
                         op = JitOps.JIT_CALL_INTERFACE;
                     allCallStart:
-                        OPCODE_USE(JitOps.JIT_CALL_O);
+                        OPCODE_USE(op);
                         {
                             tMD_MethodDef *pCallMethod = null;
                             tMethodState *pCallMethodState = null;
@@ -2497,9 +2518,9 @@ namespace DnaUnity
                             ulong value = POP_U64(); // Value
                             uint idx = POP_U32(); // Array index
                             byte* heapPtr = POP_O();
-                    #if TRACE
+#if TRACE_OPCODES
                             Sys.printf("  val 0x%llx idx %d ptr 0x%llx\n", value, idx, (ulong)heapPtr);
-                    #endif
+#endif
                             System_Array.StoreElement(heapPtr, idx, (byte*)&value);
                         }
                         break;
@@ -2532,9 +2553,9 @@ namespace DnaUnity
                             value = POP_U32();
                             heapPtr = POP_O();
                             pMem = heapPtr + pFieldDef->memOffset;
-                    #if TRACE
+#if TRACE_OPCODES
                             Sys.printf("  val 0x%x off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (ulong)heapPtr);
-                    #endif
+#endif
                             *(uint*)pMem = value;
                         }
                         break;
@@ -2565,9 +2586,9 @@ namespace DnaUnity
                             value = POP_U64();
                             heapPtr = POP_O();
                             pMem = heapPtr + pFieldDef->memOffset;
-                    #if TRACE
+#if TRACE_OPCODES
                             Sys.printf("  val 0x%llx off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (ulong)heapPtr);
-                    #endif
+#endif
                             *(ulong*)pMem = value;
                     #endif
                         }

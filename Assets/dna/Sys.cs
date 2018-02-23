@@ -78,8 +78,10 @@ namespace DnaUnity
         public static void Crash(string pMsg, params object[] args) 
         {
             isCrashed = 1;
-            printf(pMsg, args);
-            throw new System.InvalidOperationException("DnaUnity CRASH!");
+            byte* buf = stackalloc byte[2048];
+            S.snprintf(buf, 2048, pMsg, args);
+            printf("%s", (PTR)buf);
+            throw new System.InvalidOperationException("CRASH! - " + System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)buf));
         }
   
         public static /*char*/byte* GetMethodDesc(tMD_MethodDef *pMethod) 
