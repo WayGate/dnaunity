@@ -73,7 +73,7 @@ namespace DnaUnity
             return p + 16;
         }
 
-        [System.Diagnostics.Conditional("CHECK_HEAP")]
+        //[System.Diagnostics.Conditional("CHECK_HEAP")]
         public static void heapcheck()
         {
             if (Sys.isCrashed == 1)

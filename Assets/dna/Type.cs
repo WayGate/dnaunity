@@ -321,6 +321,9 @@ namespace DnaUnity
                     types[i]->alignment = typeInit[i].alignment;
                 }
             }
+            if (genericArrayMethodsInited == 0) {
+                GetMethodDefs();
+            }
             for (i=0; i< NUM_INIT_TYPES; i++) {
                 if (typeInit[i].assemblyName != null) {
                     MetaData.Fill_TypeDef(types[i], null, null);
@@ -378,7 +381,11 @@ namespace DnaUnity
 
             Mem.heapcheck();
 
-        	MetaData.Fill_TypeDef(types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], null, null);
+            if (genericArrayMethodsInited == 0) {
+                GetMethodDefs();
+            }
+
+            MetaData.Fill_TypeDef(types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], null, null);
 
             Mem.memcpy(pNewArrayType, types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], (SIZE_T)sizeof(tMD_TypeDef));
         	pNewArrayType->pArrayElementType = pElementType;
@@ -391,10 +398,6 @@ namespace DnaUnity
         		tMD_TypeDef *pInterfaceT;
         		tMD_MethodDef *pMethod;
         		uint orgNumInterfaces;
-
-        		if (genericArrayMethodsInited == 0) {
-        			GetMethodDefs();
-        		}
 
         		orgNumInterfaces = pNewArrayType->numInterfaces;
         		pNewArrayType->numInterfaces += 3;

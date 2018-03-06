@@ -87,23 +87,21 @@ namespace DnaUnity
 
         public static void Reset()
         {
-            if (isInitialized)
-            {
-                Type.Clear();
-                CLIFile.Clear();
-                InternalCall.Clear();
-                Finalizer.Clear();
-                Heap.Clear();
-                Generics.Clear();
-                MetaData.Clear();
-                DnaObject.Clear();
-                JIT_Execute.Clear();
-                JIT.Clear();
-                Sys.Clear();
-                H.Clear();
-                Mem.Clear();
-                isInitialized = false;
-            }
+            Type.Clear();
+            CLIFile.Clear();
+            InternalCall.Clear();
+            Finalizer.Clear();
+            Heap.Clear();
+            Generics.Clear();
+            MetaData.Clear();
+            DnaObject.Clear();
+            JIT_Execute.Clear();
+            JIT.Clear();
+            Sys.Clear();
+            H.Clear();
+            Mem.Clear();
+
+            isInitialized = false;
         }
 
         static int InternalLoadAndRun(bool tryRun, string[] args) 

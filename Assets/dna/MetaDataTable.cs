@@ -449,11 +449,13 @@ namespace DnaUnity
     	// Padding
         public ushort padding0;
         // Padding
-        uint padding1;
+        public uint padding1;
     	// The name of the event
         public /*STRING*/byte* name;
     	// The type of this event. A TypeDefOrRef index. This is NOT the type to which this event belongs.
         public /*IDX_TABLE*/uint eventType;
+        // Padding
+        public uint padding2;
     };
 
     // Table 0x15 - PropertyMap
@@ -530,13 +532,15 @@ namespace DnaUnity
     	// Mapping flags of type PInvokeAttributes
         public ushort mappingFlags;
     	// padding
-        public ushort padding;
+        public ushort padding1;
     	// A MemberForwarded coded index, specifying which member is forwarded. Note that only members are allowed.
         public /*IDX_TABLE*/uint memberForwarded;
     	// The import name
         public /*STRING*/byte* importName;
     	// The module ref (scope) of the import
         public /*IDX_TABLE*/uint importScope;
+        // Padding
+        public uint padding2;
     }
 
     // Table 0x1D - FieldRVA
@@ -546,6 +550,8 @@ namespace DnaUnity
         public byte* rva;
     	// Index into the field table
         public /*IDX_TABLE*/uint field;
+        // Padding
+        public uint padding;
     }
 
     // Table 0x20 - Assembly
@@ -595,6 +601,8 @@ namespace DnaUnity
         public /*STRING*/byte* name;
         // A coded index into File, AssemblyRef, or ExportedType table
         public /*IDX_TABLE*/uint implementation;
+        // Padding
+        public uint padding;
     }
 
     // Table 0x29 - NestedClass
@@ -642,6 +650,8 @@ namespace DnaUnity
     	public tMD_GenericParam *pGenericParam;
     	// The type of the constraint (coded index TypeDefOrRef)
         public /*IDX_TABLE*/uint constraint;
+        // Padding
+        public uint padding;
     }
 
 }

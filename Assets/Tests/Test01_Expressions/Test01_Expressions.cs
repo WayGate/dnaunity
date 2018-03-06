@@ -4,6 +4,7 @@ using System;
 
 public static class Test01_Expressions
 {
+ #if NO
     public static void Assert(bool b)
     {
         if (!b)
@@ -111,6 +112,12 @@ public static class Test01_Expressions
         TestLong();
         TestFloat();
         TestDouble();
+    }
+#endif
+
+    public static void Test()
+    {
+        Console.WriteLine("This is a test!");
     }
 
 }

@@ -140,7 +140,8 @@ namespace DnaUnity
         public static void Clear()
         {
             // This frees all references in the DNA heap to all mono objects
-            FreeAllGCHandles();
+            if (pHeapTreeRoot != null)
+                FreeAllGCHandles();
 
             pHeapTreeRoot = nil = null;
             trackHeapSize = 0;

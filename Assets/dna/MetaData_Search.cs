@@ -159,13 +159,17 @@ namespace DnaUnity
                 if (methodInfo.IsGenericMethod != (pMethod->isGenericDefinition != 0))
                     return 0;
 
-                if (pMethod->pReturnType != MonoType.GetTypeForMonoType(methodInfo.ReturnType))
+                if (pMethod->pReturnType == null) {
+                    if (methodInfo.ReturnType != typeof(void))
+                        return 0;
+                } else if (pMethod->pReturnType != MonoType.GetTypeForMonoType(methodInfo.ReturnType)) { 
                     return 0;
+                }
 
                 uint start = 0;
                 if (!methodInfo.IsStatic) {
-                    if (pMethod->pParams[0].pStackTypeDef != MonoType.GetTypeForMonoType(methodInfo.DeclaringType))
-                        return 0;
+//                    if (pMethod->pParams[0].pStackTypeDef != MonoType.GetTypeForMonoType(methodInfo.DeclaringType))
+//                        return 0;
                     start = 1;
                 }
 
@@ -177,6 +181,8 @@ namespace DnaUnity
                     if (pParam->pStackTypeDef != MonoType.GetTypeForMonoType(paramInfo.ParameterType))
                         return 0;
                 }
+
+                return 1;
             }
             return 0;
         }
@@ -286,11 +292,11 @@ namespace DnaUnity
         public static tMD_TypeDef* GetTypeDefFromName(tMetaData *pMetaData, /*STRING*/byte* nameSpace, /*STRING*/byte* name, 
             tMD_TypeDef *pInNestedClass, byte assertExists) 
         {
-        	uint i;
+        	uint i, numRows;
+            tMD_TypeDef* pTypeDef = null;
 
-        	for (i=1; i<=pMetaData->tables.numRows[MetaDataTable.MD_TABLE_TYPEDEF]; i++) {
-        		tMD_TypeDef *pTypeDef;
-
+            numRows = pMetaData->tables.numRows[MetaDataTable.MD_TABLE_TYPEDEF];
+            for (i=1; i<=numRows; i++) {
         		pTypeDef = (tMD_TypeDef*)MetaData.GetTableRow(pMetaData, MetaData.MAKE_TABLE_INDEX(MetaDataTable.MD_TABLE_TYPEDEF, i));
         		if (pInNestedClass == pTypeDef->pNestedIn &&
         			S.strcmp(name, pTypeDef->name) == 0 &&
@@ -298,6 +304,16 @@ namespace DnaUnity
         			return pTypeDef;
         		}
         	}
+
+            if (pMetaData->ppChildMetaData != null) {
+                i = 0;
+                while (pMetaData->ppChildMetaData[i] != null) {
+                    pTypeDef = GetTypeDefFromName(pMetaData->ppChildMetaData[i], nameSpace, name, pInNestedClass, assertExists);
+                    if (pTypeDef != null)
+                        return pTypeDef;
+                    i++;
+                }
+            }
 
         	if (assertExists != 0) {
                 Sys.Crash("MetaData.GetTypeDefFromName(): Cannot find type %s.%s", (PTR)nameSpace, (PTR)name);

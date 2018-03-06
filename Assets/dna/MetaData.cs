@@ -83,7 +83,8 @@ namespace DnaUnity
         public tMetaDataGUIDs GUIDs;
         public tTables tables;
 
-        void* monoAssembly;
+        public void* monoAssembly;
+        public tMetaData** ppChildMetaData;
 
         public System.Reflection.Assembly GetMonoAssembly()
         {
@@ -253,33 +254,35 @@ namespace DnaUnity
             byte[] rowSize = new byte[args.Length];
             for (int tableID = 0; tableID < args.Length; tableID++) {
                 byte* pDef = tableDefs[tableID];
-                int defLen = (int)S.strlen(pDef);
-                int rowLen = 0;
-                for (tableID = 0; tableID < defLen; tableID += 2) {
-                    switch ((char)pDef[tableID + 1]) {
-                        case '*':
-                            rowLen += sizeof(SIZE_T);
-                            break;
-                        case 'i':
-                            rowLen += 4;
-                            break;
-                        case 's':
-                            rowLen += 2;
-                            break;
-                        case 'c':
-                            rowLen++;
-                            break;
-                        case 'x':
-                            // Do nothing
-                            break;
-                        default:
-                            Sys.Crash("Cannot determine length of MetaData destination definition character '%c'\n", pDef[tableID + 1]);
-                            break;
+                if (pDef != null) {
+                    int defLen = (int)S.strlen(pDef);
+                    int rowLen = 0;
+                    for (int i = 0; i < defLen; i += 2) {
+                        switch ((char)pDef[i + 1]) {
+                            case '*':
+                                rowLen += sizeof(SIZE_T);
+                                break;
+                            case 'i':
+                                rowLen += 4;
+                                break;
+                            case 's':
+                                rowLen += 2;
+                                break;
+                            case 'c':
+                                rowLen++;
+                                break;
+                            case 'x':
+                                // Do nothing
+                                break;
+                            default:
+                                Sys.Crash("Cannot determine length of MetaData destination definition character '%c'\n", pDef[tableID + 1]);
+                                break;
+                        }
                     }
-                }
-                int structLen = args[tableID];
-                if (rowLen != structLen) {
-                    Sys.Crash("Metadata decoder string row len does not match target struct size %d != %d", rowLen, structLen);
+                    int structLen = args[tableID];
+                    if (rowLen != structLen) {
+                        Sys.Crash("Metadata decoder string row len does not match target struct size %d != %d", rowLen, structLen);
+                    }
                 }
                 rowSize[tableID] = (byte)args[tableID];
             }
@@ -373,7 +376,7 @@ namespace DnaUnity
                 // 0x13 - Nothing
                 null,
                 // 0x14 - Event
-                "ssxsxiS*0i",
+                "ssxsxiS*0ixi",
                 // 0x15 - PropertyMap
                 "\x02i\x17i",
                 // 0x16 - Nothing
@@ -389,9 +392,9 @@ namespace DnaUnity
                 // 0x1B - TypeSpec
                 "x*m*B*",
                 // 0x1C - ImplMap
-                "ssxs8iS*\x1ai",
+                "ssxs8iS*\x1aixi",
                 // 0x1D - FieldRVA
-                "^*\x04i",
+                "^*\x04ixi",
                 // 0x1E - Nothing
                 null,
                 // 0x1F - Nothing
@@ -413,7 +416,7 @@ namespace DnaUnity
                 // 0x27 - Nothing
                 null,
                 // 0x28 - ManifestResource
-                "iiiiS*9i",
+                "iiiiS*9ixi",
                 // 0x29 - NestedClass
                 "\x02i\x02i",
                 // 0x2A - GenericParam
@@ -421,7 +424,7 @@ namespace DnaUnity
                 // 0x2B - MethodSpec
                 "x*m*7ixiB*",
                 // 0x2C - GenericParamConstraint
-                "\x2a*0i"
+                "\x2a*0ixi"
             );
 
             tableRowSize = BuildTableRowSize(
@@ -1000,6 +1003,8 @@ namespace DnaUnity
                 pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
                 pTypeDef->isGenericDefinition = (byte)(types[i].IsGenericTypeDefinition ? 1 : 0);
             }
+
+            pMetaData->tables.data[MetaDataTable.MD_TABLE_TYPEDEF] = (PTR)pTypeDefs;
 
         }
 

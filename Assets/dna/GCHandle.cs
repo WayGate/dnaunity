@@ -99,10 +99,11 @@ namespace DnaUnity
 
         public static void Clear()
         {
-            foreach (PTR p in gcHandles)
-            {
-                System.Runtime.InteropServices.GCHandle h = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)p);
-                h.Free();
+            if (gcHandles != null) { 
+                foreach (PTR p in gcHandles) {
+                    System.Runtime.InteropServices.GCHandle h = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)p);
+                    h.Free();
+                }
             }
             gcHandles = null;
         }

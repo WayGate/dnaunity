@@ -173,7 +173,7 @@ namespace DnaUnity
         // This is to get the correct vTable offset for the method.
         // This must search the MethodImpl table to see if the default inheritence rules are being overridden.
         // Return null if this method does not override anything.
-        static tMD_MethodDef* FindVirtualOverriddenMethod(tMD_TypeDef *pTypeDef, tMD_MethodDef *pMethodDef) 
+        public static tMD_MethodDef* FindVirtualOverriddenMethod(tMD_TypeDef *pTypeDef, tMD_MethodDef *pMethodDef) 
         {
         	uint i;
 
@@ -239,7 +239,8 @@ namespace DnaUnity
                 return;
             }
 
-            //Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
+//            Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
+//            string name = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)pTypeDef->name);
 
             pMetaData = pTypeDef->pMetaData;
         	pTypeDef->isFilled = 1;

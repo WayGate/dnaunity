@@ -34,7 +34,7 @@ namespace DnaUnity
     public unsafe struct tCLIFile 
     {
         // The filename
-        public /*char**/byte *pFileName;
+        public /*char**/byte *assemblyName;
         // True if this is a mono assembly
         public int isMonoAssembly;
         // Pointer to metadata for this assembly
@@ -67,6 +67,9 @@ namespace DnaUnity
         // the DNA corlib just puts them in one assembly
         static /*char**/byte** monoAssemblies = null;
 
+        // Assembly modules mapped to UnityEngine.dll
+        static /*char**/byte** unityModuleAssemblies = null;
+
         // In .NET Core, the core libraries are split over numerous assemblies. For simplicity,
         // the DNA corlib just puts them in one assembly
         static /*char**/byte** dnaCorlibAssemblies = null;
@@ -92,8 +95,25 @@ namespace DnaUnity
 
             #if UNITY_EDITOR
             monoAssemblies = S.buildArray(
-                "UnityEditor",
-                "UnityEditor.UI",
+                "UnityEngine",
+                "UnityEngine.UI",
+                "UnityEngine.CoreModule",
+                "UnityEngine.AudioModule",
+                "UnityEngine.AnimationModule",
+                "UnityEngine.InputModule",
+                "UnityEngine.ParticleSystemModule",
+                "UnityEngine.PhysicsModule",
+                "UnityEngine.Physics2DModule",
+                null
+            );
+            unityModuleAssemblies = S.buildArray(
+                "UnityEngine.CoreModule",
+                "UnityEngine.AudioModule",
+                "UnityEngine.AnimationModule",
+                "UnityEngine.InputModule",
+                "UnityEngine.ParticleSystemModule",
+                "UnityEngine.PhysicsModule",
+                "UnityEngine.Physics2DModule",
                 null
             );
             #else
@@ -115,12 +135,15 @@ namespace DnaUnity
             // Release metadata images
             tFilesLoaded* pFiles = pFilesLoaded;
             while (pFiles != null) {
-                System.Runtime.InteropServices.GCHandle handle = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)pFiles->pCLIFile->gcHandle);
-                handle.Free();
+                if (pFiles->pCLIFile->gcHandle != 0) {
+                    GCHandle handle = GCHandle.FromIntPtr((System.IntPtr)pFiles->pCLIFile->gcHandle);
+                    handle.Free();
+                }
                 pFiles = pFiles->pNext;
             }
             pFilesLoaded = null;
             monoAssemblies = null;
+            unityModuleAssemblies = null;
             dnaCorlibAssemblies = null;
             assemblySearchPaths = null;
             assemblySearchPathsCount = 0;
@@ -149,9 +172,10 @@ namespace DnaUnity
         {
         	tFilesLoaded *pFiles;
             int monoAssembly = 0;
-            tCLIFile *pCLIFile = null;
-            tMD_Assembly *pThisAssembly = null;
-            int i;
+            tCLIFile* pCLIFile = null;
+            tMD_Assembly* pThisAssembly = null;
+            tMetaData** ppChildMetaData = null;
+            int i, j, childCount;
 
             // Check corlib assemblies
             i = 0;
@@ -163,41 +187,57 @@ namespace DnaUnity
                 i++;
         	}
 
-            // Mono/Unity assemblies only load metadata, no code
-            i = 0;
-            while (monoAssemblies[i] != null) {
-                if (S.strcmp(pAssemblyName, monoAssemblies[i]) == 0) {
-                    monoAssembly = 1;
-        			break;
-        		}
-                i++;
-        	}
-
-        	// Look in already-loaded files first
+         	// Look in already-loaded files first
         	pFiles = pFilesLoaded;
         	while (pFiles != null) {
         		pCLIFile = pFiles->pCLIFile;
-        		// Get the assembly info - there is only ever one of these in the each file's metadata
-                pThisAssembly = (tMD_Assembly*)MetaData.GetTableRow(pCLIFile->pMetaData, MetaData.MAKE_TABLE_INDEX(0x20, 1));
-        		if (S.strcmp(pAssemblyName, pThisAssembly->name) == 0) {
+        		if (S.strcmp(pAssemblyName, pCLIFile->assemblyName) == 0) {
         			// Found the correct assembly, so return its meta-data
         			return pCLIFile->pMetaData;
         		}
         		pFiles = pFiles->pNext;
         	}
 
+           // Mono/Unity assemblies only load metadata, no code
+            i = 0;
+            while (monoAssemblies[i] != null) {
+                if (S.strcmp(pAssemblyName, monoAssemblies[i]) == 0) {
+                    if (i == 0) {
+                        // Handle "UnityEngine" assemblies
+                        j = 0;
+                        childCount = 0;
+                        while (unityModuleAssemblies[j] != null) {
+                            childCount++;
+                            j++;
+                        }
+                        ppChildMetaData = (tMetaData**)Mem.malloc((SIZE_T)((childCount + 1) * sizeof(tMetaData*)));
+                        Mem.memset(ppChildMetaData, 0, (SIZE_T)((childCount + 1) * sizeof(tMetaData*)));
+                        j = 0;
+                        while (unityModuleAssemblies[j] != null) {
+                            ppChildMetaData[j] = GetMetaDataForAssembly(unityModuleAssemblies[j]);
+                            j++;
+                        }
+                    }
+                    monoAssembly = 1;
+            		break;
+        		}
+                i++;
+        	}
+
             // Assembly not loaded, so load it if possible
             if (monoAssembly != 0) {
+                pCLIFile = CLIFile.WrapMonoAssembly(pAssemblyName);
+                if (pCLIFile == null)
+                    Sys.Crash("Cannot load required mono assembly file: %s.dll", (PTR)pAssemblyName);
+            } else {
                 byte* fileName = stackalloc byte[256];
                 S.snprintf(fileName, 256, "%s.dll", (PTR)pAssemblyName);
                 pCLIFile = CLIFile.LoadAssembly(fileName);
                 if (pCLIFile == null)
                     Sys.Crash("Cannot load required assembly file: %s.dll", (PTR)pAssemblyName);
-            } else {
-                pCLIFile = CLIFile.WrapMonoAssembly(pAssemblyName);
-                if (pCLIFile == null)
-                    Sys.Crash("Cannot load required mono assembly file: %s.dll", (PTR)pAssemblyName);
             }
+
+            pCLIFile->pMetaData->ppChildMetaData = ppChildMetaData;
 
             return pCLIFile->pMetaData;
         }
@@ -372,6 +412,7 @@ namespace DnaUnity
         	tCLIFile *pRet;
         	tFilesLoaded *pNewFile;
             byte* filepath = stackalloc byte[512];
+            tMD_Assembly* pThisAssembly = null;
 
             rawData = null;
             for (int i = 0; i < assemblySearchPathsCount; i++)
@@ -387,9 +428,12 @@ namespace DnaUnity
             Sys.log_f(1, "\nLoading file: %s\n", (PTR)pFileName);
 
             pRet = LoadPEFile(rawData);
-            int filenameLen = S.strlen(pFileName) + 1;
-            pRet->pFileName = (byte*)Mem.mallocForever((uint)filenameLen);
-            S.strncpy(pRet->pFileName, pFileName, filenameLen);
+
+            // Get the assembly info - there is only ever one of these in the each file's metadata
+            pThisAssembly = (tMD_Assembly*)MetaData.GetTableRow(pRet->pMetaData, MetaData.MAKE_TABLE_INDEX(0x20, 1));
+            int nameLen = S.strlen(pThisAssembly->name) + 1;
+            pRet->assemblyName = (byte*)Mem.mallocForever((uint)nameLen);
+            S.strncpy(pRet->assemblyName, pThisAssembly->name, nameLen);
 
         	// Record that we've loaded this file
             pNewFile = ((tFilesLoaded*)Mem.mallocForever((SIZE_T)sizeof(tFilesLoaded)));
@@ -427,11 +471,11 @@ namespace DnaUnity
             pRet->pMetaData = pMetaData = MetaData.New();
             MetaData.WrapMonoAssembly(pMetaData, assembly);
 
-            string codeBase = System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
+            string codeBase = assembly.CodeBase;
             System.UriBuilder uri = new System.UriBuilder(codeBase);
             string path = System.Uri.UnescapeDataString(uri.Path);
-            string filename = System.IO.Path.GetDirectoryName(path);
-            pRet->pFileName = new S(filename);
+            string assmName = System.IO.Path.GetFileNameWithoutExtension(path);
+            pRet->assemblyName = new S(assmName);
 
             // Record that we've loaded this file
             pNewFile = ((tFilesLoaded*)Mem.mallocForever((SIZE_T)sizeof(tFilesLoaded)));

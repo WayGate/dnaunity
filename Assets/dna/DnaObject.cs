@@ -31,10 +31,12 @@ namespace DnaUnity
         public static void Clear()
         {
             // Make sure we clear every single reference to a DNA object that Mono runtime may have.
-            foreach (KeyValuePair<PTR,System.WeakReference> pair in dnaObjects) {
-                DnaObject obj = pair.Value.Target as DnaObject;
-                if (obj != null) {
-                    obj.dnaPtr = null;
+            if (dnaObjects != null) { 
+                foreach (KeyValuePair<PTR,System.WeakReference> pair in dnaObjects) {
+                    DnaObject obj = pair.Value.Target as DnaObject;
+                    if (obj != null) {
+                        obj.dnaPtr = null;
+                    }
                 }
             }
             dnaObjects = null;

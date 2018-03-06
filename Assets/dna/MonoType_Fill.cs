@@ -1181,7 +1181,9 @@ namespace DnaUnity
             switch (typeCode)
             {
                 case System.TypeCode.Object:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_OBJECT];
+                    if (monoType == typeof(System.Object))
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_OBJECT];
+                    break;
                 case System.TypeCode.DBNull:
                     break;
                 case System.TypeCode.Boolean:
@@ -1197,7 +1199,7 @@ namespace DnaUnity
                 case System.TypeCode.UInt16:
                     return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT16];
                 case System.TypeCode.Int32:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT16];
+                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT32];
                 case System.TypeCode.UInt32:
                     return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT32];
                 case System.TypeCode.Int64:
@@ -1216,14 +1218,23 @@ namespace DnaUnity
                     return Type.types[DnaUnity.Type.TYPE_SYSTEM_STRING];
             }
 
-            switch (monoType.FullName)
-            {
-                case "System.Void":
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_VOID];
-                case "System.Enum":
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_ENUM];
-                case "System.Array":
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_NO_TYPE];
+            if (monoType == typeof(void))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_VOID];
+            else if (monoType == typeof(System.Enum))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ENUM];
+            else if (monoType == typeof(System.Array))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_NO_TYPE];
+            else if (monoType == typeof(object[]))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_OBJECT];
+            else if (monoType == typeof(byte[]))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_BYTE];
+            else if (monoType == typeof(int[]))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_INT32];
+            else if (monoType == typeof(string[]))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_STRING];
+
+            if (monoType.IsArray) {
+                return Type.GetArrayTypeDef(GetTypeForMonoType(monoType.GetElementType()), null, null);
             }
 
             S.snprintf(nameSpace, 256, monoType.Namespace);
@@ -1290,13 +1301,15 @@ namespace DnaUnity
 
             pMethodDef->numberOfParameters = (ushort)(paramInfos.Length + (methodInfo.IsStatic?0:1));
             pMethodDef->pReturnType = GetTypeForMonoType(methodInfo.ReturnType);
+            if (pMethodDef->pReturnType == Type.types[Type.TYPE_SYSTEM_VOID])
+                pMethodDef->pReturnType = null;
         	if (pMethodDef->pReturnType != null) {
         		MetaData.Fill_TypeDef(pMethodDef->pReturnType, null, null);
         	}
             pMethodDef->pParams = (tParameter*)Mem.malloc((SIZE_T)(pMethodDef->numberOfParameters * sizeof(tParameter)));
         	totalSize = 0;
             start = 0;
-        	if (methodInfo.IsStatic) {
+        	if (!methodInfo.IsStatic) {
         		// Fill in parameter info for the 'this' pointer
         		pMethodDef->pParams->offset = 0;
         		if (pParentType->isValueType != 0) {
@@ -1316,11 +1329,12 @@ namespace DnaUnity
         		uint size;
 
                 // NOTE: Byref values are treated as intptr's in DNA
-                if (paramInfos[i - start].ParameterType.IsByRef) {
+                System.Type paramType = paramInfos[i - start].ParameterType;
+                if (paramType.IsByRef) {
                     pStackTypeDef = Type.types[Type.TYPE_SYSTEM_INTPTR];
-                    pByRefTypeDef = GetTypeForMonoType(paramInfos[i - start].ParameterType);
+                    pByRefTypeDef = GetTypeForMonoType(paramType.GetElementType());
                 } else {
-                    pStackTypeDef = GetTypeForMonoType(paramInfos[i - start].ParameterType);
+                    pStackTypeDef = GetTypeForMonoType(paramType);
                     pByRefTypeDef = null;
                 }
 
@@ -1341,31 +1355,10 @@ namespace DnaUnity
         	}
         	pMethodDef->parameterStackSize = totalSize;
 
-            pMethodDef->monoMethodInfo = new H(methodInfo);
-            pMethodDef->monoMethodCall = new H(CallMethodTrampoline);
-        }
-
-        // Find the method that has been overridden by pMethodDef.
-        // This is to get the correct vTable offset for the method.
-        // This must search the MethodImpl table to see if the default inheritence rules are being overridden.
-        // Return null if this method does not override anything.
-        static tMD_MethodDef* FindVirtualOverriddenMethod(MethodInfo methodInfo) 
-        {
-            int i;
-            MethodInfo baseMethodInfo, typeMethodInfo;
-            tMD_TypeDef* pBaseType;
-            tMD_MethodDef* pMethod;
-
-            baseMethodInfo = methodInfo.GetBaseDefinition();
-            pBaseType = GetTypeForMonoType(baseMethodInfo.DeclaringType);
-            for (i=0; i<pBaseType->numMethods; i++) {
-                pMethod = pBaseType->ppMethods[i];
-                typeMethodInfo = H.ToObj(pMethod->monoMethodInfo) as MethodInfo;
-                if (typeMethodInfo == methodInfo)
-                    return pMethod;
-            }
-
-            return null;
+            if (pMethodDef->monoMethodInfo == null) 
+                pMethodDef->monoMethodInfo = new H(methodInfo);
+            if (pMethodDef->monoMethodCall == null)
+                pMethodDef->monoMethodCall = new H(CallMethodTrampoline);
         }
 
         public static void Fill_TypeDef(tMD_TypeDef *pTypeDef, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
@@ -1379,6 +1372,7 @@ namespace DnaUnity
             tMD_FieldDef* pFieldDefs = null;
             MethodInfo[] methodInfos;
             MethodInfo methodInfo;
+            tMD_MethodDef* pMethodDef;
             tMD_MethodDef* pMethodDefs = null;
 
             if (pTypeDef->isFilled == 1) {
@@ -1427,15 +1421,57 @@ namespace DnaUnity
         	// This only needs to be done for non-generic Type.types, or for generic type that are not a definition
         	// I.e. Fully instantiated generic Type.types
         	if (pTypeDef->isGenericDefinition == 0) {
-        		// Create the virtual method table
-        		pTypeDef->numVirtualMethods = 0;
 
-        		// Resolve fields, members, interfaces.
-        		// Only needs to be done if it's not a generic definition type
+        	    // Populate methods
+                pTypeDef->ppMethods = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef*)));
+                pMethodDefs = (tMD_MethodDef*)Mem.mallocForever((SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef)));
+                Mem.memset(pMethodDefs, 0, (SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef)));
+                for (i = 0; i < methodInfos.Length; i++) {
+                    methodInfo = methodInfos[i];
+                    pMethodDef = &pMethodDefs[i];
 
-        		// It it's not a value-type and the stack-size is not preset, then set it up now.
-        		// It needs to be done here as non-static fields in non-value type can point to the containing type
-        		if (pTypeDef->stackSize == 0 && pTypeDef->isValueType == 0) {
+                    pMethodDef->name = new S(methodInfo.Name);
+                    pMethodDef->monoMethodInfo = new H(methodInfo);
+                    pMethodDef->pMetaData = pMetaData;
+                    pMethodDef->pParentType = pTypeDef;
+                    pMethodDef->flags = (ushort)(
+                        (methodInfo.IsVirtual ? MetaData.METHODATTRIBUTES_VIRTUAL : 0) |
+                        (methodInfo.IsStatic ? MetaData.METHODATTRIBUTES_STATIC : 0));
+
+                    // NOTE: All mono calls are considered internal calls
+                    pMethodDef->implFlags = (ushort)MetaData.METHODIMPLATTRIBUTES_INTERNALCALL;
+        		    pTypeDef->ppMethods[i] = pMethodDef;
+
+                    // Assign vtable slots
+        			if (methodInfo.IsVirtual) {
+                        if (methodInfo.GetBaseDefinition().DeclaringType == monoType) {
+        					// Allocate a new vTable slot if method is explicitly marked as NewSlot, or
+        					// this is of type Object.
+        					pMethodDef->vTableOfs = virtualOfs++;
+        				} else {
+        					tMD_MethodDef *pVirtualOveriddenMethod;
+        					pVirtualOveriddenMethod = MetaData.FindVirtualOverriddenMethod(pTypeDef->pParent, pMethodDef);
+                            if (pVirtualOveriddenMethod == null) {
+                                Sys.Crash("Unable to find virtual override %s", (PTR)(pMethodDef->name));
+                            }
+        					pMethodDef->vTableOfs = pVirtualOveriddenMethod->vTableOfs;
+        				}
+        			} else {
+        				// Dummy value - make it obvious it's not valid!
+        				pMethodDef->vTableOfs = 0xffffffff;
+        			}
+
+                    pTypeDef->ppMethods[i] = pMethodDef;
+                }
+                // Create the virtual method table
+                pTypeDef->numVirtualMethods = virtualOfs;
+
+                // Resolve fields, members, interfaces.
+                // Only needs to be done if it's not a generic definition type
+
+                // It it's not a value-type and the stack-size is not preset, then set it up now.
+                // It needs to be done here as non-static fields in non-value type can point to the containing type
+                if (pTypeDef->stackSize == 0 && pTypeDef->isValueType == 0) {
         			pTypeDef->stackType = EvalStack.EVALSTACK_O;
         			pTypeDef->stackSize = sizeof(PTR);
                     pTypeDef->alignment = sizeof(PTR);
@@ -1449,7 +1485,7 @@ namespace DnaUnity
                     Mem.memset(pFieldDefs, 0, (SIZE_T)(pTypeDef->numFields * sizeof(tMD_FieldDef)));
                 }
         		instanceMemSize = 0;
-        		for (i=0; i <= fieldInfos.Length; i++) {
+        		for (i=0; i < fieldInfos.Length; i++) {
 
                     fieldInfo = fieldInfos[i];
                     tMD_FieldDef* pFieldDef = &pFieldDefs[i];
@@ -1497,7 +1533,7 @@ namespace DnaUnity
         		}
 
         		// Handle static fields
-        		for (i=0; i <= fieldInfos.Length; i++) {
+        		for (i=0; i < fieldInfos.Length; i++) {
 
                     fieldInfo = fieldInfos[i];
                     tMD_FieldDef* pFieldDef = &pFieldDefs[i];
@@ -1519,27 +1555,14 @@ namespace DnaUnity
         		}
 
         		// Resolve all members
-                pTypeDef->ppMethods = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef*)));
-                pMethodDefs = (tMD_MethodDef*)Mem.mallocForever((SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef)));
-                Mem.memset(pMethodDefs, 0, (SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef)));
                 pTypeDef->pVTable = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numVirtualMethods * sizeof(tMD_MethodDef*)));
         		// Copy initial vTable from parent
         		if (pTypeDef->pParent != null) {
                     Mem.memcpy(pTypeDef->pVTable, pTypeDef->pParent->pVTable, (SIZE_T)(pTypeDef->pParent->numVirtualMethods * sizeof(tMD_MethodDef*)));
         		}
-                for (i = 0; i <= methodInfos.Length; i++) {
-                    tMD_MethodDef* pMethodDef;
-
+                for (i = 0; i < methodInfos.Length; i++) {
                     methodInfo = methodInfos[i];
                     pMethodDef = &pMethodDefs[i];
-
-                    pMethodDef->name = new S(methodInfo.Name);
-                    pMethodDef->flags = (ushort)(
-                        (methodInfo.IsVirtual ? MetaData.METHODATTRIBUTES_VIRTUAL : 0) |
-                        (methodInfo.IsStatic ? MetaData.METHODATTRIBUTES_STATIC : 0));
-
-                    // NOTE: All mono calls are considered internal calls
-                    pMethodDef->implFlags = (ushort)MetaData.METHODIMPLATTRIBUTES_INTERNALCALL;
 
                     if (methodInfo.IsStatic && methodInfo.Name == ".cctor") {
         				// This is a static constructor
@@ -1556,7 +1579,6 @@ namespace DnaUnity
         				// This is a virtual method, so enter it in the vTable
         				pTypeDef->pVTable[pMethodDef->vTableOfs] = pMethodDef;
         			}
-        			pTypeDef->ppMethods[i] = pMethodDef;
         		}
 
         		// Find inherited Finalizer, if this type doesn't have an explicit Finalizer, and if there is one
@@ -1596,8 +1618,11 @@ namespace DnaUnity
                             // Discover interface mapping for each interface method
                             for (j=0; j<pInterface->numVirtualMethods; j++) {
                                 tMD_MethodDef* pInterfaceMethod = pInterface->pVTable[j];
-                                tMD_MethodDef* pOverriddenMethod = FindVirtualOverriddenMethod(targetMethods[j]);
-                                System.Diagnostics.Debug.Assert(pOverriddenMethod != null);
+                                tMD_MethodDef* pOverriddenMethod = MetaData.FindVirtualOverriddenMethod(pTypeDef, pInterfaceMethod);
+                                if (pOverriddenMethod == null) {
+                                    pOverriddenMethod = MetaData.FindVirtualOverriddenMethod(pTypeDef, pInterfaceMethod);
+                                    Sys.Crash("Unable to find virtual override %s", (PTR)(pInterfaceMethod->name));
+                                }
         						pMap->pVTableLookup[j] = pOverriddenMethod->vTableOfs;
         					}
         				}
