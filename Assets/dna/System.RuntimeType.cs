@@ -41,7 +41,7 @@ namespace DnaUnity
         	return (/*HEAP_PTR*/byte*)pRuntimeType;
         }
 
-        public static tAsyncCall* get_Name(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* get_Name(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
         	/*HEAP_PTR*/byte* strResult;
@@ -52,7 +52,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* get_Namespace(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* get_Namespace(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
         	/*HEAP_PTR*/byte* strResult;
@@ -63,7 +63,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* GetNestingParentType(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* GetNestingParentType(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
         	tMD_TypeDef *pNestingParentType;
@@ -78,7 +78,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* get_BaseType(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* get_BaseType(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
         	tMD_TypeDef *pBaseType = pRuntimeType->pTypeDef->pParent;
@@ -92,7 +92,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* get_IsEnum(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* get_IsEnum(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tMD_TypeDef *pType = ((tRuntimeType*)pThis_)->pTypeDef;
 
@@ -102,7 +102,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* get_IsGenericType(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* get_IsGenericType(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tMD_TypeDef *pType = ((tRuntimeType*)pThis_)->pTypeDef;
 
@@ -110,7 +110,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Internal_GetGenericTypeDefinition(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* Internal_GetGenericTypeDefinition(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tMD_TypeDef *pType = ((tRuntimeType*)pThis_)->pTypeDef;
 
@@ -123,7 +123,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* GetGenericArguments(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* GetGenericArguments(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tMD_TypeDef *pType = ((tRuntimeType*)pThis_)->pTypeDef;
         	tMD_TypeDef *pCoreType;
@@ -143,7 +143,7 @@ namespace DnaUnity
         		}
         	}
 
-        	ret = System_Array.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_TYPE], argCount);
+        	ret = System_Array.NewVector(pCallNative, Type.types[Type.TYPE_SYSTEM_ARRAY_TYPE], argCount);
         	// Allocate to return value straight away, so it cannot be GCed
         	*(/*HEAP_PTR*/byte**)pReturnValue = ret;
 
@@ -160,7 +160,7 @@ namespace DnaUnity
         	return ((tRuntimeType*)type)->pTypeDef;
         }
 
-        public static tAsyncCall* GetElementType(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* GetElementType(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tMD_TypeDef *pType = ((tRuntimeType*)pThis_)->pTypeDef;
         	tMD_TypeDef *pElementTypeDef = pType->pArrayElementType;

@@ -24,7 +24,7 @@ namespace DnaUnity
     public unsafe static class System_Runtime_CompilerServices
     {
 
-        public static tAsyncCall* InitializeArray(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InitializeArray(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	/*HEAP_PTR*/byte* pArray;
         	byte* pRawData;

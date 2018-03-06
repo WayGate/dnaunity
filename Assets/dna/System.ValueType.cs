@@ -27,7 +27,7 @@ namespace DnaUnity
         // Get all the fields in the value-Type.types in the parameters.
         // If the 2nd parameter is null, then don't include it!
         // The type of the objects will always be identical.
-        public static tAsyncCall* GetFields(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetFields(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	/*HEAP_PTR*/byte* o1,o2, ret;
         	tMD_TypeDef *pType;
@@ -46,7 +46,7 @@ namespace DnaUnity
         		}
         	}
 
-        	ret = System_Array.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_OBJECT], numInstanceFields << ((o2 == null)?0:1));
+        	ret = System_Array.NewVector(pCallNative, Type.types[Type.TYPE_SYSTEM_ARRAY_OBJECT], numInstanceFields << ((o2 == null)?0:1));
 
         	retOfs = 0;
         	for (i=0; i<pType->numFields; i++) {

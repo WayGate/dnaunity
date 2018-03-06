@@ -30,8 +30,8 @@ namespace DnaUnity
             testFoldout = EditorGUILayout.Foldout(testFoldout, "Tests");
             if (testFoldout)
             {
-                if (GUILayout.Button("Run Test 1"))
-                    runScript.RunTest1();
+                if (GUILayout.Button("Run Test01_Expressions"))
+                    runScript.RunTest01_Expressions();
             }
 
         }

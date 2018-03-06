@@ -31,7 +31,7 @@ namespace DnaUnity
     public unsafe static class System_Threading_Thread
     {
 
-        public static tAsyncCall* ctor(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* ctor(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tThread *pThread = Thread.New();
         	pThread->startDelegate = ((byte**)pParams)[0];
@@ -39,7 +39,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* ctorParam(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* ctorParam(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tThread *pThread = Thread.New();
         	pThread->startDelegate = ((byte**)pParams)[0];
@@ -48,7 +48,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Start(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Start(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tThread *pThread = (tThread*)pThis_;
         	tMD_MethodDef *pStartMethod;
@@ -77,7 +77,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Sleep(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Sleep(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             tAsyncCall *pAsync = ((tAsyncCall*)Mem.malloc((SIZE_T)sizeof(tAsyncCall)));
 
@@ -86,7 +86,7 @@ namespace DnaUnity
         	return pAsync;
         }
 
-        public static tAsyncCall* get_CurrentThread(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* get_CurrentThread(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tThread *pThread = Thread.GetCurrent();
         	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pThread);

@@ -83,14 +83,24 @@ namespace DnaUnity
         public tMetaDataGUIDs GUIDs;
         public tTables tables;
 
+        void* monoAssembly;
+
+        public System.Reflection.Assembly GetMonoAssembly()
+        {
+            return monoAssembly != null ?
+                H.ToObj(monoAssembly) as System.Reflection.Assembly : null;
+        }
+
         public byte index32BitString, index32BitBlob, index32BitGUID;
     }
 
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct tParameter
     {
-        // The type of the parameter
-        public tMD_TypeDef *pTypeDef;
+        // The type of the parameter on the stack (will be IntPtr if this is a ref, in, or out param)
+        public tMD_TypeDef *pStackTypeDef;
+        // The type of the parameter of a byref type (ref, in, or out param) or null if not a byref param
+        public tMD_TypeDef* pByRefTypeDef;
         // The offset for this parameter into the paramater stack (in bytes)
         public uint offset;
         // The size of this value on the parameter stack (in bytes)
@@ -128,8 +138,12 @@ namespace DnaUnity
         public const uint FIELDATTRIBUTES_LITERAL                  = 0x40; // compile-time constant
         public const uint FIELDATTRIBUTES_HASFIELDRVA              = 0x100;
 
+        public const uint SIG_METHODDEF_DEFAULT                    = 0x0;
+        public const uint SIG_METHODDEF_VARARG                     = 0x5;
         public const uint SIG_METHODDEF_GENERIC                    = 0x10;
         public const uint SIG_METHODDEF_HASTHIS                    = 0x20;
+        public const uint SIG_METHODDEF_EXPLICITTHIS               = 0x40;
+        public const uint SIG_METHODDEF_SENTINEL                   = 0x41;
 
         public const uint IMPLMAP_FLAGS_CHARSETMASK                = 0x0006;
         public const uint IMPLMAP_FLAGS_CHARSETNOTSPEC             = 0x0000;
@@ -165,6 +179,11 @@ namespace DnaUnity
         public static bool METHOD_ISNEWSLOT(tMD_MethodDef* pMethod) 
         { 
             return ((pMethod)->flags & METHODATTRIBUTES_NEWSLOT) != 0; 
+        }
+
+        public static bool PARAM_ISBYREF(tParameter* pParam)
+        {
+            return (pParam->pByRefTypeDef != null);
         }
 
         public static bool FIELD_HASFIELDRVA(tMD_FieldDef* pField) 
@@ -225,9 +244,47 @@ namespace DnaUnity
         // Coded indexes use this lookup table.
         static byte** codedTags = null;
 
+        static byte[] tableRowSize = null;
+
         static byte[] codedTagBits = null;
 
-        static byte[] tableRowSize = null;
+        static byte[] BuildTableRowSize(params int[] args)
+        {
+            byte[] rowSize = new byte[args.Length];
+            for (int tableID = 0; tableID < args.Length; tableID++) {
+                byte* pDef = tableDefs[tableID];
+                int defLen = (int)S.strlen(pDef);
+                int rowLen = 0;
+                for (tableID = 0; tableID < defLen; tableID += 2) {
+                    switch ((char)pDef[tableID + 1]) {
+                        case '*':
+                            rowLen += sizeof(SIZE_T);
+                            break;
+                        case 'i':
+                            rowLen += 4;
+                            break;
+                        case 's':
+                            rowLen += 2;
+                            break;
+                        case 'c':
+                            rowLen++;
+                            break;
+                        case 'x':
+                            // Do nothing
+                            break;
+                        default:
+                            Sys.Crash("Cannot determine length of MetaData destination definition character '%c'\n", pDef[tableID + 1]);
+                            break;
+                    }
+                }
+                int structLen = args[tableID];
+                if (rowLen != structLen) {
+                    Sys.Crash("Metadata decoder string row len does not match target struct size %d != %d", rowLen, structLen);
+                }
+                rowSize[tableID] = (byte)args[tableID];
+            }
+            return rowSize;
+        }
 
         public static void Init() 
         {
@@ -271,100 +328,193 @@ namespace DnaUnity
             */
 
          tableDefs = S.buildArray(
-                // 0x00
+                // 0x00 - Module
                 "sxS*G*GxGx",
-                // 0x01
+                // 0x01 - TypeRef
                 "x*;ixiS*S*",
-                // 0x02
-                "x*m*iixiS*S*0i\x04i\x06ixclcxcxcxixix*x*xixix*xixix*xixixixix*Iixix*x*x*x*xixix*xixix*x*x*x*",
-                // 0x03
+                // 0x02 - TypeDef
+                "x*m*iixiS*S*0i\x04i\x06ixclcxcxcxixix*x*xixix*xixix*xixixixix*Iixix*x*x*x*xixix*xixix*x*x*x*x*",
+                // 0x03 - Nothing
                 null,
-                // 0x04
-                "x*m*ssxsxiS*B*x*x*xixiIixix*",
-                // 0x05
+                // 0x04 - FieldDef
+                "x*m*ssxsxiS*B*x*x*xixiIixix*x*x*x*",
+                // 0x05 - Nothing
                 null,
-                // 0x06
-                "x*m*^*ssssxiS*B*\x08ixix*xixix*xixix*x*Iixix*x*"
+                // 0x06 - MethodDef
+                "x*m*^*ssssxiS*B*\x08ixix*xixix*xixix*x*Iixix*x*x*x*"
                 #if DIAG_METHOD_CALLS
                 "xixix*"
                 #endif
                 ,
-                // 0x07
+                // 0x07 - Nothing
                 null,
-                // 0x08
+                // 0x08 - Param
                 "ssssxiS*",
-                // 0x09
+                // 0x09 - InterfaceImpl
                 "\x02i0i",
-                // 0x0A
+                // 0x0A - MemberRef
                 "x*5ixiS*B*",
-                // 0x0B
+                // 0x0B - Constant
                 "ccccxs1iB*",
-                // 0x0C
+                // 0x0C - CustomAttribute
                 "2i:iB*",
-                // 0x0D
+                // 0x0D - FieldMarshal
                 "3ixiB*",
-                // 0x0E
+                // 0x0E - DeclSecurity
                 "ssxs4iB*",
-                // 0x0F
+                // 0x0F - ClassLayout
                 "ssxsii\x02i",
-                // 0x10
+                // 0x10 - FieldLayout
                 "ii\x04i",
-                // 0x11
+                // 0x11 - StandAloneSig
                 "B*",
-                // 0x12
+                // 0x12 - EventMap
                 "\x02i\x14i",
-                // 0x13
+                // 0x13 - Nothing
                 null,
-                // 0x14
+                // 0x14 - Event
                 "ssxsxiS*0i",
-                // 0x15
+                // 0x15 - PropertyMap
                 "\x02i\x17i",
-                // 0x16
+                // 0x16 - Nothing
                 null,
-                // 0x17
+                // 0x17 - Property
                 "ssxsxiS*B*",
-                // 0x18
+                // 0x18 - MethodSemantics
                 "ssxs\x06i6i",
-                // 0x19
+                // 0x19 - MethodImpl
                 "\x02i7i7i",
-                // 0x1A
+                // 0x1A - ModuleRef
                 "S*",
-                // 0x1B
+                // 0x1B - TypeSpec
                 "x*m*B*",
-                // 0x1C
+                // 0x1C - ImplMap
                 "ssxs8iS*\x1ai",
-                // 0x1D
+                // 0x1D - FieldRVA
                 "^*\x04i",
-                // 0x1E
+                // 0x1E - Nothing
                 null,
-                // 0x1F
+                // 0x1F - Nothing
                 null,
-                // 0x20
+                // 0x20 - Assembly
                 "iissssssssiiB*S*S*",
-                // 0x21
+                // 0x21 - Nothing
                 null,
-                // 0x22
+                // 0x22 - Nothing
                 null,
-                // 0x23
+                // 0x23 - AssemblyRef
                 "ssssssssiixiB*S*S*B*",
-                // 0x24
+                // 0x24 - Nothing
                 null,
-                // 0x25
+                // 0x25 - Nothing
                 null,
-                // 0x26
+                // 0x26 - Nothing
                 null,
-                // 0x27
+                // 0x27 - Nothing
                 null,
-                // 0x28
+                // 0x28 - ManifestResource
                 "iiiiS*9i",
-                // 0x29
+                // 0x29 - NestedClass
                 "\x02i\x02i",
-                // 0x2A
+                // 0x2A - GenericParam
                 "ssss<iS*",
-                // 0x2B
+                // 0x2B - MethodSpec
                 "x*m*7ixiB*",
-                // 0x2C
+                // 0x2C - GenericParamConstraint
                 "\x2a*0i"
+            );
+
+            tableRowSize = BuildTableRowSize(
+                // 0x00 - Module
+                sizeof(tMD_Module),
+                // 0x01 - TypeRef
+                sizeof(tMD_TypeRef),
+                // 0x02 - TypeDef
+                sizeof(tMD_TypeDef),
+                // 0x03 - Nothing
+                0,
+                // 0x04 - FieldDef
+                sizeof(tMD_FieldDef),
+                // 0x05 - Nothing
+                0,
+                // 0x06 - MethodDef
+                sizeof(tMD_MethodDef),
+                // 0x07 - Nothing
+                0,
+                // 0x08 - Param
+                sizeof(tMD_Param),
+                // 0x09 - InterfaceImpl
+                sizeof(tMD_InterfaceImpl),
+                // 0x0A - MemberRef
+                sizeof(tMD_MemberRef),
+                // 0x0B - Constant
+                sizeof(tMD_Constant),
+                // 0x0C - CustomAttribute
+                sizeof(tMD_CustomAttribute),
+                // 0x0D - FieldMarshal
+                sizeof(tMD_FieldMarshal),
+                // 0x0E - DeclSecurity
+                sizeof(tMD_DeclSecurity),
+                // 0x0F - ClassLayout
+                sizeof(tMD_ClassLayout),
+                // 0x10 - FieldLayout
+                sizeof(tMD_FieldLayout),
+                // 0x11 - StandAloneSig
+                sizeof(tMD_StandAloneSig),
+                // 0x12 - EventMap
+                sizeof(tMD_EventMap),
+                // 0x13 - Nothing
+                0,
+                // 0x14 - Event
+                sizeof(tMD_Event),
+                // 0x15 - PropertyMap
+                sizeof(tMD_PropertyMap),
+                // 0x16 - Nothing
+                0,
+                // 0x17 - Property
+                sizeof(tMD_Property),
+                // 0x18 - MethodSemantics
+                sizeof(tMD_MethodSemantics),
+                // 0x19 - MethodImpl
+                sizeof(tMD_MethodImpl),
+                // 0x1A - ModuleRef
+                sizeof(tMD_ModuleRef),
+                // 0x1B - TypeSpec
+                sizeof(tMD_TypeSpec),
+                // 0x1C - ImplMap
+                sizeof(tMD_ImplMap),
+                // 0x1D - FieldRVA
+                sizeof(tMD_FieldRVA),
+                // 0x1E - Nothing
+                0,
+                // 0x1F - Nothing
+                0,
+                // 0x20 - Assembly
+                sizeof(tMD_Assembly),
+                // 0x21 - Nothing
+                0,
+                // 0x22 - Nothing
+                0,
+                // 0x23 - AssemblyRef
+                sizeof(tMD_AssemblyRef),
+                // 0x24 - Nothing
+                0,
+                // 0x25 - Nothing
+                0,
+                // 0x26 - Nothing
+                0,
+                // 0x27 - Nothing
+                0,
+                // 0x28 - ManifestResource
+                sizeof(tMD_ManifestResource),
+                // 0x29 - NestedClass
+                sizeof(tMD_NestedClass),
+                // 0x2A - GenericParam
+                sizeof(tMD_GenericParam),
+                // 0x2B - MethodSpec
+                sizeof(tMD_MethodSpec),
+                // 0x2C - GenericParamConstraint
+                sizeof(tMD_GenericParamConstraint)
             );
 
             // Coded indexes use this lookup table.
@@ -402,21 +552,14 @@ namespace DnaUnity
             codedTagBits = new byte[] {
                 2, 2, 5, 1, 2, 3, 1, 1, 1, 2, 3, 2, 1
             };
-
-            tableRowSize = new byte[MAX_TABLES];
-
-            uint i;
-            for (i=0; i<MAX_TABLES; i++) {
-                tableRowSize[i] = 0;
-            }
         }
 
         public static void Clear()
         {
             tableDefs = null;
             codedTags = null;
-            codedTagBits = null;
             tableRowSize = null;
+            codedTagBits = null;
         }
 
         public static uint DecodeSigEntry(/*SIG*/byte* *pSig) {
@@ -519,8 +662,8 @@ namespace DnaUnity
         public static void* LoadSingleTable(tMetaData *pThis, tRVA *pRVA, int tableID, void **ppTable) 
         {
             int numRows = (int)pThis->tables.numRows[tableID];
-        	int rowLen = 0; // Number of bytes taken by each row in memory.
-        	int i, row;
+        	int rowLen = tableRowSize[tableID];
+            int i, row;
         	/*char**/byte *pDef = tableDefs[tableID];
         	int defLen = (int)S.strlen(pDef);
         	void *pRet;
@@ -528,35 +671,6 @@ namespace DnaUnity
         	byte *pDest;
         	uint v = 0;
             SIZE_T p = 0;
-
-        	// Calculate the destination row size from table definition, if it hasn't already been calculated
-        	if (tableRowSize[tableID] == 0) {
-        		for (i=0; i<defLen; i += 2) {
-                    switch ((char)pDef[i+1]) {
-        				case '*':
-        					rowLen += sizeof(SIZE_T);
-        					break;
-                        case 'i':
-                            rowLen += 4;
-                            break;
-        				case 's':
-        					rowLen += 2;
-        					break;
-        				case 'c':
-        					rowLen++;
-        					break;
-        				case 'x':
-        					// Do nothing
-        					break;
-        				default:
-        					Sys.Crash("Cannot determine length of MetaData destination definition character '%c'\n", pDef[i+1]);
-                            break;
-        			}
-        		}
-                tableRowSize[tableID] = (byte)rowLen;
-        	} else {
-        		rowLen = tableRowSize[tableID];
-        	}
 
         	// Allocate memory for destination table
             pRet = Mem.malloc((SIZE_T)(numRows * rowLen));
@@ -806,13 +920,15 @@ namespace DnaUnity
         public static void* GetTableRow(tMetaData *pThis, /*IDX_TABLE*/uint index) 
         {
         	/*char**/byte *pData;
+            uint tableId;
         	
         	if (MetaData.TABLE_OFS(index) == 0) {
         		return null;
         	}
-        	pData = (byte*)pThis->tables.data[MetaData.TABLE_ID(index)];
+            tableId = MetaData.TABLE_ID(index);
+            pData = (byte*)pThis->tables.data[tableId];
         	// Table indexes start at one, hence the -1 here.
-        	return pData + (MetaData.TABLE_OFS(index) - 1) * tableRowSize[MetaData.TABLE_ID(index)];
+        	return pData + (MetaData.TABLE_OFS(index) - 1) * tableRowSize[tableId];
         }
 
         public static void GetConstant(tMetaData *pThis, /*IDX_TABLE*/uint idx, byte* pResultMem) 
@@ -861,6 +977,30 @@ namespace DnaUnity
         			}
         		}
         	}
+        }
+
+        public static void WrapMonoAssembly(tMetaData* pMetaData, System.Reflection.Assembly assembly)
+        {
+            System.Type[] types = assembly.GetTypes();
+
+            pMetaData->tables.numRows[MetaDataTable.MD_TABLE_TYPEDEF] = (uint)types.Length;
+
+            tMD_TypeDef* pTypeDefs = (tMD_TypeDef*)Mem.malloc((SIZE_T)(sizeof(tMD_TypeDef) * types.Length));
+            Mem.memset(pTypeDefs, 0, (SIZE_T)(sizeof(tMD_TypeDef) * types.Length));
+
+            for (int i=0; i<types.Length; i++) {
+                tMD_TypeDef* pTypeDef = &pTypeDefs[i];
+                System.Type monoType = types[i];
+                pTypeDef->pMetaData = pMetaData;
+                pTypeDef->name = new S(monoType.Name);
+                pTypeDef->nameSpace = new S(monoType.Namespace);
+                pTypeDef->monoType = new H(monoType);
+                pTypeDef->flags =
+                    (monoType.IsInterface ? TYPEATTRIBUTES_INTERFACE : 0);
+                pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
+                pTypeDef->isGenericDefinition = (byte)(types[i].IsGenericTypeDefinition ? 1 : 0);
+            }
+
         }
 
     }

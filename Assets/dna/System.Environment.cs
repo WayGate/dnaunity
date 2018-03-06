@@ -24,19 +24,19 @@ namespace DnaUnity
     public static unsafe class System_Environment
     {
         
-        public static tAsyncCall* get_TickCount(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* get_TickCount(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(int*)pReturnValue = System.Environment.TickCount;
         	return null;
         }
 
-        public static tAsyncCall* GetOSVersionString(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetOSVersionString(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(byte**)pReturnValue = System_String.FromMonoString(System.Environment.OSVersion.Version.ToString());
         	return null;
         }
 
-        public static tAsyncCall* get_Platform(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* get_Platform(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(uint*)pReturnValue = (uint)System.Environment.OSVersion.Platform;
         	return null;

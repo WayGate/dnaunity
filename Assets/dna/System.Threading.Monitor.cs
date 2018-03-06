@@ -31,7 +31,7 @@ namespace DnaUnity
     public unsafe static class System_Threading_Monitor
     {
 
-        static uint Internal_TryEntry_Check(byte* pThis_, byte* pParams, byte* pReturnValue, tAsyncCall *pAsync) 
+        static uint Internal_TryEntry_Check(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue, tAsyncCall *pAsync) 
         {
         	/*HEAP_PTR*/byte* pObj = ((/*HEAP_PTR*/byte**)pParams)[0];
         	int timeout = ((int*)pParams)[1];
@@ -66,9 +66,9 @@ namespace DnaUnity
         	return 0;
         }
 
-        public static tAsyncCall* Internal_TryEnter(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_TryEnter(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
-        	uint ok = Internal_TryEntry_Check(pThis_, pParams, pReturnValue, null);
+        	uint ok = Internal_TryEntry_Check(pCallNative, pThis_, pParams, pReturnValue, null);
         	tAsyncCall *pAsync;
         	if (ok != 0) {
         		// Got lock already, so don't block thread
@@ -81,7 +81,7 @@ namespace DnaUnity
         	return pAsync;
         }
 
-        public static tAsyncCall* Internal_Exit(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_Exit(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	/*HEAP_PTR*/byte* pObj = ((/*HEAP_PTR*/byte**)pParams)[0];
         	Heap.SyncExit(pObj);

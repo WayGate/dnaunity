@@ -57,7 +57,7 @@ namespace DnaUnity
         	return pSystemString;
         }
 
-        public static tAsyncCall* ctor_CharInt32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* ctor_CharInt32(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* pSystemString;
         	char c;
@@ -76,7 +76,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* ctor_CharAIntInt(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* ctor_CharAIntInt(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* pSystemString;
         	/*HEAP_PTR*/byte* charArray;
@@ -97,7 +97,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* ctor_StringIntInt(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* ctor_StringIntInt(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             tSystemString* pThis;
             //tSystemString* pStr;
@@ -116,7 +116,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* get_Chars(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* get_Chars(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* pThis = (tSystemString*)pThis_;
         	uint index;
@@ -129,7 +129,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* InternalConcat(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalConcat(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* s0, s1, ret;
             char* pS0Chars, pS1Chars, pRetChars;
@@ -147,7 +147,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* InternalTrim(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalTrim(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* pThis = (tSystemString*)pThis_;
         	/*HEAP_PTR*/byte* pWhiteChars;
@@ -212,7 +212,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Equals(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Equals(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* a, b;
         	uint ret;
@@ -235,7 +235,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* GetHashCode(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetHashCode(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* pThis = (tSystemString*)pThis_;
         	char* pChar, pEnd;
@@ -256,7 +256,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* InternalReplace(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalReplace(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* pThis = (tSystemString*)pThis_;
         	tSystemString* pOld = (*((tSystemString**)(pParams + 0)));
@@ -319,7 +319,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* InternalIndexOf(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalIndexOf(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* pThis = (tSystemString*)pThis_;
         	ushort value = (*((ushort*)(pParams + 0)));
@@ -351,7 +351,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* InternalIndexOfAny(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalIndexOfAny(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString *pThis = (tSystemString*)pThis_;
         	/*HEAP_PTR*/byte* valueArray = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
@@ -407,6 +407,14 @@ namespace DnaUnity
             return (/*HEAP_PTR*/byte*)pSystemString;
         }
 
+        public static string ToMonoString(byte* pStr)
+        {
+            if (pStr == null)
+                return null;
+            string s = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)(pStr + 4), *(int*)pStr);
+            return s;
+        }
+
         public static /*HEAP_PTR*/byte* FromUserStrings(tMetaData *pMetaData, /*IDX_USERSTRINGS*/uint index) 
         {
         	uint stringLen;
@@ -452,7 +460,7 @@ namespace DnaUnity
         	return (/*HEAP_PTR*/byte*)pSystemString;
         }
 
-        public static /*STRING2*/char* GetString(/*HEAP_PTR*/byte* pThis_, uint *pLength) 
+        public static /*STRING2*/char* GetString(tJITCallNative* pCallNative, /*HEAP_PTR*/byte* pThis_, uint *pLength) 
         {
         	tSystemString *pThis = (tSystemString*)pThis_;
 

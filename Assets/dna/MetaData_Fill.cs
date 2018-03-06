@@ -34,11 +34,12 @@ namespace DnaUnity
     public unsafe static partial class MetaData
     {
 
-        public static void Fill_FieldDef(tMD_TypeDef *pParentType, tMD_FieldDef *pFieldDef, uint memOffset, tMD_TypeDef **ppClassTypeArgs) 
+        public static void Fill_FieldDef(tMD_TypeDef *pParentType, tMD_FieldDef *pFieldDef, uint memOffset, uint* pAlignment, tMD_TypeDef **ppClassTypeArgs) 
         {
         	uint sigLength;
         	byte* sig;
         	tMetaData *pMetaData;
+            uint fieldSize, fieldAlignment;
 
         	pFieldDef->pParentType = pParentType;
 
@@ -51,12 +52,20 @@ namespace DnaUnity
         		return;
         	}
         	MetaData.Fill_TypeDef(pFieldDef->pType, null, null);
-        	// A check for 0 is done so if a type has a field of it's own type it is handled correctly.
-            pFieldDef->memSize = (pFieldDef->pType->stackSize>0)?pFieldDef->pType->stackSize:(uint)sizeof(PTR);
-        	pFieldDef->memOffset = memOffset;
-        	pFieldDef->pFieldDef = pFieldDef;
+            // A check for 0 is done so if a type has a field of it's own type it is handled correctly.
+            if (pFieldDef->pType->instanceMemSize != 0)
+                fieldSize = pFieldDef->pType->instanceMemSize;
+            else if (pFieldDef->pType->stackSize != 0)
+                fieldSize = pFieldDef->pType->stackSize;
+            else
+                fieldSize = sizeof(PTR);
+            fieldAlignment = (pFieldDef->pType->isValueType == 0 || pFieldDef->pType->alignment == 0) ? sizeof(PTR) : pFieldDef->pType->alignment;
+            if (pAlignment != null && *pAlignment < fieldAlignment)
+                *pAlignment = fieldAlignment;
+            pFieldDef->memOffset = (memOffset + fieldAlignment - 1) & ~(fieldAlignment - 1);
+            pFieldDef->memSize = fieldSize;
 
-        	pMetaData = pFieldDef->pMetaData;
+            pMetaData = pFieldDef->pMetaData;
         	if (MetaData.FIELD_HASFIELDRVA(pFieldDef)) {
         		uint i, top;
 
@@ -127,28 +136,33 @@ namespace DnaUnity
         		if (pParentType->isValueType != 0) {
         			// If this is a value-type then the 'this' pointer is actually an IntPtr to the value-type's location
                     pMethodDef->pParams->size = sizeof(PTR);
-        			pMethodDef->pParams->pTypeDef = Type.types[Type.TYPE_SYSTEM_INTPTR];
+        			pMethodDef->pParams->pStackTypeDef = Type.types[Type.TYPE_SYSTEM_INTPTR];
         		} else {
                     pMethodDef->pParams->size = sizeof(PTR);
-        			pMethodDef->pParams->pTypeDef = pParentType;
+        			pMethodDef->pParams->pStackTypeDef = pParentType;
         		}
                 totalSize = sizeof(PTR);
                 start = 1;
         	}
         	for (i=start; i<pMethodDef->numberOfParameters; i++) {
-        		tMD_TypeDef *pTypeDef;
+        		tMD_TypeDef *pStackTypeDef;
+                tMD_TypeDef* pByRefTypeDef;
         		uint size;
 
-        		pTypeDef = Type.GetTypeFromSig(pMethodDef->pMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs);
-        		//if (pTypeDef != null) {
-        			MetaData.Fill_TypeDef(pTypeDef, null, null);
-        			size = pTypeDef->stackSize;
-        		//} else {
-        		//	// If this method has generic-type-argument arguments, then we can't do anything very sensible yet
-        		//	size = 0;
-        		//}
-        		pMethodDef->pParams[i].pTypeDef = pTypeDef;
-        		pMethodDef->pParams[i].offset = totalSize;
+                pByRefTypeDef = null;
+        		pStackTypeDef = Type.GetTypeFromSig(pMethodDef->pMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs, &pByRefTypeDef);
+                if (pStackTypeDef != null) {
+                    MetaData.Fill_TypeDef(pStackTypeDef, null, null);
+                    size = pStackTypeDef->stackSize;
+                } else {
+                    size = 0;
+                }
+                if (pByRefTypeDef != null) {
+                    MetaData.Fill_TypeDef(pByRefTypeDef, null, null);
+                }
+                pMethodDef->pParams[i].pStackTypeDef = pStackTypeDef;
+                pMethodDef->pParams[i].pByRefTypeDef = pByRefTypeDef;
+                pMethodDef->pParams[i].offset = totalSize;
         		pMethodDef->pParams[i].size = size;
         		totalSize += size;
         	}
@@ -188,11 +202,21 @@ namespace DnaUnity
         		// Use normal inheritence rules
         		// It must be a virtual method that's being overridden.
         		for (i=pTypeDef->numVirtualMethods - 1; i != 0xffffffff; i--) {
-        			if (MetaData.CompareNameAndSig(pMethodDef->name, pMethodDef->signature, pMethodDef->pMetaData, 
-                        pMethodDef->pParentType->ppClassTypeArgs, pMethodDef->ppMethodTypeArgs, pTypeDef->pVTable[i], pTypeDef->ppClassTypeArgs, null) != 0) {
-        				return pTypeDef->pVTable[i];
-        			}
-        		}
+                    if (pMethodDef->signature != null) { 
+        			    if (MetaData.CompareNameAndSig(pMethodDef->name, pMethodDef->signature, pMethodDef->pMetaData, 
+                            pMethodDef->pParentType->ppClassTypeArgs, pMethodDef->ppMethodTypeArgs, pTypeDef->pVTable[i], pTypeDef->ppClassTypeArgs, null) != 0) {
+        				    return pTypeDef->pVTable[i];
+        			    }
+                    } else if (pMethodDef->monoMethodInfo != null) {
+                        System.Reflection.MethodInfo methodInfo = H.ToObj(pMethodDef->monoMethodInfo) as System.Reflection.MethodInfo;
+                        if (MetaData.CompareNameAndMethodInfo(pMethodDef->name, methodInfo, pMethodDef->pMetaData,
+                            pMethodDef->pParentType->ppClassTypeArgs, pMethodDef->ppMethodTypeArgs, pTypeDef->pVTable[i], pTypeDef->ppClassTypeArgs, null) != 0)
+                        {
+                            return pTypeDef->pVTable[i];
+                        }
+                    }
+
+                }
         		pTypeDef = pTypeDef->pParent;
         	} while (pTypeDef != null);
 
@@ -210,11 +234,17 @@ namespace DnaUnity
                 return;
             }
 
+            if (pTypeDef->monoType != null) {
+                MonoType.Fill_TypeDef(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs);
+                return;
+            }
+
             //Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
 
             pMetaData = pTypeDef->pMetaData;
         	pTypeDef->isFilled = 1;
-        	pTypeDef->pTypeDef = pTypeDef;
+            pTypeDef->alignment = 1;
+            pTypeDef->pTypeDef = pTypeDef;
 
         	pTypeDef->pParent = MetaData.GetTypeDefFromDefRefOrSpec(pMetaData, pTypeDef->extends, ppClassTypeArgs, ppMethodTypeArgs);
         	pParent = pTypeDef->pParent;
@@ -222,6 +252,9 @@ namespace DnaUnity
         	if (pParent != null) {
         		MetaData.Fill_TypeDef(pParent, null, null);
         		virtualOfs = pParent->numVirtualMethods;
+                if (pParent->hasMonoBase != 0) {
+                    pTypeDef->hasMonoBase = 1;
+                }
         	} else {
         		virtualOfs = 0;
         	}
@@ -289,6 +322,7 @@ namespace DnaUnity
         		if (pTypeDef->stackSize == 0 && pTypeDef->isValueType == 0) {
         			pTypeDef->stackType = EvalStack.EVALSTACK_O;
         			pTypeDef->stackSize = sizeof(PTR);
+                    pTypeDef->alignment = sizeof(PTR);
         		}
         		// Resolve all fields - instance ONLY at this point,
         		// because static fields in value-Type.types can be of the containing type, and the size is not yet known.
@@ -315,16 +349,16 @@ namespace DnaUnity
         				if (MetaData.FIELD_ISLITERAL(pFieldDef) || MetaData.FIELD_HASFIELDRVA(pFieldDef)) {
         					// If it's a literal, then analyse the field, but don't include it in any memory allocation
         					// If is has an RVA, then analyse the field, but don't include it in any memory allocation
-        					MetaData.Fill_FieldDef(pTypeDef, pFieldDef, 0, ppClassTypeArgs);
+        					MetaData.Fill_FieldDef(pTypeDef, pFieldDef, 0, null, ppClassTypeArgs);
         				} else {
-        					MetaData.Fill_FieldDef(pTypeDef, pFieldDef, instanceMemSize, ppClassTypeArgs);
+        					MetaData.Fill_FieldDef(pTypeDef, pFieldDef, instanceMemSize, &(pTypeDef->alignment), ppClassTypeArgs);
         					instanceMemSize += pFieldDef->memSize;
         				}
         				pTypeDef->ppFields[i] = pFieldDef;
         			}
         		}
         		if (pTypeDef->instanceMemSize == 0) {
-        			pTypeDef->instanceMemSize = instanceMemSize;
+        			pTypeDef->instanceMemSize = (instanceMemSize + (pTypeDef->alignment - 1)) & ~(pTypeDef->alignment - 1);
         		}
 
         		// Sort out stack type and size.
@@ -357,9 +391,9 @@ namespace DnaUnity
         				if (MetaData.FIELD_ISLITERAL(pFieldDef) || MetaData.FIELD_HASFIELDRVA(pFieldDef)) {
         					// If it's a literal, then analyse the field, but don't include it in any memory allocation
         					// If is has an RVA, then analyse the field, but don't include it in any memory allocation
-        					MetaData.Fill_FieldDef(pTypeDef, pFieldDef, 0, ppClassTypeArgs);
+        					MetaData.Fill_FieldDef(pTypeDef, pFieldDef, 0, null, ppClassTypeArgs);
         				} else {
-        					MetaData.Fill_FieldDef(pTypeDef, pFieldDef, staticMemSize, ppClassTypeArgs);
+        					MetaData.Fill_FieldDef(pTypeDef, pFieldDef, staticMemSize, null, ppClassTypeArgs);
         					staticMemSize += pFieldDef->memSize;
         				}
         				pTypeDef->ppFields[i] = pFieldDef;

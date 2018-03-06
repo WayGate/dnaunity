@@ -36,14 +36,14 @@ namespace DnaUnity
     public unsafe static class System_WeakReference
     {
 
-        public static tAsyncCall* get_Target(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* get_Target(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tWeakRef *pThis = (tWeakRef*)pThis_;
         	*(/*HEAP_PTR*/byte**)pReturnValue = pThis->target;
         	return null;
         }
 
-        public static tAsyncCall* set_Target(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* set_Target(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tWeakRef *pThis = (tWeakRef*)pThis_;
         	/*HEAP_PTR*/byte* target = ((/*HEAP_PTR*/byte**)pParams)[0];

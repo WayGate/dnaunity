@@ -54,7 +54,7 @@ namespace DnaUnity
         }
 
         // Must return a boxed version of value-Type.types
-        public static tAsyncCall* Internal_GetValue(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_GetValue(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemArray *pArray = (tSystemArray*)pThis_;
         	tMD_TypeDef *pArrayType;
@@ -94,7 +94,7 @@ namespace DnaUnity
         }
 
         // Value-Type.types will be boxed
-        public static tAsyncCall* Internal_SetValue(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_SetValue(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemArray* pArray = (tSystemArray*)pThis_;
             tMD_TypeDef* pArrayType, pObjType;
@@ -150,7 +150,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Clear(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Clear(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemArray* pArray;
         	uint index, length, elementSize;
@@ -168,7 +168,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Internal_Copy(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_Copy(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemArray* pSrc, pDst;
         	tMD_TypeDef* pSrcType, pDstType, pSrcElementType;
@@ -213,7 +213,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Resize(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Resize(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	/*HEAP_PTR*/byte** ppArray_, pHeap;
         	tSystemArray* pOldArray, pNewArray;
@@ -233,7 +233,7 @@ namespace DnaUnity
         	}
 
         	pArrayTypeDef = Heap.GetType(*ppArray_);
-            pHeap = (byte**)System_Array.NewVector(pArrayTypeDef, newSize);
+            pHeap = (byte**)System_Array.NewVector(pCallNative, pArrayTypeDef, newSize);
         	pNewArray = (tSystemArray*)pHeap;
             *ppArray_ = (byte*)pHeap;
             pOldElements = tSystemArray.GetElements(pOldArray);
@@ -244,7 +244,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Reverse(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Reverse(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemArray* pArray;
         	uint index, length, elementSize, i, dec;
@@ -276,7 +276,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static /*HEAP_PTR*/byte* NewVector(tMD_TypeDef *pArrayTypeDef, uint length) 
+        public static /*HEAP_PTR*/byte* NewVector(tJITCallNative* pCallNative, tMD_TypeDef* pArrayTypeDef, uint length) 
         {
         	uint heapSize;
         	tSystemArray *pArray;
@@ -320,7 +320,7 @@ namespace DnaUnity
         	}
         }
 
-        public static void LoadElement(/*HEAP_PTR*/byte* pThis_, uint index, byte* value) 
+        public static void LoadElement(tJITCallNative* pCallNative, /*HEAP_PTR*/byte* pThis_, uint index, byte* value) 
         {
         	tSystemArray *pArray = (tSystemArray*)pThis_;
         	tMD_TypeDef *pArrayTypeDef;
@@ -346,7 +346,7 @@ namespace DnaUnity
         	}
         }
 
-        public static byte* LoadElementAddress(/*HEAP_PTR*/byte* pThis_, uint index) 
+        public static byte* LoadElementAddress(tJITCallNative* pCallNative, /*HEAP_PTR*/byte* pThis_, uint index) 
         {
         	tSystemArray *pArray = (tSystemArray*)pThis_;
         	tMD_TypeDef *pArrayTypeDef;
@@ -364,18 +364,18 @@ namespace DnaUnity
             return pElements + pArrayTypeDef->pArrayElementType->arrayElementSize * index;
         }
 
-        public static uint GetNumBytes(/*HEAP_PTR*/byte* pThis_, tMD_TypeDef *pElementType) 
+        public static uint GetNumBytes(tJITCallNative* pCallNative, /*HEAP_PTR*/byte* pThis_, tMD_TypeDef *pElementType) 
         {
             return (uint)((((tSystemArray*)pThis_)->length * pElementType->arrayElementSize) + sizeof(tSystemArray));
         }
 
-        public static tAsyncCall* CreateInstance(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* CreateInstance(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             tRuntimeType* pRuntimeType = (*((tRuntimeType**)(pParams + 0)));
             tMD_TypeDef *pElementType = System_RuntimeType.DeRef((byte*)pRuntimeType);
         	tMD_TypeDef *pArrayType = Type.GetArrayTypeDef(pElementType, null, null);
             uint length = (*((uint*)(pParams + Sys.S_PTR)));
-        	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, System_Array.NewVector(pArrayType, length));
+        	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, System_Array.NewVector(pCallNative, pArrayType, length));
         	return null;
         }
 

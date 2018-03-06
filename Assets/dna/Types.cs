@@ -93,9 +93,12 @@ typedef byte byte;
     };
 
     // Native function call
-    public unsafe delegate tAsyncCall* fnInternalCall(byte* pThis_, byte* pParams, byte* pReturnValue);
+    public unsafe delegate tAsyncCall* fnInternalCall(tJITCallNative* pMethodDef, byte* pThis_, byte* pParams, byte* pReturnValue);
     // Native function call check routine for blocking IO
-    public unsafe delegate uint fnInternalCallCheck(byte* pThis_, byte* pParams, byte* pReturnValue, tAsyncCall *pAsync);
+    public unsafe delegate uint fnInternalCallCheck(tJITCallNative* pMethodDef, byte* pThis_, byte* pParams, byte* pReturnValue, tAsyncCall *pAsync);
+    // Field getter setter
+    public unsafe delegate void fnFieldGetterSetter(tMD_FieldDef* pFieldDef, byte* _this, byte* pInValue);
+
 
     public unsafe struct tAsyncCall 
     {

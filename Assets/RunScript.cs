@@ -48,16 +48,16 @@ namespace DnaUnity
 
         public void RunAllTests()
         {
-            RunTest1();
+            RunTest01_Expressions();
         }
 
-        public void RunTest1()
+        public void RunTest01_Expressions()
         {
-            Debug.Log("Running Test1");
+            Debug.Log("Running Test01_Expressions");
             InitDna();
-            Dna.Load("Test1.dll");
-            Dna.Call("Test1.Test");
-            Debug.Log("## Test1 Complete!");
+            Dna.Load("Test01_Expressions.dll");
+            Dna.Call("Test01_Expressions.Test");
+            Debug.Log("## Test01_Expressions Complete!");
         }
     }
 

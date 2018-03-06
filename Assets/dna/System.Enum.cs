@@ -24,22 +24,22 @@ namespace DnaUnity
     public unsafe static class System_Enum
     {
 
-        public static tAsyncCall* Internal_GetValue(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_GetValue(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	*(uint*)pReturnValue = *(uint*)pThis_;
 
         	return null;
         }
 
-        public static tAsyncCall* Internal_GetInfo(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_GetInfo(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tMD_TypeDef *pEnumType = System_RuntimeType.DeRef((byte*)((tMD_TypeDef**)pParams)[0]);
         	uint i, retIndex;
         	/*HEAP_PTR*/byte* names, values;
 
         	// An enum type always has just one non-literal field, with all other fields being the values.
-        	names = System_Array.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_STRING], pEnumType->numFields - 1);
-        	values = System_Array.NewVector(Type.types[Type.TYPE_SYSTEM_ARRAY_INT32], pEnumType->numFields - 1);
+        	names = System_Array.NewVector(pCallNative, Type.types[Type.TYPE_SYSTEM_ARRAY_STRING], pEnumType->numFields - 1);
+        	values = System_Array.NewVector(pCallNative, Type.types[Type.TYPE_SYSTEM_ARRAY_INT32], pEnumType->numFields - 1);
         	
         	for (i=0, retIndex=0; i<pEnumType->numFields; i++) {
         		tMD_FieldDef *pField = pEnumType->ppFields[i];

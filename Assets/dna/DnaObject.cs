@@ -3,12 +3,89 @@ using System.Collections.Generic;
 
 namespace DnaUnity
 {
+    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+    using SIZE_T = System.UInt32;
+    using PTR = System.UInt32;
+    #else
+    using SIZE_T = System.UInt64;
+    using PTR = System.UInt64;
+    #endif
+
     public unsafe class DnaObject : System.IDisposable
     {
+        private static Dictionary<PTR, System.WeakReference> dnaObjects;
+
         public byte* dnaPtr;
 
         // Flag: Has Dispose already been called?
         bool disposed = false;
+
+        private static int _collectionCount;
+
+        public static void Init()
+        {
+            dnaObjects = new Dictionary<SIZE_T, System.WeakReference>();
+            _collectionCount = System.GC.CollectionCount(0);
+        }
+
+        public static void Clear()
+        {
+            // Make sure we clear every single reference to a DNA object that Mono runtime may have.
+            foreach (KeyValuePair<PTR,System.WeakReference> pair in dnaObjects) {
+                DnaObject obj = pair.Value.Target as DnaObject;
+                if (obj != null) {
+                    obj.dnaPtr = null;
+                }
+            }
+            dnaObjects = null;
+        }
+
+        public static DnaObject MakeDnaObject(byte* ptr)
+        {
+            if (ptr == null)
+                return null;
+
+            System.WeakReference weak;
+            DnaObject obj = null;
+            if (dnaObjects.TryGetValue((PTR)ptr, out weak)) {
+                obj = weak.Target as DnaObject;
+                if (obj != null)
+                    return obj;
+            }
+
+            obj = new DnaObject(ptr);
+            dnaObjects.Add((PTR)ptr, new System.WeakReference(obj));
+
+            // If there is a collection - clear dead references
+            if (System.GC.CollectionCount(0) != _collectionCount) {
+                ClearDeadReferences();
+            }
+
+            return obj;
+        }
+
+        private static void ClearDeadReferences()
+        {
+            List<PTR> deadRefs = null;
+            foreach (KeyValuePair<PTR, System.WeakReference> pair in dnaObjects) {
+                DnaObject obj = pair.Value.Target as DnaObject;
+                if (obj == null) {
+                    if (deadRefs == null)
+                        deadRefs = new List<PTR>();
+                    deadRefs.Add(pair.Key);
+                }
+            }
+
+            for (int i = 0; i < deadRefs.Count; i++) {
+                dnaObjects.Remove(deadRefs[i]);
+            }
+        }
+
+        public DnaObject(byte* ptr)
+        {
+            Heap.MakeUndeletable(ptr);
+            dnaPtr = ptr;
+        }
 
         // Public implementation of Dispose pattern callable by consumers.
         public void Dispose()
@@ -24,7 +101,7 @@ namespace DnaUnity
                 return; 
 
             if (disposing) {
-                // Release reference to DNA object here.
+                Heap.MakeDeletable(dnaPtr);
             }
 
             // Free any unmanaged objects here.
@@ -35,30 +112,6 @@ namespace DnaUnity
         {
             Dispose(false);
         }
-    }
-
-    public struct UnityRef
-    {
-        public object obj;
-        public int typeId;
-
-        // Copy on write id for value type (usually the address on the stack of this obj.  In order to implement proper value
-        // type semantics without unecessary copying, will make a copy on any writes where the stack address has changed)
-        public uint cowId;
-        #if UNITY_WEBGL     // Add dummy padding on 32 bit platforms
-        public int dummy;
-        #endif
-    }
-
-    public unsafe abstract class UnityType
-    {
-        public abstract void New(byte* parameters, byte* retValue);
-        public abstract void Copy(ref UnityRef oldRef, ref UnityRef newRef, uint newCowId);
-        public abstract void CallMethod(object obj, int id, uint* cowId, byte* parameters, byte* retValue);
-        public abstract void GetField(object obj, int id, byte* outValue);
-        public abstract void SetField(object obj, int id, uint* cowId, byte* inValue);
-        public abstract void GetProperty(object obj, int id, byte* outValue);
-        public abstract void SetProperty(object obj, int id, uint* cowId, byte* inValue);
     }
 
 }

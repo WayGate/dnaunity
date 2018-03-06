@@ -30,7 +30,7 @@ namespace DnaUnity
 
     public unsafe static class System_Console
     {
-        public static tAsyncCall* Write(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Write(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	byte* /*HEAP_PTR*/ _string;
             char* wStr;
@@ -39,14 +39,14 @@ namespace DnaUnity
         	_string = *(byte**)pParams;
         	if (_string != null) {
                 #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
-                wStr = System_String.GetString(_string, &strLen);
+                wStr = System_String.GetString(pCallNative, _string, &strLen);
                 if (wStr != null && strLen > 0 && !(strLen == 1 && wStr[0] == '\n') && !(strLen == 2 && wStr[0] == '\r' && wStr[1] == '\n'))
                 {
                     string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
                     UnityEngine.Debug.Log(netStr);
                 }
                 #else
-                wStr = System_String.GetString(_string, &strLen);
+                wStr = System_String.GetString(pCallNative, _string, &strLen);
                 string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
                 System.Console.Write(netStr);
                 #endif
@@ -55,14 +55,14 @@ namespace DnaUnity
             return null;
         }
 
-        static uint Internal_ReadKey_Check(byte* pThis_, byte* pParams, byte* pReturnValue, tAsyncCall *pAsync) 
+        static uint Internal_ReadKey_Check(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue, tAsyncCall *pAsync) 
         {
             throw new System.NotImplementedException();
         }
 
 //        static uint nextKeybC = 0xFFFFFFFF;
 
-        public static tAsyncCall* Internal_ReadKey(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_ReadKey(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             tAsyncCall *pAsync = (tAsyncCall*)Mem.malloc((SIZE_T)sizeof(tAsyncCall));
 
@@ -73,11 +73,11 @@ namespace DnaUnity
         	return pAsync;
         }
 
-        public static tAsyncCall* Internal_KeyAvailable(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_KeyAvailable(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	uint c, isKey;
 
-        	isKey = Internal_ReadKey_Check(null, null, (byte*)&c, null);
+        	isKey = Internal_ReadKey_Check(pCallNative, null, null, (byte*)&c, null);
         	if (isKey != 0) {
 //        		nextKeybC = c;
         		*(uint*)pReturnValue = 1;

@@ -112,8 +112,8 @@ namespace DnaUnity
 
     	// Type attribute flags
         public /*FLAGS32*/uint flags;
-        // Padding 1
-        public uint padding1;
+        // Type Id of DNA built in types (index into type init array)
+        public uint typeInitId;
         // Name of type def - index into string heap
         public /*STRING*/byte* name;
     	// Namespace of type def - index into string heap
@@ -135,8 +135,8 @@ namespace DnaUnity
         public byte stackType;
     	// Total memory size of instances of this type (its in-memory representation) (not static fields)
         public uint instanceMemSize;
-        // Padding 2
-        public uint padding2;
+        // Data alignment for this type
+        public uint alignment;
     	// The parent type definition
         public tMD_TypeDef *pParent;
     	// The virtual method table
@@ -155,8 +155,10 @@ namespace DnaUnity
     	// numPrimedFields, numPrimedMethods, numVirtualMethods
     	// have been pre-set.
         public byte isPrimed;
+        // Is either a mono reference type, or has a mono reference type as a base class
+        public byte hasMonoBase;
     	// Padding 4
-        public fixed byte padding4[5];
+        public uint padding4;
     	// If this type has a static constructor, then store it here. null if no static constructor
         public tMD_MethodDef *pStaticConstructor;
     	// The size of this type when in an array
@@ -200,6 +202,8 @@ namespace DnaUnity
     	// Pointer to the heap object which is the Type class object for this type.
     	// This is only allocated as needed, so defaults to null
         public /*HEAP_PTR*/byte* typeObject;
+        // The GCHandle to a MonoType object if this is a wrapper around a mono type, null if a native type
+        public /*GCHandle*/ void* monoType;
     }
 
     // Table 0x04 - FieldDef
@@ -237,6 +241,12 @@ namespace DnaUnity
     	// If this field has an RVA, then the pointer to the memory location is stored here.
     	// If this is a literal field, then this is a pointer to the tMD_Constant literal definition.
         public byte* pMemory;
+        // The GCHandle to the mono Reflection.FieldInfo for field if this is mono type, null if not
+        public /*GCHandle*/ void* monoFieldInfo;
+        // The GCHandle to field getter method if this is mono type, null if not
+        public /*GCHandle*/ void* monoGetter;
+        // The GCHandle to field setter method if this is mono type, null if not
+        public /*GCHandle*/ void* monoSetter;
     }
 
     // Table 0x06 - MethodDef
@@ -292,15 +302,19 @@ namespace DnaUnity
         public tMD_TypeDef **ppMethodTypeArgs;
     	// If this is a generic core method, then store type instances here.
         public tGenericMethodInstance *pGenericMethodInstances;
+        // The GCHandle to the mono Reflection.MethodInfo for method if this is mono type, null if not
+        public /*GCHandle*/ void* monoMethodInfo;
+        // The GCHandle to the mono call delegate for method if this is mono type, null if not
+        public /*GCHandle*/ void* monoMethodCall;
 
-    #if DIAG_METHOD_CALLS
+#if DIAG_METHOD_CALLS
     	// Number of times this method has been called
         public uint callCount;
         // Padding
         public uint padding4;
     	// Total time (inclusive of children) in this function
         public ulong totalTime;
-    #endif
+#endif
     }
 
     // Table 0x08 - Param
@@ -377,7 +391,7 @@ namespace DnaUnity
         public /*BLOB_*/byte* nativeType;
     };
 
-    // Table 0x0E - DEclSecurity
+    // Table 0x0E - DeclSecurity
     public unsafe struct tMD_DeclSecurity
     {
     	// The security action

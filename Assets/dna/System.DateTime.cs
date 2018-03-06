@@ -28,7 +28,7 @@ namespace DnaUnity
         public const long TicksAtUnixEpoch = 621355968000000000L;
         public const long TicksAtFileTimeEpoch = 504911232000000000L;
 
-        public static tAsyncCall* InternalUtcNow(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalUtcNow(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(ulong*)pReturnValue = (ulong)System.DateTime.UtcNow.Ticks;
 

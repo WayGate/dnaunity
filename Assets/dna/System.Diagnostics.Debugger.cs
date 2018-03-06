@@ -24,7 +24,7 @@ namespace DnaUnity
     public unsafe static class System_Diagnostics_Debugger
     {
 
-        public static tAsyncCall* Break(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Break(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             System.Diagnostics.Debugger.Break();
 

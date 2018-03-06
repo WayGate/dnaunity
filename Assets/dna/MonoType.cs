@@ -20,12 +20,15 @@
 
 namespace DnaUnity
 {
-    public unsafe static class CsObject
+    public unsafe partial class MonoType
     {
-        public static void* Create(object o)
-        {
-            throw new System.NotImplementedException();
-        }
+
+
+
+
+
+
+
     }
 }
 

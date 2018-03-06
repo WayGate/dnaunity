@@ -24,7 +24,7 @@ namespace DnaUnity
     public unsafe static class System_Char
     {
 
-        public static tAsyncCall* GetUnicodeCategory(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetUnicodeCategory(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	uint paramCodePoint = ((uint*)pParams)[0];
         	// Do a binary search on the UC_Index array
@@ -94,7 +94,7 @@ namespace DnaUnity
         	}
         }
 
-        public static tAsyncCall* ToLowerInvariant(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* ToLowerInvariant(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	uint paramCodePoint = ((uint*)pParams)[0];
         	int pos;
@@ -105,7 +105,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* ToUpperInvariant(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* ToUpperInvariant(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	uint paramCodePoint = ((uint*)pParams)[0];
         	int pos;

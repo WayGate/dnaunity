@@ -24,14 +24,14 @@ namespace DnaUnity
     public unsafe static class System_Object
     {
 
-        public static tAsyncCall* Equals(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Equals(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             Sys.INTERNALCALL_RESULT_U32(pReturnValue, (pThis_ == *(byte**)pParams) ? 1U : 0U);
 
         	return null;
         }
 
-        public static tAsyncCall* Clone(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Clone(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	/*HEAP_PTR*/byte* obj, clone;
 
@@ -42,14 +42,14 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* GetHashCode(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetHashCode(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             Sys.INTERNALCALL_RESULT_U32(pReturnValue, (uint)((((uint)pThis_) >> 2) * 2654435761UL));
 
         	return null;
         }
 
-        public static tAsyncCall* GetType(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetType(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	/*HEAP_PTR*/byte* typeObject;
         	tMD_TypeDef *pTypeDef;

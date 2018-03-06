@@ -328,7 +328,7 @@ namespace DnaUnity
                                 pThis = *(byte**)pMethodState->pParamsLocals;
                                 thisOfs = 4;
                             }
-                            unblocked = ((fnInternalCallCheck)H.ToObj(pAsync->checkFn))(pThis, pMethodState->pParamsLocals + thisOfs, pMethodState->pEvalStack, pAsync);
+                            unblocked = ((fnInternalCallCheck)H.ToObj(pAsync->checkFn))(null, pThis, pMethodState->pParamsLocals + thisOfs, pMethodState->pEvalStack, pAsync);
                             if (unblocked != 0) {
                                 // The IO has unblocked, and the return value is ready.
                                 // So delete the async object.

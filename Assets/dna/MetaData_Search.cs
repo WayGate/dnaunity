@@ -36,53 +36,151 @@ namespace DnaUnity
             tMD_TypeDef **ppMethodMethodTypeArgs) 
         {
         	if (S.strcmp(name, pMethod->name) == 0) {
-        		/*SIG*/byte* sig, thisSig;
-        		uint e, thisE, paramCount, i;
 
-        		sig = MetaData.GetBlob(sigBlob, null);
-        		thisSig = MetaData.GetBlob(pMethod->signature, null);
+                if (pMethod->signature != null) { 
 
-        		e = MetaData.DecodeSigEntry(&sig);
-        		thisE = MetaData.DecodeSigEntry(&thisSig);
-        		// Check method call type (static, etc...)
-        		if (e != thisE) {
-        			return 0;
-        		}
+        		    /*SIG*/byte* sig, thisSig;
+        		    uint e, thisE, paramCount, i;
 
-        		// If method has generic arguments, check the generic type argument count
-                if ((e & SIG_METHODDEF_GENERIC) != 0) {
-        			e = MetaData.DecodeSigEntry(&sig);
-        			thisE = MetaData.DecodeSigEntry(&thisSig);
-        			// Generic argument count
-        			if (e != thisE) {
-        				return 0;
-        			}
-        		}
+        		    sig = MetaData.GetBlob(sigBlob, null);
+        		    thisSig = MetaData.GetBlob(pMethod->signature, null);
 
-        		e = MetaData.DecodeSigEntry(&sig);
-        		thisE = MetaData.DecodeSigEntry(&thisSig);
-        		// check parameter count
-        		if (e != thisE) {
-        			return 0;
-        		}
-        		paramCount = e + 1; // +1 to include the return type
+        		    e = MetaData.DecodeSigEntry(&sig);
+        		    thisE = MetaData.DecodeSigEntry(&thisSig);
+        		    // Check method call type (static, etc...)
+        		    if (e != thisE)
+        			    return 0;
 
-        		// check all parameters
-        		for (i=0; i<paramCount; i++) {
-                    tMD_TypeDef *pParamType;
-                    tMD_TypeDef *pThisParamType;
+        		    // If method has generic arguments, check the generic type argument count
+                    if ((e & SIG_METHODDEF_GENERIC) != 0) {
+        			    e = MetaData.DecodeSigEntry(&sig);
+        			    thisE = MetaData.DecodeSigEntry(&thisSig);
+        			    // Generic argument count
+        			    if (e != thisE)
+        				    return 0;
+        		    }
 
-        			pParamType = Type.GetTypeFromSig(pSigMetaData, &sig, ppSigClassTypeArgs, ppSigMethodTypeArgs);
-        			pThisParamType = Type.GetTypeFromSig(pMethod->pMetaData, &thisSig, ppMethodClassTypeArgs, ppMethodMethodTypeArgs);
-        			if (pParamType != pThisParamType) {
-        				return 0;
-        			}
-        		}
-        		// All parameters the same, so found the right method
-        		return 1;
-        	}
-        	return 0;
+        		    e = MetaData.DecodeSigEntry(&sig);
+        		    thisE = MetaData.DecodeSigEntry(&thisSig);
+        		    // check parameter count
+        		    if (e != thisE)
+        			    return 0;
+        		    paramCount = e + 1; // +1 to include the return type
+
+        		    // check all parameters
+        		    for (i=0; i<paramCount; i++) {
+                        tMD_TypeDef *pParamType;
+                        tMD_TypeDef *pThisParamType;
+
+        			    pParamType = Type.GetTypeFromSig(pSigMetaData, &sig, ppSigClassTypeArgs, ppSigMethodTypeArgs);
+        			    pThisParamType = Type.GetTypeFromSig(pMethod->pMetaData, &thisSig, ppMethodClassTypeArgs, ppMethodMethodTypeArgs);
+        			    if (pParamType != pThisParamType) {
+        				    return 0;
+        			    }
+        		    }
+
+        		    // All parameters the same, so found the right method
+        		    return 1;
+        	    }
+
+            } else if (pMethod->monoMethodInfo != null) {
+                
+                /*SIG*/
+                byte* sig;
+                uint e, paramCount, i;
+                System.Reflection.MethodInfo methodInfo = H.ToObj(pMethod->monoMethodInfo) as System.Reflection.MethodInfo;
+
+                sig = MetaData.GetBlob(sigBlob, null);
+
+                e = MetaData.DecodeSigEntry(&sig);
+                // Check method call type (static, etc...)
+                if (methodInfo.IsStatic && (e & (SIG_METHODDEF_HASTHIS | SIG_METHODDEF_EXPLICITTHIS)) != 0)
+                    return 0;
+
+                // If method has generic arguments, check the generic type argument count
+                if ((e & SIG_METHODDEF_GENERIC) != 0)
+                {
+                    if (!methodInfo.IsGenericMethod)
+                        return 0;
+
+                    e = MetaData.DecodeSigEntry(&sig);
+                    // Generic argument count
+                    if (e != methodInfo.GetGenericArguments().Length)
+                        return 0;
+                }
+
+                paramCount = MetaData.DecodeSigEntry(&sig);
+                System.Reflection.ParameterInfo[] paramInfos = methodInfo.GetParameters();
+                if (paramCount != paramInfos.Length)
+                    return 0;
+
+                tMD_TypeDef* pReturnType = Type.GetTypeFromSig(pSigMetaData, &sig, ppSigClassTypeArgs, ppSigMethodTypeArgs);
+                tMD_TypeDef* pThisReturnType = MonoType.GetTypeForMonoType(methodInfo.ReturnType);
+                if (pReturnType != pThisReturnType)
+                    return 0;
+
+                // check all parameters
+                for (i = 0; i < paramCount; i++)
+                {
+                    tMD_TypeDef* pParamType;
+                    tMD_TypeDef* pThisParamType;
+
+                    pParamType = Type.GetTypeFromSig(pSigMetaData, &sig, ppSigClassTypeArgs, ppSigMethodTypeArgs);
+                    pThisParamType = MonoType.GetTypeForMonoType(paramInfos[i].ParameterType);
+                    if (pParamType != pThisParamType)
+                        return 0;
+                }
+
+                // All parameters the same, so found the right method
+                return 1;
+
+            }
+            return 0;
         }
+
+        public static uint CompareNameAndMethodInfo(/*STRING*/byte* name, System.Reflection.MethodInfo methodInfo, tMetaData* pSigMetaData,
+            tMD_TypeDef** ppSigClassTypeArgs, tMD_TypeDef** ppSigMethodTypeArgs, tMD_MethodDef* pMethod, tMD_TypeDef** ppMethodClassTypeArgs,
+            tMD_TypeDef** ppMethodMethodTypeArgs)
+        {
+            if (S.strcmp(name, pMethod->name) == 0)
+            {
+                uint i;
+
+                if (METHOD_ISSTATIC(pMethod) != methodInfo.IsStatic ||
+                    METHOD_ISVIRTUAL(pMethod) != methodInfo.IsVirtual)
+                    return 0;
+
+                System.Reflection.ParameterInfo[] paramInfos = methodInfo.GetParameters();
+
+                uint numberOfParameters = (uint)(paramInfos.Length + (methodInfo.IsStatic ? 0 : 1));
+                if ((uint)pMethod->numberOfParameters != numberOfParameters)
+                    return 0;
+
+                if (methodInfo.IsGenericMethod != (pMethod->isGenericDefinition != 0))
+                    return 0;
+
+                if (pMethod->pReturnType != MonoType.GetTypeForMonoType(methodInfo.ReturnType))
+                    return 0;
+
+                uint start = 0;
+                if (!methodInfo.IsStatic) {
+                    if (pMethod->pParams[0].pStackTypeDef != MonoType.GetTypeForMonoType(methodInfo.DeclaringType))
+                        return 0;
+                    start = 1;
+                }
+
+                for (i = start; i < numberOfParameters; i++) {
+                    tParameter* pParam = &pMethod->pParams[i];
+                    System.Reflection.ParameterInfo paramInfo = paramInfos[i - start];
+                    
+                    // NOTE: We are not checking to see if params are REF params here.  Potentially a problem.
+                    if (pParam->pStackTypeDef != MonoType.GetTypeForMonoType(paramInfo.ParameterType))
+                        return 0;
+                }
+            }
+            return 0;
+        }
+
 
         const int MSG_BUF_SIZE = 2048;
 

@@ -84,9 +84,10 @@ namespace DnaUnity
             // Set to 0 when the Finalizer has been run (or there is no Finalizer in the first place)
             // Only set on type that have a Finalizer
             public byte needToFinalize;
+            // Set to 1 if the first PTR size field is a GCHandle to a mono object
+            public byte monoGCHandle;
 
             // unused
-            public byte padding1;
             public uint padding2;
 
             // The type in this heap entry
@@ -138,6 +139,9 @@ namespace DnaUnity
 
         public static void Clear()
         {
+            // This frees all references in the DNA heap to all mono objects
+            FreeAllGCHandles();
+
             pHeapTreeRoot = nil = null;
             trackHeapSize = 0;
             heapSizeMax = 0;
@@ -157,7 +161,7 @@ namespace DnaUnity
         	}
         	if (MetaData.TYPE_ISARRAY(pType)) {
         		// If it's an array, return the array length * array element size
-        		return System_Array.GetNumBytes((/*HEAP_PTR*/byte*)(pHeapEntry + 1), pType->pArrayElementType);
+        		return System_Array.GetNumBytes(null /* This is ok */, (/*HEAP_PTR*/byte*)(pHeapEntry + 1), pType->pArrayElementType);
         	}
         	// If it's not string or array, just return the instance memory size
         	return pType->instanceMemSize;
@@ -433,6 +437,13 @@ namespace DnaUnity
         		tHeapEntry *pThis = pToDelete;
         		pToDelete = (tHeapEntry*)(pToDelete->pSync);
         		pHeapTreeRoot = TreeRemove(pHeapTreeRoot, pThis);
+                if (pThis->monoGCHandle == 1) {
+                    void* hptr = *(void**)((byte*)pThis + sizeof(tHeapEntry));
+                    if (hptr != null) { 
+                        GCHandle h = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)hptr);
+                        h.Free();
+                    }
+                }
         		numNodes--;
                 trackHeapSize -= GetSize(pThis) + (uint)sizeof(tHeapEntry);
         		Mem.free(pThis);
@@ -450,6 +461,35 @@ namespace DnaUnity
         #if DIAG_GC
         	Sys.log_f(1, "GC time = %d ms\n", gcTotalTime / 1000);
         #endif
+        }
+
+        public static void FreeAllGCHandles()
+        {
+            tHeapEntry* pNode;
+            tHeapEntry** pUp = stackalloc tHeapEntry*[MAX_TREE_DEPTH * 2];
+            int top;
+
+            // Traverse nodes
+            pUp[0] = pHeapTreeRoot;
+            top = 1;
+            while (top != 0) {
+                // Get this node
+                pNode = pUp[--top];
+                if (pNode->monoGCHandle != 0) {
+                    void* hptr = *(void**)((byte*)pNode + sizeof(tHeapEntry));
+                    if (hptr != null) { 
+                        GCHandle h = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)hptr);
+                        h.Free();
+                    }
+                }
+                // Get next node(s)
+                if (pNode->pLink[1] != (PTR)nil) {
+                    pUp[top++] = (tHeapEntry*)pNode->pLink[1];
+                }
+                if (pNode->pLink[0] != (PTR)nil) {
+                    pUp[top++] = (tHeapEntry*)pNode->pLink[0];
+                }
+            }
         }
 
         public static void UnmarkFinalizer(/*HEAP_PTR*/byte* heapPtr) 
@@ -507,7 +547,7 @@ namespace DnaUnity
         	pHeapEntry->pTypeDef = pTypeDef;
         	pHeapEntry->pSync = null;
             pHeapEntry->needToFinalize = (byte)((pTypeDef->pFinalizer != null) ? 1 : 0);
-            pMem = (byte*)&pHeapEntry->pSync + sizeof(PTR);
+            pMem = (byte*)pHeapEntry + sizeof(tHeapEntry);
             Mem.memset(pMem, 0, size);
         	trackHeapSize += totalSize;
 
@@ -520,24 +560,51 @@ namespace DnaUnity
         public static /*HEAP_PTR*/byte* AllocType(tMD_TypeDef *pTypeDef) 
         {
         	//printf("Heap.AllocType('%s')\n", pTypeDef->name);
-        	return Alloc(pTypeDef, pTypeDef->instanceMemSize);
+        	byte* pInst = Alloc(pTypeDef, pTypeDef->instanceMemSize);
+            if (pTypeDef->hasMonoBase != 0) {
+                tHeapEntry* pHeapEntry = (tHeapEntry*)((byte*)pInst - sizeof(tHeapEntry));
+                pHeapEntry->monoGCHandle = 1;
+            }
+
+            return pInst;
         }
 
-        public static tMD_TypeDef* GetType(/*HEAP_PTR*/byte* heapEntry) 
+        public static /*HEAP_PTR*/byte* AllocMonoObject(tMD_TypeDef* pTypeDef, object monoObject)
         {
-        	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapEntry);
+            byte* pMem = AllocType(pTypeDef);
+            void** ppGCHandle = (void**)pMem;
+            *ppGCHandle = (void*)(System.IntPtr)GCHandle.Alloc(monoObject);
+            return pMem;
+        }
+
+        public static tMD_TypeDef* GetType(/*HEAP_PTR*/byte* heapObj) 
+        {
+        	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapObj);
         	return pHeapEntry->pTypeDef;
         }
 
-        public static void MakeUndeletable(/*HEAP_PTR*/byte* heapEntry) 
+        public static object GetMonoObject(/*HEAP_PTR*/byte* heapObj)
         {
-        	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapEntry);
+            tHeapEntry* pHeapEntry = GET_HEAPENTRY(heapObj);
+            if (pHeapEntry->monoGCHandle != 0) {
+                void* p = *(void**)heapObj;
+                if (p == null)
+                    return null;
+                GCHandle handle = (GCHandle)(System.IntPtr)p;
+                return handle.Target;
+            }
+            return null;
+        }
+
+        public static void MakeUndeletable(/*HEAP_PTR*/byte* heapObj) 
+        {
+        	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapObj);
         	pHeapEntry->marked = 0xff;
         }
 
-        public static void MakeDeletable(/*HEAP_PTR*/byte* heapEntry) 
+        public static void MakeDeletable(/*HEAP_PTR*/byte* heapObj) 
         {
-        	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapEntry);
+        	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapObj);
         	pHeapEntry->marked = 0;
         }
 

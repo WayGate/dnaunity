@@ -24,7 +24,7 @@ namespace DnaUnity
     public unsafe static class System_Type
     {
 
-        public static tAsyncCall* GetTypeFromHandle(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetTypeFromHandle(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tMD_TypeDef *pTypeDef = *(tMD_TypeDef**)pParams;
 
@@ -33,7 +33,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* get_IsValueType(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* get_IsValueType(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
         	
@@ -45,7 +45,7 @@ namespace DnaUnity
         public static void DotNetStringToCString(byte* buf, uint bufLength, /*STRING*/byte* dotnetString) 
         {
         	uint stringLen;
-        	/*STRING2*/char* dotnetString2 = System_String.GetString(dotnetString, &stringLen);
+        	/*STRING2*/char* dotnetString2 = System_String.GetString(null /* This is ok */,  dotnetString, &stringLen);
         	if (stringLen > bufLength) {
         		Sys.Crash("String of length %i was too long for buffer of length %i\n", stringLen, bufLength);
         	}
@@ -57,7 +57,7 @@ namespace DnaUnity
         	buf[i] = 0;
         }
 
-        public static tAsyncCall* EnsureAssemblyLoaded(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* EnsureAssemblyLoaded(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	byte* assemblyName = stackalloc byte[256];
         	DotNetStringToCString(assemblyName, 256, ((/*HEAP_PTR*/byte**)pParams)[0]);
@@ -67,7 +67,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* GetTypeFromName(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetTypeFromName(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             byte* namespaceName = stackalloc byte[256];
             byte* className = stackalloc byte[256];
@@ -92,7 +92,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* GetProperties(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetProperties(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
         	tMD_TypeDef *pTypeDef = pRuntimeType->pTypeDef;
@@ -120,7 +120,7 @@ namespace DnaUnity
         	// Instantiate a PropertyInfo[]
         	uint numProperties = lastIdxExc - firstIdx;
         	tMD_TypeDef *pArrayType = Type.GetArrayTypeDef(Type.types[Type.TYPE_SYSTEM_REFLECTION_PROPERTYINFO], null, null);
-        	/*HEAP_PTR*/byte* ret = System_Array.NewVector(pArrayType, numProperties);
+        	/*HEAP_PTR*/byte* ret = System_Array.NewVector(pCallNative, pArrayType, numProperties);
         	// Allocate to return value straight away, so it cannot be GCed
         	*(/*HEAP_PTR*/byte**)pReturnValue = ret;
 
@@ -151,7 +151,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* GetMethod(byte* pThis_, byte* pParams, byte* pReturnValue)
+        public static tAsyncCall* GetMethod(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	// Read param
             byte* methodName = stackalloc byte[256];
@@ -164,7 +164,7 @@ namespace DnaUnity
         	// Search for the method by name
         	for (int i=0; i<pTypeDef->numMethods; i++) {
         		if (S.strcmp(pTypeDef->ppMethods[i]->name, methodName) == 0) {
-        			tMD_MethodDef *pMethodDef = pTypeDef->ppMethods[i];
+        			tMD_MethodDef *pMethodInstDef = pTypeDef->ppMethods[i];
 
         			// Instantiate a MethodInfo
         			tMethodInfo *pMethodInfo = (tMethodInfo*)Heap.AllocType(Type.types[Type.TYPE_SYSTEM_REFLECTION_METHODINFO]);
@@ -173,10 +173,10 @@ namespace DnaUnity
         			pMethodInfo->methodBase.ownerType = pThis_;
 
         			// Assign name
-        			pMethodInfo->methodBase.name = System_String.FromCharPtrASCII(pMethodDef->name);
+        			pMethodInfo->methodBase.name = System_String.FromCharPtrASCII(pMethodInstDef->name);
 
         			// Assign method def
-        			pMethodInfo->methodBase.methodDef = pMethodDef;
+        			pMethodInfo->methodBase.methodDef = pMethodInstDef;
 
         			*(/*HEAP_PTR*/byte**)pReturnValue = (/*HEAP_PTR*/byte*)pMethodInfo;
         			return null;

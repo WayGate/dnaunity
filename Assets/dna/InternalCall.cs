@@ -205,7 +205,9 @@ namespace DnaUnity
 
         public static /*fnInternalCall*/void* Map(tMD_MethodDef *pMethod) 
         {
-        	if (pMethod->pParentType->pParent == Type.types[Type.TYPE_SYSTEM_MULTICASTDELEGATE]) {
+            if (pMethod->monoMethodCall != null) {
+                return pMethod->monoMethodCall;
+            } else if (pMethod->pParentType->pParent == Type.types[Type.TYPE_SYSTEM_MULTICASTDELEGATE]) {
         		// Special case to handle delegates
                 /*fnInternalCall*/ void* fn = Map_Delegate(pMethod);
         		if (fn != null) {

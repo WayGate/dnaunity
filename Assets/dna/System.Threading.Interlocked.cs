@@ -31,7 +31,7 @@ namespace DnaUnity
     public unsafe static class System_Threading_Interlocked
     {
 
-        public static tAsyncCall* CompareExchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* CompareExchange_Int32(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	uint *pLoc = (*((uint**)(pParams + 0)));
         	uint value = (*((uint*)(pParams + 4)));
@@ -45,7 +45,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Increment_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Increment_Int32(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	int *pLoc = (*((int**)(pParams + 0)));
 
@@ -55,7 +55,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Decrement_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Decrement_Int32(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	int *pLoc = (*((int**)(pParams + 0)));
 
@@ -65,7 +65,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Add_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Add_Int32(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	uint *pLoc = (*((uint**)(pParams + 0)));
         	uint value = (*((uint*)(pParams + 4)));
@@ -76,7 +76,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* Exchange_Int32(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Exchange_Int32(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	uint *pLoc = (*((uint**)(pParams + 0)));
         	uint value = (*((uint*)(pParams + 4)));

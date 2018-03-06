@@ -24,35 +24,35 @@ namespace DnaUnity
     public unsafe static class System_Math
     {
 
-        public static tAsyncCall* Sin(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Sin(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(double*)pReturnValue = System.Math.Sin((*((double*)(pParams + 0))));
 
         	return null;
         }
 
-        public static tAsyncCall* Cos(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Cos(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(double*)pReturnValue = System.Math.Cos((*((double*)(pParams + 0))));
 
         	return null;
         }
 
-        public static tAsyncCall* Tan(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Tan(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(double*)pReturnValue = System.Math.Tan((*((double*)(pParams + 0))));
 
         	return null;
         }
 
-        public static tAsyncCall* Pow(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Pow(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(double*)pReturnValue = System.Math.Pow((*((double*)(pParams + 0))), (*((double*)(pParams + 8))));
 
         	return null;
         }
 
-        public static tAsyncCall* Sqrt(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Sqrt(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
             *(double*)pReturnValue = System.Math.Sqrt((*((double*)(pParams + 0))));
 

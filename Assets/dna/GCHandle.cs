@@ -54,6 +54,12 @@ namespace DnaUnity
             gcHandles.Add(_p);
         }
 
+        public H(fnFieldGetterSetter o)
+        {
+            _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
+            gcHandles.Add(_p);
+        }
+
         public H(ref void* p, object o)
         {
             if (p != null)

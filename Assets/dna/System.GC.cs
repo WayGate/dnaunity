@@ -24,19 +24,19 @@ namespace DnaUnity
     public unsafe static class System_GC
     {
         
-        public static tAsyncCall* Collect(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Collect(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	Heap.GarbageCollect();
         	return null;
         }
 
-        public static tAsyncCall* Internal_CollectionCount(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Internal_CollectionCount(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	*(uint*)pReturnValue = Heap.NumCollections();
         	return null;
         }
 
-        public static tAsyncCall* GetTotalMemory(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetTotalMemory(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	if (*(uint*)pParams != 0) {
         		Heap.GarbageCollect();
@@ -45,7 +45,7 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* SuppressFinalize(byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* SuppressFinalize(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	/*HEAP_PTR*/byte* obj = ((/*HEAP_PTR*/byte**)pParams)[0];
         	Heap.UnmarkFinalizer(obj);

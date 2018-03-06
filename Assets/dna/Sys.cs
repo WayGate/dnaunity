@@ -97,7 +97,7 @@ namespace DnaUnity
         			namePos = S.scatprintf(namePos, nameEnd, ",");
         		}
                 tParameter *param = &(pMethod->pParams[i]);
-                namePos = S.scatprintf(namePos, nameEnd, "%s", (PTR)param->pTypeDef->name);
+                namePos = S.scatprintf(namePos, nameEnd, "%s", (PTR)param->pStackTypeDef->name);
         	}
         	S.scatprintf(namePos, nameEnd, ")");
 

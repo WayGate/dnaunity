@@ -73,6 +73,7 @@ namespace DnaUnity
             Sys.Init();
             JIT.Init();
             JIT_Execute.Init();
+            DnaObject.Init();
             MetaData.Init();
             Generics.Init();
             Heap.Init();
@@ -95,6 +96,7 @@ namespace DnaUnity
                 Heap.Clear();
                 Generics.Clear();
                 MetaData.Clear();
+                DnaObject.Clear();
                 JIT_Execute.Clear();
                 JIT.Clear();
                 Sys.Clear();
@@ -126,7 +128,7 @@ namespace DnaUnity
         	Mem.memset(opcodeNumUses, 0, sizeof(opcodeNumUses));
         #endif
 
-            pCLIFile = CLIFile.Load(pFileName, /*FALSE*/0);
+            pCLIFile = CLIFile.LoadAssembly(pFileName);
 
         #if DIAG_TOTAL_TIME
         	startTime = microTime();

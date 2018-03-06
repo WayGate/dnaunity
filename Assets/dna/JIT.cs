@@ -518,7 +518,7 @@ namespace DnaUnity
         			case OpCodes.LDARG_S:
         				u32Value = pCIL[cilOfs++];
         cilLdArg:
-        				pStackType = pMethodDef->pParams[u32Value].pTypeDef;
+        				pStackType = pMethodDef->pParams[u32Value].pStackTypeDef;
         				ofs = pMethodDef->pParams[u32Value].offset;
         				if (pStackType->stackSize == 4 && ofs < 32) {
         					PushOp(JitOps.JIT_LOADPARAMLOCAL_0 + (ofs >> 2));
@@ -567,7 +567,7 @@ namespace DnaUnity
         				// Push opcode and offset into locals memory
         				u32Value = pCIL[cilOfs++];
         cilLdLoc:
-        				pStackType = pLocals[u32Value].pTypeDef;
+        				pStackType = pLocals[u32Value].pStackTypeDef;
         				ofs = pMethodDef->parameterStackSize + pLocals[u32Value].offset;
         				if (pStackType->stackSize == 4 && ofs < 32) {
         					PushOp(JitOps.JIT_LOADPARAMLOCAL_0 + (ofs >> 2));
@@ -1808,7 +1808,7 @@ cilCallVirtConstrained:
 
         			pTypeDef = Type.GetTypeFromSig(pMethodDef->pMetaData, &sig, pMethodDef->pParentType->ppClassTypeArgs, pMethodDef->ppMethodTypeArgs);
         			MetaData.Fill_TypeDef(pTypeDef, null, null);
-        			pLocals[i2].pTypeDef = pTypeDef;
+        			pLocals[i2].pStackTypeDef = pTypeDef;
         			pLocals[i2].offset = totalSize;
         			pLocals[i2].size = pTypeDef->stackSize;
         			totalSize += pTypeDef->stackSize;

@@ -815,7 +815,7 @@ namespace DnaUnity
                             // Internal constructors MUST leave the newly created object in the return value
                             // (ie on top of the evaluation stack)
                             fnInternalCall fn = (fnInternalCall)H.ToObj(pCallNative->fn);
-                            pAsync = fn(pThis, pCurrentMethodState->pParamsLocals + thisOfs, pCurrentMethodState->pEvalStack);
+                            pAsync = fn(pCallNative, pThis, pCurrentMethodState->pParamsLocals + thisOfs, pCurrentMethodState->pEvalStack);
                             if (pAsync != null) {
                                 // Save the method state
                                 SAVE_METHOD_STATE();
@@ -2400,7 +2400,7 @@ namespace DnaUnity
 
                             pArrayTypeDef = (tMD_TypeDef*)GET_PTR();
                             numElements = POP_U32();
-                            heapPtr = System_Array.NewVector(pArrayTypeDef, numElements);
+                            heapPtr = System_Array.NewVector(null, pArrayTypeDef, numElements);
                             PUSH_O(heapPtr);
                             // Run any pending Finalizers
                             RUN_FINALIZER();
@@ -2421,7 +2421,7 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
-                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
+                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32((uint)(sbyte)value);
                         }
                         break;
@@ -2431,7 +2431,7 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
-                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
+                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32((byte)value);
                         }
                         break;
@@ -2441,7 +2441,7 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
-                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
+                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32((uint)(short)value);
                         }
                         break;
@@ -2451,7 +2451,7 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
-                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
+                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32((ushort)value);
                         }
                         break;
@@ -2463,7 +2463,7 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
-                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
+                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32(value);
                         }
                         break;
@@ -2475,7 +2475,7 @@ namespace DnaUnity
                             uint idx = POP_U32(); // array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
                             ulong value;
-                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
+                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U64(value);
                         }
                         break;
@@ -2487,7 +2487,7 @@ namespace DnaUnity
                             /*HEAP_PTR*/byte* heapPtr = POP_O(); // array object
                             uint size = GET_OP(); // size of type on stack
                             *(uint*)pCurEvalStack = 0; // This is required to zero out the stack for type that are stored in <4 bytes in arrays
-                            System_Array.LoadElement(heapPtr, idx, pCurEvalStack);
+                            System_Array.LoadElement(null, heapPtr, idx, pCurEvalStack);
                             pCurEvalStack += size;
                         }
                         break;
@@ -2497,7 +2497,7 @@ namespace DnaUnity
                         {
                             uint idx = POP_U32(); // Array index
                             byte* heapPtr = POP_O();
-                            byte* pMem = System_Array.LoadElementAddress(heapPtr, idx);
+                            byte* pMem = System_Array.LoadElementAddress(null, heapPtr, idx);
                             PUSH_PTR(pMem);
                         }
                         break;
