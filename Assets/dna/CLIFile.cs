@@ -93,7 +93,7 @@ namespace DnaUnity
                 null
             );
 
-            #if UNITY_EDITOR
+            #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
             monoAssemblies = S.buildArray(
                 "UnityEngine",
                 "UnityEngine.UI",

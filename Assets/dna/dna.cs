@@ -45,7 +45,7 @@ namespace DnaUnity
         public static string[] defaultAssemblySearchPaths = new string[] {
             "UnityDna"
         };
-#endif
+        #endif
 
         public static void Init(int memsize = DEFAULT_MEM_SIZE, string[] assemblySearchPaths = null)
         {

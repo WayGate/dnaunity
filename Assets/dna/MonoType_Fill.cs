@@ -151,12 +151,13 @@ namespace DnaUnity
                 void* hPtr = *(void**)pPtr;
                 GCHandle h = (GCHandle)(System.IntPtr)hPtr;
                 return h.Target;
-            } else if (pTypeDef->isValueType == 0) {
-                // Handle arrays here
-                return DnaObject.MakeDnaObject(*(byte**)pPtr);
             } else {
                 switch (pTypeDef->typeInitId)
                 {
+                    case Type.TYPE_SYSTEM_OBJECT:
+                        object o;
+                        MarshalToObject(pPtr, out o);
+                        return o;
                     case Type.TYPE_SYSTEM_STRING:
                         return System_String.ToMonoString(*(byte**)pPtr);
                     case Type.TYPE_SYSTEM_BOOLEAN:
@@ -232,6 +233,20 @@ namespace DnaUnity
 
             Sys.Crash("Marshaling code not defined yet for this class");
             return null;
+        }
+
+        public static void MarshalToObject(byte* pPtr, out object o)
+        {
+            o = null;
+            byte* pMem = *(byte**)pPtr;
+            if (pMem == null)
+                return;
+            tMD_TypeDef* pTypeDef = Heap.GetType(pMem);
+            if (pTypeDef->isValueType != 0) {
+                o = MarshalToMonoObj(pTypeDef, *(byte**)pPtr);
+            } else {
+                o = MarshalToMonoObj(pTypeDef, pPtr);
+            }
         }
 
 #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
@@ -388,6 +403,9 @@ namespace DnaUnity
                 *(byte**)pPtr = Heap.AllocMonoObject(pTypeDef, obj);
             } else {
                 switch (pTypeDef->typeInitId) {
+                    case Type.TYPE_SYSTEM_OBJECT:
+                        MarshalFromObject(pPtr, ref obj);
+                        return;
                     case Type.TYPE_SYSTEM_STRING:
                         *(byte**)pPtr = System_String.FromMonoString(obj as string);
                         return;
@@ -561,6 +579,23 @@ namespace DnaUnity
             Sys.Crash("Marshaling code not defined yet for this class");
         }
 
+        public static void MarshalFromObject(byte* pPtr, ref object o)
+        {
+            if (o == null) {
+                *(byte**)pPtr = null;
+                return;
+            }
+            tMD_TypeDef* pTypeDef = GetTypeForMonoType(o.GetType());
+            if (pTypeDef->isValueType != 0) { 
+                // Box the value type
+                *(byte**)pPtr = Heap.AllocType(pTypeDef);
+                MarshalFromMonoObj(pTypeDef, o, *(byte**)pPtr);
+            } else {
+                // Put reference to ref type on stack
+                MarshalFromMonoObj(pTypeDef, o, pPtr);
+            }
+        }
+
         public static fnInternalCall GetGenericTrampoline(tMD_MethodDef* pMethodDef, MethodInfo methodInfo)
         {
             int numParams = pMethodDef->numberOfParameters;
@@ -637,74 +672,77 @@ namespace DnaUnity
             if (methodInfo.ReturnType == typeof(void)) {
                 if (numParams == 2 && pMethodDef->pParams[0].pByRefTypeDef == null && pMethodDef->pParams[1].pByRefTypeDef == null) {
                     tMD_TypeDef* pThisType = pMethodDef->pParams[0].pStackTypeDef;
-                    bool vt = pThisType->isValueType != 0;
                     uint typeInitId = pMethodDef->pParams[1].pStackTypeDef->typeInitId;
                     switch (typeInitId)
                     {
+                        case Type.TYPE_SYSTEM_OBJECT:
+                            Action<T, object> callO = (Action<T, object>)System.Delegate.CreateDelegate(typeof(Action<T, object>), methodInfo);
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); object o; MarshalToObject(_p, out o); callO(_this as T, o); return null; };
+                            break;
                         case Type.TYPE_SYSTEM_STRING:
                             Action<T, string> callS = (Action<T, string>)System.Delegate.CreateDelegate(typeof(Action<T, string>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callS(_this as T, System_String.ToMonoString(*(byte**)_p)); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callS(_this as T, System_String.ToMonoString(*(byte**)_p)); return null; };
                             break;
                         case Type.TYPE_SYSTEM_BOOLEAN:
                             Action<T, bool> callB = (Action<T, bool>)System.Delegate.CreateDelegate(typeof(Action<T, bool>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callB(_this as T, *(uint*)_p != 0); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callB(_this as T, *(uint*)_p != 0); return null; };
                             break;
                         case Type.TYPE_SYSTEM_INT32:
                             Action<T, int> callI = (Action<T, int>)System.Delegate.CreateDelegate(typeof(Action<T, int>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callI(_this as T, *(int*)_p); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callI(_this as T, *(int*)_p); return null; };
                             break;
                         case Type.TYPE_SYSTEM_INT64:
                             Action<T, long> callL = (Action<T, long>)System.Delegate.CreateDelegate(typeof(Action<T, long>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callL(_this as T, *(long*)_p); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callL(_this as T, *(long*)_p); return null; };
                             break;
                         case Type.TYPE_SYSTEM_SINGLE:
                             Action<T, float> callF = (Action<T, float>)System.Delegate.CreateDelegate(typeof(Action<T, float>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callF(_this as T, *(float*)_p); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callF(_this as T, *(float*)_p); return null; };
                             break;
                         case Type.TYPE_SYSTEM_DOUBLE:
                             Action<T, double> callD = (Action<T, double>)System.Delegate.CreateDelegate(typeof(Action<T, double>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callD(_this as T, *(double*)_p); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callD(_this as T, *(double*)_p); return null; };
                             break;
 #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
                         case Type.TYPE_UNITYENGINE_VECTOR2:
                             Action<T, Vector2> callV2 = (Action<T, Vector2>)System.Delegate.CreateDelegate(typeof(Action<T, Vector2>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector2 v2; MarshalToVector2(_p, out v2); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  callV2(_this as T, v2); return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector2 v2; MarshalToVector2(_p, out v2); callV2(_this as T, v2); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_VECTOR3:
                             Action<T, Vector3> callV3 = (Action<T, Vector3>)System.Delegate.CreateDelegate(typeof(Action<T, Vector3>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector3 v3; MarshalToVector3(_p, out v3); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  callV3(_this as T, v3); return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector3 v3; MarshalToVector3(_p, out v3); callV3(_this as T, v3); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_COLOR:
                             Action<T, Color> callC = (Action<T, Color>)System.Delegate.CreateDelegate(typeof(Action<T, Color>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Color c; MarshalToColor(_p, out c); callC(_this as T, c); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Color c; MarshalToColor(_p, out c); callC(_this as T, c); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_VECTOR4:
                             Action<T, Vector4> callV4 = (Action<T, Vector4>)System.Delegate.CreateDelegate(typeof(Action<T, Vector4>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector4 v4; MarshalToVector4(_p, out v4); callV4(_this as T, v4); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector4 v4; MarshalToVector4(_p, out v4); callV4(_this as T, v4); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_QUATERNION:
                             Action<T, Quaternion> callQ = (Action<T, Quaternion>)System.Delegate.CreateDelegate(typeof(Action<T, Quaternion>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Quaternion q; MarshalToQuaternion(_p, out q); callQ(_this as T, q); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Quaternion q; MarshalToQuaternion(_p, out q); callQ(_this as T, q); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_RECT:
                             Action<T, Rect> callRC = (Action<T, Rect>)System.Delegate.CreateDelegate(typeof(Action<T, Rect>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Rect r; MarshalToRect(_p, out r); callRC(_this as T, r); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Rect r; MarshalToRect(_p, out r); callRC(_this as T, r); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_RECTOFFSET:
                             Action<T, RectOffset> callRO = (Action<T, RectOffset>)System.Delegate.CreateDelegate(typeof(Action<T, RectOffset>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); RectOffset ro; MarshalToRectOffset(_p, out ro); callRO(_this as T, ro); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); RectOffset ro; MarshalToRectOffset(_p, out ro); callRO(_this as T, ro); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_RAY:
                             Action<T, Ray> callRY = (Action<T, Ray>)System.Delegate.CreateDelegate(typeof(Action<T, Ray>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Ray r; MarshalToRay(_p, out r); callRY(_this as T, r); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Ray r; MarshalToRay(_p, out r); callRY(_this as T, r); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_BOUNDS:
                             Action<T, Bounds> callBD = (Action<T, Bounds>)System.Delegate.CreateDelegate(typeof(Action<T, Bounds>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Bounds b; MarshalToBounds(_p, out b); callBD(_this as T, b); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Bounds b; MarshalToBounds(_p, out b); callBD(_this as T, b); return null; };
                             break;
                         case Type.TYPE_UNITYENGINE_MATRIX4X4:
                             Action<T, Matrix4x4> callM = (Action<T, Matrix4x4>)System.Delegate.CreateDelegate(typeof(Action<T, Matrix4x4>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Matrix4x4 m; MarshalToMatrix4x4(_p, out m); callM(_this as T, m); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Matrix4x4 m; MarshalToMatrix4x4(_p, out m); callM(_this as T, m);  return null; };
                             break;
 #endif
                     }
@@ -714,74 +752,77 @@ namespace DnaUnity
             else if (numParams == 1 && pMethodDef->pParams[0].pByRefTypeDef == null)
             {
                 tMD_TypeDef* pThisType = pMethodDef->pParams[0].pStackTypeDef;
-                bool vt = pThisType->isValueType != 0;
                 uint typeInitId = pMethodDef->pReturnType->typeInitId;
                 switch (typeInitId)
                 {
+                    case Type.TYPE_SYSTEM_OBJECT:
+                        Func<T, object> funcO = (Func<T, object>)System.Delegate.CreateDelegate(typeof(Func<object>), methodInfo);
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); object o = funcO(_this as T); MarshalFromObject(_r, ref o); return null; };
+                        break;
                     case Type.TYPE_SYSTEM_STRING:
                         Func<T, string> funcS = (Func<T, string>)System.Delegate.CreateDelegate(typeof(Func<string>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); string s = funcS(_this as T); *(byte**)_r = System_String.FromMonoString(s); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); string s = funcS(_this as T); *(byte**)_r = System_String.FromMonoString(s); return null; };
                         break;
                     case Type.TYPE_SYSTEM_BOOLEAN:
                         Func<T, bool> funcB = (Func<T, bool>)System.Delegate.CreateDelegate(typeof(Func<bool>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); bool b = funcB(_this as T); *(uint*)_r = (uint)(b ? 1 : 0); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); bool b = funcB(_this as T); *(uint*)_r = (uint)(b ? 1 : 0); return null; };
                         break;
                     case Type.TYPE_SYSTEM_INT32:
                         Func<T, int> funcI = (Func<T, int>)System.Delegate.CreateDelegate(typeof(Func<int>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); int i = funcI(_this as T); *(int*)_r = i; if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); int i = funcI(_this as T); *(int*)_r = i; return null; };
                         break;
                     case Type.TYPE_SYSTEM_INT64:
                         Func<T, long> funcL = (Func<T, long>)System.Delegate.CreateDelegate(typeof(Func<long>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); long l = funcL(_this as T); *(long*)_r = l; if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); long l = funcL(_this as T); *(long*)_r = l; return null; };
                         break;
                     case Type.TYPE_SYSTEM_SINGLE:
                         Func<T, float> funcF = (Func<T, float>)System.Delegate.CreateDelegate(typeof(Func<float>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); float f = funcF(_this as T); *(float*)_r = f; if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); float f = funcF(_this as T); *(float*)_r = f; return null; };
                         break;
                     case Type.TYPE_SYSTEM_DOUBLE:
                         Func<T, double> funcD = (Func<T, double>)System.Delegate.CreateDelegate(typeof(Func<double>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); double d = funcD(_this as T); *(double*)_r = d; if (vt) { MarshalFromMonoObj(pThisType, _this, _t); } return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); double d = funcD(_this as T); *(double*)_r = d; return null; };
                         break;
 #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
                     case Type.TYPE_UNITYENGINE_VECTOR2:
                         Func<T, Vector2> funcV2 = (Func<T, Vector2>)System.Delegate.CreateDelegate(typeof(Func<T, Vector2>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector2 v2 = funcV2(_this as T); MarshalFromVector2(_r, ref v2); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector2 v2 = funcV2(_this as T); MarshalFromVector2(_r, ref v2); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_VECTOR3:
                         Func<T, Vector3> funcV3 = (Func<T, Vector3>)System.Delegate.CreateDelegate(typeof(Func<T, Vector3>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector3 v3 = funcV3(_this as T); MarshalFromVector3(_r, ref v3); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector3 v3 = funcV3(_this as T); MarshalFromVector3(_r, ref v3); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_COLOR:
                         Func<T, Color> funcC = (Func<T, Color>)System.Delegate.CreateDelegate(typeof(Func<T, Color>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Color c = funcC(_this as T); MarshalFromColor(_r, ref c); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Color c = funcC(_this as T); MarshalFromColor(_r, ref c); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_VECTOR4:
                         Func<T, Vector4> funcV4 = (Func<T, Vector4>)System.Delegate.CreateDelegate(typeof(Func<T, Vector4>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector4 v4 = funcV4(_this as T); MarshalFromVector4(_r, ref v4); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Vector4 v4 = funcV4(_this as T); MarshalFromVector4(_r, ref v4); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_QUATERNION:
                         Func<T, Quaternion> funcQ = (Func<T, Quaternion>)System.Delegate.CreateDelegate(typeof(Func<T, Quaternion>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Quaternion q = funcQ(_this as T); MarshalFromQuaternion(_r, ref q); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Quaternion q = funcQ(_this as T); MarshalFromQuaternion(_r, ref q); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_RECT:
                         Func<T, Rect> funcRC = (Func<T, Rect>)System.Delegate.CreateDelegate(typeof(Func<T, Rect>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Rect r = funcRC(_this as T); MarshalFromRect(_r, ref r); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Rect r = funcRC(_this as T); MarshalFromRect(_r, ref r); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_RECTOFFSET:
                         Func<T, RectOffset> funcRO = (Func<T, RectOffset>)System.Delegate.CreateDelegate(typeof(Func<T, RectOffset>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); RectOffset ro = funcRO(_this as T); MarshalFromRectOffset(_r, ref ro); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); RectOffset ro = funcRO(_this as T); MarshalFromRectOffset(_r, ref ro); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_RAY:
                         Func<T, Ray> funcRY = (Func<T, Ray>)System.Delegate.CreateDelegate(typeof(Func<T, Ray>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Ray r = funcRY(_this as T); MarshalFromRay(_r, ref r); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Ray r = funcRY(_this as T); MarshalFromRay(_r, ref r); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_BOUNDS:
                         Func<T, Bounds> funcBD = (Func<T, Bounds>)System.Delegate.CreateDelegate(typeof(Func<T, Bounds>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Bounds b = funcBD(_this as T); MarshalFromBounds(_r, ref b); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Bounds b = funcBD(_this as T); MarshalFromBounds(_r, ref b); return null; };
                         break;
                     case Type.TYPE_UNITYENGINE_MATRIX4X4:
                         Func<T, Matrix4x4> funcM = (Func<T, Matrix4x4>)System.Delegate.CreateDelegate(typeof(Func<T, Matrix4x4>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Matrix4x4 m = funcM(_this as T); MarshalFromMatrix4x4(_r, ref m); if (vt) { MarshalFromMonoObj(pThisType, _this, _t); }  return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Matrix4x4 m = funcM(_this as T); MarshalFromMatrix4x4(_r, ref m); return null; };
                         break;
 #endif
 
@@ -813,6 +854,10 @@ namespace DnaUnity
                     uint typeInitId = pMethodDef->pParams[1].pStackTypeDef->typeInitId;
                     switch (typeInitId)
                     {
+                        case Type.TYPE_SYSTEM_OBJECT:
+                            RefAction<T, object> callO = (RefAction<T, object>)System.Delegate.CreateDelegate(typeof(RefAction<T, object>), methodInfo);
+                            func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); object o; MarshalToObject(_p, out o); callO(ref _this, o); marshalFrom(_t, ref _this); return null; };
+                            break;
                         case Type.TYPE_SYSTEM_STRING:
                             RefAction<T, string> callS = (RefAction<T, string>)System.Delegate.CreateDelegate(typeof(RefAction<T, string>), methodInfo);
                             func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); callS(ref _this, System_String.ToMonoString(*(byte**)_p)); marshalFrom(_t, ref _this); return null; };
@@ -889,6 +934,10 @@ namespace DnaUnity
                 uint typeInitId = pMethodDef->pReturnType->typeInitId;
                 switch (typeInitId)
                 {
+                    case Type.TYPE_SYSTEM_OBJECT:
+                        RefFunc<T, object> funcO = (RefFunc<T, object>)System.Delegate.CreateDelegate(typeof(RefFunc<T, object>), methodInfo);
+                        func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); object o = funcO(ref _this); MarshalFromObject(_r, ref o); marshalFrom(_t, ref _this); return null; };
+                        break;
                     case Type.TYPE_SYSTEM_STRING:
                         RefFunc<T, string> funcS = (RefFunc<T, string>)System.Delegate.CreateDelegate(typeof(RefFunc<T, string>), methodInfo);
                         func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); string s = funcS(ref _this); *(byte**)_r = System_String.FromMonoString(s); marshalFrom(_t, ref _this); return null; };
@@ -982,6 +1031,10 @@ namespace DnaUnity
                     uint typeInitId = pMethodDef->pParams[0].pStackTypeDef->typeInitId;
                     switch (typeInitId)
                     {
+                        case Type.TYPE_SYSTEM_OBJECT:
+                            Action<object> callO = (Action<object>)System.Delegate.CreateDelegate(typeof(Action<object>), methodInfo);
+                            func = (_c, _t, _p, _r) => { object o; MarshalToObject(_p, out o); callO(o); return null; };
+                            break;
                         case Type.TYPE_SYSTEM_STRING:
                             Action<string> callS = (Action<string>)System.Delegate.CreateDelegate(typeof(Action<string>), methodInfo);
                             func = (_c, _t, _p, _r) => { callS(System_String.ToMonoString(*(byte**)_p)); return null; };
@@ -1057,6 +1110,10 @@ namespace DnaUnity
                 uint typeInitId = pMethodDef->pReturnType->typeInitId;
                 switch (typeInitId)
                 {
+                    case Type.TYPE_SYSTEM_OBJECT:
+                        Func<object> funcO = (Func<object>)System.Delegate.CreateDelegate(typeof(Func<object>), methodInfo);
+                        func = (_c, _t, _p, _r) => { object o = funcO(); MarshalFromObject(_r, ref o); return null; };
+                        break;
                     case Type.TYPE_SYSTEM_STRING:
                         Func<string> funcS = (Func<string>)System.Delegate.CreateDelegate(typeof(Func<string>), methodInfo);
                         func = (_c, _t, _p, _r) => { string s = funcS(); *(byte**)_r = System_String.FromMonoString(s); return null; };
@@ -1175,6 +1232,9 @@ namespace DnaUnity
         {
             byte* nameSpace = stackalloc byte[256];
             byte* name = stackalloc byte[256];
+
+            if (monoType == null)
+                return null;
 
             System.TypeCode typeCode = System.Type.GetTypeCode(monoType);
 
@@ -1363,7 +1423,8 @@ namespace DnaUnity
 
         public static void Fill_TypeDef(tMD_TypeDef *pTypeDef, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
         {
-        	uint instanceMemSize, staticMemSize, virtualOfs, i, j;
+        	uint instanceMemSize, staticMemSize, virtualOfs, i, j, k;
+            int lastPeriod;
         	tMetaData *pMetaData;
         	tMD_TypeDef *pParent;
             System.Type monoType;
@@ -1430,7 +1491,13 @@ namespace DnaUnity
                     methodInfo = methodInfos[i];
                     pMethodDef = &pMethodDefs[i];
 
-                    pMethodDef->name = new S(methodInfo.Name);
+                    lastPeriod = methodInfo.Name.LastIndexOf('.');
+                    if (lastPeriod == -1) {
+                        pMethodDef->name = new S(methodInfo.Name);
+                    } else {
+                        string nameMinusExclInterfaceName = methodInfo.Name.Substring(lastPeriod + 1);
+                        pMethodDef->name = new S(nameMinusExclInterfaceName);
+                    }
                     pMethodDef->monoMethodInfo = new H(methodInfo);
                     pMethodDef->pMetaData = pMetaData;
                     pMethodDef->pParentType = pTypeDef;
@@ -1614,16 +1681,32 @@ namespace DnaUnity
         					pMap->pVTableLookup = (uint*)Mem.mallocForever(pInterface->numVirtualMethods * sizeof(uint));
         					pMap->ppMethodVLookup = null;
                             InterfaceMapping interfaceMapping = monoType.GetInterfaceMap(interfaceTypes[i]);
+                            MethodInfo[] interfaceMethods = interfaceMapping.InterfaceMethods;
                             MethodInfo[] targetMethods = interfaceMapping.TargetMethods;
                             // Discover interface mapping for each interface method
                             for (j=0; j<pInterface->numVirtualMethods; j++) {
                                 tMD_MethodDef* pInterfaceMethod = pInterface->pVTable[j];
-                                tMD_MethodDef* pOverriddenMethod = MetaData.FindVirtualOverriddenMethod(pTypeDef, pInterfaceMethod);
-                                if (pOverriddenMethod == null) {
-                                    pOverriddenMethod = MetaData.FindVirtualOverriddenMethod(pTypeDef, pInterfaceMethod);
-                                    Sys.Crash("Unable to find virtual override %s", (PTR)(pInterfaceMethod->name));
+                                MethodInfo interfaceMethodInfo = null;
+                                for (k=0; k<interfaceMethods.Length; k++) {
+                                    if (S.strcmp(pInterfaceMethod->name, interfaceMethods[k].Name) == 0) {
+                                        interfaceMethodInfo = targetMethods[k];
+                                        break;
+                                    }
                                 }
-        						pMap->pVTableLookup[j] = pOverriddenMethod->vTableOfs;
+                                if (interfaceMethodInfo == null) {
+                                    Sys.Crash("Unable to find mapped method %s", (PTR)(pInterfaceMethod->name));
+                                }
+                                tMD_MethodDef* pOverriddenMethod = null;
+                                for (k=0; k<pTypeDef->numMethods; k++) {
+                                    if ((H.ToObj(pTypeDef->ppMethods[k]->monoMethodInfo) as MethodInfo) == interfaceMethodInfo) {
+                                        pOverriddenMethod = pTypeDef->ppMethods[k];
+                                        break;
+                                    }
+                                }
+                                if (pOverriddenMethod == null) {
+                                    Sys.Crash("Unable to find override method %s", (PTR)(pInterfaceMethod->name));
+                                }
+                                pMap->pVTableLookup[j] = pOverriddenMethod->vTableOfs;
         					}
         				}
         			}

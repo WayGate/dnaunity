@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-#if !UNITY_EDITOR && !UNITY_IOS && !UNITY_ANDROID && !UNITY_WEBGL && !UNITY_STANDALONE
+#if VS_TESTING
 
 namespace DnaUnity
 {
@@ -19,6 +19,16 @@ namespace DnaUnity
 
         public static void Main()
         {
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.dll");
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.AnimationModule.dll");
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.AudioModule.dll");
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.CoreModule.dll");
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.InputModule.dll");
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.ParticleSystemModule.dll");
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.Physics2DModule.dll");
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.PhysicsModule.dll");
+            System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.UIModule.dll");
+
             Dna.Init(10000000, assemblySearchPaths);
             Dna.Load("Test01_Expressions.dll");
             Dna.Call("Test01_Expressions.Test");

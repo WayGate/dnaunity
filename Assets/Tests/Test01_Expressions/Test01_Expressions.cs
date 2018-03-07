@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System;
+using UnityEngine;
 
 public static class Test01_Expressions
 {
@@ -117,7 +118,7 @@ public static class Test01_Expressions
 
     public static void Test()
     {
-        Console.WriteLine("This is a test!");
+        Debug.Log("This is a test!");
     }
 
 }

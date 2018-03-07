@@ -59,6 +59,13 @@
             return s._s;
         }
 
+        public static string str(byte* p)
+        {
+            if (p == null)
+                return null;
+            return System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)p);
+        }
+
         // check for corrupt string
         public static int isvalidstr(byte* s)
         {

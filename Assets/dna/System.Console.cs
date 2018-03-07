@@ -38,17 +38,17 @@ namespace DnaUnity
 
         	_string = *(byte**)pParams;
         	if (_string != null) {
-                #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
+                #if VS_TESTING || !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE)
+                wStr = System_String.GetString(pCallNative, _string, &strLen);
+                string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
+                System.Console.Write(netStr);
+                #else
                 wStr = System_String.GetString(pCallNative, _string, &strLen);
                 if (wStr != null && strLen > 0 && !(strLen == 1 && wStr[0] == '\n') && !(strLen == 2 && wStr[0] == '\r' && wStr[1] == '\n'))
                 {
                     string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
                     UnityEngine.Debug.Log(netStr);
                 }
-                #else
-                wStr = System_String.GetString(pCallNative, _string, &strLen);
-                string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
-                System.Console.Write(netStr);
                 #endif
             }
 
