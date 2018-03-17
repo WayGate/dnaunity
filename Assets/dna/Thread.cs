@@ -131,9 +131,9 @@ namespace DnaUnity
             // Allocate the first chunk of thread-local stack
             if (pThis->pThreadStack == null) {
                 pThis->pThreadStack = ((tThreadStack*)Mem.malloc((SIZE_T)sizeof(tThreadStack)));
-                pThis->pThreadStack->ofs = 0;
                 pThis->pThreadStack->pNext = null;
             }
+            pThis->pThreadStack->ofs = 0;
         }
 
         static uint threadID = 0;
@@ -388,8 +388,9 @@ namespace DnaUnity
             
             // Set up the initial MethodState
             pThread->pCurrentMethodState = MethodState.Direct(pThread, pMethod, null, 0);
+
             // Insert initial parameters (if any)
-            if (pParams == null) {
+            if (pParams != null) {
                 MethodState.SetParameters(pThread->pCurrentMethodState, pMethod, pParams);
             }
             

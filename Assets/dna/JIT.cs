@@ -991,7 +991,7 @@ cilCallVirtConstrained:
         				toBitCount = 32;
         				toType = Type.TYPE_SYSTEM_INT32;
         cilConvInt32:
-        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_I32;
+        				convOpOffset = (uint)JitOpsConsts.JIT_CONV_OFFSET_I32;
         				goto cilConv;
         			case OpCodes.CONV_U1:
         			case OpCodes.CONV_OVF_U1: // Fix this later - will never overflow
@@ -1015,7 +1015,7 @@ cilCallVirtConstrained:
         				toBitCount = 32;
         				toType = Type.TYPE_SYSTEM_UINT32;
         cilConvUInt32:
-        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_U32;
+        				convOpOffset = (uint)JitOpsConsts.JIT_CONV_OFFSET_U32;
         				goto cilConv;
                             
         			case OpCodes.CONV_I8:
@@ -1026,7 +1026,7 @@ cilCallVirtConstrained:
                     case OpCodes.CONV_OVF_I_UN:
         #endif
         				toType = Type.TYPE_SYSTEM_INT64;
-        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_I64;
+        				convOpOffset = (uint)JitOpsConsts.JIT_CONV_OFFSET_I64;
         				goto cilConv;
         			case OpCodes.CONV_U8:
         			case OpCodes.CONV_OVF_U8: // Fix this later - will never overflow
@@ -1036,16 +1036,16 @@ cilCallVirtConstrained:
                     case OpCodes.CONV_OVF_U_UN:
         #endif
         				toType = Type.TYPE_SYSTEM_UINT64;
-        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_U64;
+        				convOpOffset = (uint)JitOpsConsts.JIT_CONV_OFFSET_U64;
         				goto cilConv;
         			case OpCodes.CONV_R4:
         				toType = Type.TYPE_SYSTEM_SINGLE;
-        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_R32;
+        				convOpOffset = (uint)JitOpsConsts.JIT_CONV_OFFSET_R32;
         				goto cilConv;
         			case OpCodes.CONV_R8:
         			case OpCodes.CONV_R_UN:
         				toType = Type.TYPE_SYSTEM_DOUBLE;
-        				convOpOffset = (uint)JitOps.JIT_CONV_OFFSET_R64;
+        				convOpOffset = (uint)JitOpsConsts.JIT_CONV_OFFSET_R64;
         				goto cilConv;
         cilConv:
         				pStackType = PopStackType();
@@ -1086,21 +1086,21 @@ cilCallVirtConstrained:
                                 break;
         					}
         					// This is the type that the conversion is to.
-        					switch ((JitOps)convOpOffset) {
-        					case JitOps.JIT_CONV_OFFSET_I32:
+        					switch (convOpOffset) {
+        					case JitOpsConsts.JIT_CONV_OFFSET_I32:
         						useParam = 1;
         						param = 32 - toBitCount;
         						break;
-        					case JitOps.JIT_CONV_OFFSET_U32:
+        					case JitOpsConsts.JIT_CONV_OFFSET_U32:
         						useParam = 1;
         						// Next line is really (1 << toBitCount) - 1
         						// But it's done like this to work when toBitCount == 32
                                 param = (uint)((((1 << ((int)toBitCount - 1)) - 1) << 1) + 1);
         						break;
-        					case JitOps.JIT_CONV_OFFSET_I64:
-        					case JitOps.JIT_CONV_OFFSET_U64:
-        					case JitOps.JIT_CONV_OFFSET_R32:
-        					case JitOps.JIT_CONV_OFFSET_R64:
+        					case JitOpsConsts.JIT_CONV_OFFSET_I64:
+        					case JitOpsConsts.JIT_CONV_OFFSET_U64:
+        					case JitOpsConsts.JIT_CONV_OFFSET_R32:
+        					case JitOpsConsts.JIT_CONV_OFFSET_R64:
         						break;
         					default:
         						Sys.Crash("JITit() Conv cannot handle convOpOffset %d", convOpOffset);

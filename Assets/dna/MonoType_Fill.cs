@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -37,9 +38,15 @@ using PTR = System.UInt64;
 
 namespace DnaUnity
 {
-
     public unsafe partial class MonoType
     {
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+        const int PTR_SIZE = 4;
+        const uint STACK_ALIGNMENT = 4;
+#else
+        const int PTR_SIZE = 8;
+        const uint STACK_ALIGNMENT = 8;
+#endif
 
         public static void GetFieldTrampoline(tMD_FieldDef* pFieldInfo, byte* pThis, byte* pOutValue)
         {
@@ -82,46 +89,46 @@ namespace DnaUnity
             q = new Quaternion(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8), *(float*)(pPtr + 12));
         }
 
-        public static void MarshalToVector2Int(byte *pPtr, out Vector2Int v2i)
+        public static void MarshalToVector2Int(byte* pPtr, out Vector2Int v2i)
         {
             v2i = new Vector2Int(*(int*)(pPtr + 0), *(int*)(pPtr + 4));
         }
 
-        public static void MarshalToVector3Int(byte *pPtr, out Vector3Int v3i)
+        public static void MarshalToVector3Int(byte* pPtr, out Vector3Int v3i)
         {
             v3i = new Vector3Int(*(int*)(pPtr + 0), *(int*)(pPtr + 4), *(int*)(pPtr + 8));
         }
 
-        public static void MarshalToRect(byte *pPtr, out Rect r)
+        public static void MarshalToRect(byte* pPtr, out Rect r)
         {
             r = new Rect(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8), *(float*)(pPtr + 12));
         }
 
-        public static void MarshalToRectInt(byte *pPtr, out RectInt ri)
+        public static void MarshalToRectInt(byte* pPtr, out RectInt ri)
         {
             ri = new RectInt(*(int*)(pPtr + 0), *(int*)(pPtr + 4), *(int*)(pPtr + 8), *(int*)(pPtr + 12));
         }
 
-        public static void MarshalToRectOffset(byte *pPtr, out RectOffset ro)
+        public static void MarshalToRectOffset(byte* pPtr, out RectOffset ro)
         {
             ro = new RectOffset(*(int*)(pPtr + 0), *(int*)(pPtr + 4), *(int*)(pPtr + 8), *(int*)(pPtr + 12));
         }
 
-        public static void MarshalToRay2D(byte *pPtr, out Ray2D r2d)
+        public static void MarshalToRay2D(byte* pPtr, out Ray2D r2d)
         {
-            r2d = new Ray2D(new Vector2(*(float*)(pPtr + 0), *(float*)(pPtr + 4)), 
+            r2d = new Ray2D(new Vector2(*(float*)(pPtr + 0), *(float*)(pPtr + 4)),
                             new Vector2(*(float*)(pPtr + 8), *(float*)(pPtr + 12)));
         }
 
-        public static void MarshalToRay(byte *pPtr, out Ray r)
+        public static void MarshalToRay(byte* pPtr, out Ray r)
         {
-            r = new Ray(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)), 
+            r = new Ray(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)),
                         new Vector3(*(float*)(pPtr + 12), *(float*)(pPtr + 16), *(float*)(pPtr + 20)));
         }
 
         public static void MarshalToBounds(byte* pPtr, out Bounds b)
         {
-            b = new Bounds(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)), 
+            b = new Bounds(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)),
                            new Vector3(*(float*)(pPtr + 12), *(float*)(pPtr + 16), *(float*)(pPtr + 20)));
         }
 
@@ -152,8 +159,7 @@ namespace DnaUnity
                 GCHandle h = (GCHandle)(System.IntPtr)hPtr;
                 return h.Target;
             } else {
-                switch (pTypeDef->typeInitId)
-                {
+                switch (pTypeDef->typeInitId) {
                     case Type.TYPE_SYSTEM_OBJECT:
                         object o;
                         MarshalToObject(pPtr, out o);
@@ -161,17 +167,17 @@ namespace DnaUnity
                     case Type.TYPE_SYSTEM_STRING:
                         return System_String.ToMonoString(*(byte**)pPtr);
                     case Type.TYPE_SYSTEM_BOOLEAN:
-                        return *(int*)pPtr != 0;
+                        return *(bool*)pPtr;
                     case Type.TYPE_SYSTEM_BYTE:
-                        return (byte)*(uint*)pPtr;
+                        return *(byte*)pPtr;
                     case Type.TYPE_SYSTEM_SBYTE:
-                        return (sbyte)*(int*)pPtr;
+                        return *(sbyte*)pPtr;
                     case Type.TYPE_SYSTEM_CHAR:
-                        return (char)*(uint*)pPtr;
+                        return *(char*)pPtr;
                     case Type.TYPE_SYSTEM_UINT16:
-                        return (ushort)*(uint*)pPtr;
+                        return *(ushort*)pPtr;
                     case Type.TYPE_SYSTEM_INT16:
-                        return (short)*(int*)pPtr;
+                        return *(short*)pPtr;
                     case Type.TYPE_SYSTEM_UINT32:
                         return *(uint*)pPtr;
                     case Type.TYPE_SYSTEM_INT32:
@@ -208,13 +214,13 @@ namespace DnaUnity
                     case Type.TYPE_UNITYENGINE_RECTOFFSET:
                         return new RectOffset(*(int*)(pPtr + 0), *(int*)(pPtr + 4), *(int*)(pPtr + 8), *(int*)(pPtr + 12));
                     case Type.TYPE_UNITYENGINE_RAY2D:
-                        return new Ray2D(new Vector2(*(float*)(pPtr + 0), *(float*)(pPtr + 4)), 
+                        return new Ray2D(new Vector2(*(float*)(pPtr + 0), *(float*)(pPtr + 4)),
                                          new Vector2(*(float*)(pPtr + 8), *(float*)(pPtr + 12)));
                     case Type.TYPE_UNITYENGINE_RAY:
-                        return new Ray(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)), 
+                        return new Ray(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)),
                                        new Vector3(*(float*)(pPtr + 12), *(float*)(pPtr + 16), *(float*)(pPtr + 20)));
                     case Type.TYPE_UNITYENGINE_BOUNDS:
-                        return new Bounds(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)), 
+                        return new Bounds(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)),
                                           new Vector3(*(float*)(pPtr + 12), *(float*)(pPtr + 16), *(float*)(pPtr + 20)));
                     case Type.TYPE_UNITYENGINE_PLANE:
                         return new Plane(new Vector3(*(float*)(pPtr + 0), *(float*)(pPtr + 4), *(float*)(pPtr + 8)), *(float*)(pPtr + 12));
@@ -228,6 +234,34 @@ namespace DnaUnity
                         m.SetColumn(3, new Vector4(*(float*)(pPtr + 48), *(float*)(pPtr + 52), *(float*)(pPtr + 56), *(float*)(pPtr + 60)));
                         return m;
 #endif          
+                }
+            }
+
+            // A dna reference or boxed type
+            if (pTypeDef->monoType == null) {
+                if (pTypeDef->isValueType != 0) {
+                    Debug.Log(S.str(pTypeDef->name));
+                    byte* pBoxedValue = Heap.AllocType(pTypeDef);
+                    if (pTypeDef->instanceMemSize == 4) {
+                        *(uint*)pBoxedValue = *(uint*)pPtr;
+                    } else if (pTypeDef->instanceMemSize == 8) {
+                        *(ulong*)pBoxedValue = *(ulong*)pPtr;
+                    } else {
+                        Mem.memcpy(pBoxedValue, pPtr, pTypeDef->instanceMemSize);
+                    }
+                    return DnaObject.WrapObject(pBoxedValue);
+                } else {
+                    return DnaObject.WrapObject(pPtr);
+                }
+            } else {
+                System.Type monoType = H.ToObj(pTypeDef->monoType) as System.Type;
+                if (monoType.IsEnum) {
+                    return Enum.ToObject(monoType, *(int*)pPtr);
+                } else {
+                    if (monoType.IsValueType) {
+                        object o = Activator.CreateInstance(monoType);
+                        System.Runtime.InteropServices.Marshal.PtrToStructure((System.IntPtr)pPtr, o);
+                    }
                 }
             }
 
@@ -295,7 +329,7 @@ namespace DnaUnity
             *(float*)(pPtr + 12) = q.w;
         }
 
-        public static void MarshalFromVector2Int(byte *pPtr, ref Vector2Int v2i)
+        public static void MarshalFromVector2Int(byte* pPtr, ref Vector2Int v2i)
         {
             *(int*)(pPtr + 0) = v2i.x;
             *(int*)(pPtr + 4) = v2i.y;
@@ -324,7 +358,7 @@ namespace DnaUnity
             *(int*)(pPtr + 12) = ri.height;
         }
 
-        public static void MarshalFromRectOffset(byte *pPtr, ref RectOffset ro)
+        public static void MarshalFromRectOffset(byte* pPtr, ref RectOffset ro)
         {
             *(float*)(pPtr + 0) = ro.left;
             *(float*)(pPtr + 4) = ro.top;
@@ -332,7 +366,7 @@ namespace DnaUnity
             *(float*)(pPtr + 12) = ro.bottom;
         }
 
-        public static void MarshalFromRay2D(byte *pPtr, ref Ray2D r2d)
+        public static void MarshalFromRay2D(byte* pPtr, ref Ray2D r2d)
         {
             Vector2 r2do = r2d.origin;
             Vector2 r2dd = r2d.direction;
@@ -342,7 +376,7 @@ namespace DnaUnity
             *(float*)(pPtr + 12) = r2dd.y;
         }
 
-        public static void MarshalFromRay(byte *pPtr, ref Ray r)
+        public static void MarshalFromRay(byte* pPtr, ref Ray r)
         {
             Vector3 ryo = r.origin;
             Vector3 ryd = r.direction;
@@ -391,191 +425,247 @@ namespace DnaUnity
             Vector4 c3 = m.GetColumn(2);
             *(float*)(pPtr + 32) = c3.x; *(float*)(pPtr + 36) = c3.y; *(float*)(pPtr + 40) = c3.z; *(float*)(pPtr + 44) = c3.w;
             Vector4 c4 = m.GetColumn(3);
-            *(float*)(pPtr + 48) = c4.x;  *(float*)(pPtr + 52) = c4.y; *(float*)(pPtr + 56) = c4.z; *(float*)(pPtr + 60) = c4.w;
+            *(float*)(pPtr + 48) = c4.x; *(float*)(pPtr + 52) = c4.y; *(float*)(pPtr + 56) = c4.z; *(float*)(pPtr + 60) = c4.w;
         }
 #endif          
 
-        public static void MarshalFromMonoObj(tMD_TypeDef* pTypeDef, object obj, byte* pPtr)
+        public static void MarshalFromMonoObj(tMD_TypeDef* pTypeDef, object obj, byte* pPtr, bool toStack = true)
         {
             if (obj is DnaObject) {
-                *(byte**)pPtr = (obj as DnaObject).dnaPtr;
-            } else if (pTypeDef->monoType != null) {
-                *(byte**)pPtr = Heap.AllocMonoObject(pTypeDef, obj);
-            } else {
-                switch (pTypeDef->typeInitId) {
-                    case Type.TYPE_SYSTEM_OBJECT:
-                        MarshalFromObject(pPtr, ref obj);
-                        return;
-                    case Type.TYPE_SYSTEM_STRING:
-                        *(byte**)pPtr = System_String.FromMonoString(obj as string);
-                        return;
-                    case Type.TYPE_SYSTEM_BOOLEAN:
-                        *(uint*)pPtr = (uint)((bool)obj ? 1 : 0);
-                        return;
-                    case Type.TYPE_SYSTEM_BYTE:
-                        *(uint*)pPtr = (byte)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_SBYTE:
-                        *(int*)pPtr = (sbyte)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_CHAR:
-                        *(uint*)pPtr = (char)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_UINT16:
-                        *(uint*)pPtr = (ushort)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_INT16:
-                        *(int*)pPtr = (short)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_UINT32:
-                        *(uint*)pPtr = (uint)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_INT32:
-                        *(int*)pPtr = (int)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_UINT64:
-                        *(ulong*)pPtr = (ulong)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_INT64:
-                        *(long*)pPtr = (long)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_SINGLE:
-                        *(float*)pPtr = (float)obj;
-                        return;
-                    case Type.TYPE_SYSTEM_DOUBLE:
-                        *(double*)pPtr = (double)obj;
-                        return;
-#if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
-                    case Type.TYPE_UNITYENGINE_VECTOR2:
-                        Vector2 v2 = (Vector2)obj;
-                        *(float*)(pPtr + 0) = v2.x;
-                        *(float*)(pPtr + 4) = v2.y;
-                        return;
-                    case Type.TYPE_UNITYENGINE_VECTOR3:
-                        Vector3 v3 = (Vector2)obj;
-                        *(float*)(pPtr + 0) = v3.x;
-                        *(float*)(pPtr + 4) = v3.y;
-                        *(float*)(pPtr + 8) = v3.z;
-                        return;
-                    case Type.TYPE_UNITYENGINE_COLOR:
-                        Color c = (Color)obj;
-                        *(float*)(pPtr + 0) = c.r;
-                        *(float*)(pPtr + 4) = c.g;
-                        *(float*)(pPtr + 8) = c.b;
-                        *(float*)(pPtr + 12) = c.a;
-                        return;
-                    case Type.TYPE_UNITYENGINE_COLOR32:
-                        Color32 c32 = (Color32)obj;
-                        *(byte*)(pPtr + 0) = c32.r;
-                        *(byte*)(pPtr + 1) = c32.g;
-                        *(byte*)(pPtr + 2) = c32.b;
-                        *(byte*)(pPtr + 3) = c32.a;
-                        return;
-                    case Type.TYPE_UNITYENGINE_VECTOR4:
-                        Vector4 v4 = (Vector4)obj;
-                        *(float*)(pPtr + 0) = v4.x;
-                        *(float*)(pPtr + 4) = v4.y;
-                        *(float*)(pPtr + 8) = v4.z;
-                        *(float*)(pPtr + 12) = v4.w;
-                        return;
-                    case Type.TYPE_UNITYENGINE_QUATERNION:
-                        Quaternion q = (Quaternion)obj;
-                        *(float*)(pPtr + 0) = q.x;
-                        *(float*)(pPtr + 4) = q.y;
-                        *(float*)(pPtr + 8) = q.z;
-                        *(float*)(pPtr + 12) = q.w;
-                        return;
-                    case Type.TYPE_UNITYENGINE_VECTOR2INT:
-                        Vector2Int v2i = (Vector2Int)obj;
-                        *(int*)(pPtr + 0) = v2i.x;
-                        *(int*)(pPtr + 4) = v2i.y;
-                        return;
-                    case Type.TYPE_UNITYENGINE_VECTOR3INT:
-                        Vector3Int v3i = (Vector3Int)obj;
-                        *(int*)(pPtr + 0) = v3i.x;
-                        *(int*)(pPtr + 4) = v3i.y;
-                        *(int*)(pPtr + 8) = v3i.z;
-                        return;
-                    case Type.TYPE_UNITYENGINE_RECT:
-                        Rect r = (Rect)obj;
-                        *(float*)(pPtr + 0) = r.x;
-                        *(float*)(pPtr + 4) = r.y;
-                        *(float*)(pPtr + 8) = r.width;
-                        *(float*)(pPtr + 12) = r.height;
-                        return;
-                    case Type.TYPE_UNITYENGINE_RECTINT:
-                        RectInt ri = (RectInt)obj;
-                        *(int*)(pPtr + 0) = ri.x;
-                        *(int*)(pPtr + 4) = ri.y;
-                        *(int*)(pPtr + 8) = ri.width;
-                        *(int*)(pPtr + 12) = ri.height;
-                        return;
-                    case Type.TYPE_UNITYENGINE_RECTOFFSET:
-                        RectOffset ro = (RectOffset)obj;
-                        *(float*)(pPtr + 0) = ro.left;
-                        *(float*)(pPtr + 4) = ro.top;
-                        *(float*)(pPtr + 8) = ro.right;
-                        *(float*)(pPtr + 12) = ro.bottom;
-                        return;
-                    case Type.TYPE_UNITYENGINE_RAY2D:
-                        Ray2D r2d = (Ray2D)obj;
-                        Vector2 r2do = r2d.origin;
-                        Vector2 r2dd = r2d.direction;
-                        *(float*)(pPtr + 0) = r2do.x;
-                        *(float*)(pPtr + 4) = r2do.y;
-                        *(float*)(pPtr + 8) = r2dd.x;
-                        *(float*)(pPtr + 12) = r2dd.y;
-                        return;
-                    case Type.TYPE_UNITYENGINE_RAY:
-                        Ray ry = (Ray)obj;
-                        Vector3 ryo = ry.origin;
-                        Vector3 ryd = ry.direction;
-                        *(float*)(pPtr + 0) = ryo.x;
-                        *(float*)(pPtr + 4) = ryo.y;
-                        *(float*)(pPtr + 8) = ryo.z;
-                        *(float*)(pPtr + 12) = ryd.x;
-                        *(float*)(pPtr + 16) = ryd.y;
-                        *(float*)(pPtr + 20) = ryd.z;
-                        return;
-                    case Type.TYPE_UNITYENGINE_BOUNDS:
-                        Bounds b = (Bounds)obj;
-                        Vector3 bct = b.center;
-                        Vector3 bex = b.extents;
-                        *(float*)(pPtr + 0) = bct.x;
-                        *(float*)(pPtr + 4) = bct.y;
-                        *(float*)(pPtr + 8) = bct.z;
-                        *(float*)(pPtr + 12) = bex.x;
-                        *(float*)(pPtr + 16) = bex.y;
-                        *(float*)(pPtr + 20) = bex.z;
-                        return;
-                    case Type.TYPE_UNITYENGINE_PLANE:
-                        Plane p = (Plane)obj;
-                        Vector3 pnm = p.normal;
-                        float pds = p.distance;
-                        *(float*)(pPtr + 0) = pnm.x;
-                        *(float*)(pPtr + 4) = pnm.y;
-                        *(float*)(pPtr + 8) = pnm.z;
-                        *(float*)(pPtr + 12) = pds;
-                        return;
-                    case Type.TYPE_UNITYENGINE_RANGEINT:
-                        RangeInt rin = (RangeInt)obj;
-                        *(int*)(pPtr + 0) = rin.start;
-                        *(int*)(pPtr + 4) = rin.length;
-                        return;
-                    case Type.TYPE_UNITYENGINE_MATRIX4X4:
-                        Matrix4x4 m = (Matrix4x4)obj;
-                        Vector4 c1 = m.GetColumn(0);
-                        *(float*)(pPtr + 0) = c1.x; *(float*)(pPtr + 4) = c1.y; *(float*)(pPtr + 8) = c1.z; *(float*)(pPtr + 12) = c1.w;
-                        Vector4 c2 = m.GetColumn(1);
-                        *(float*)(pPtr + 16) = c2.x; *(float*)(pPtr + 20) = c2.y; *(float*)(pPtr + 24) = c2.z; *(float*)(pPtr + 28) = c2.w;
-                        Vector4 c3 = m.GetColumn(2);
-                        *(float*)(pPtr + 32) = c3.x; *(float*)(pPtr + 36) = c3.y; *(float*)(pPtr + 40) = c3.z; *(float*)(pPtr + 44) = c3.w;
-                        Vector4 c4 = m.GetColumn(3);
-                        *(float*)(pPtr + 48) = c4.x;  *(float*)(pPtr + 52) = c4.y; *(float*)(pPtr + 56) = c4.z; *(float*)(pPtr + 60) = c4.w;
-                        return;
-#endif          
+                if (pTypeDef->isValueType != 0) {
+                    if (toStack) {
+                        // Marshalling to mememory on the stack
+                        if (pTypeDef->instanceMemSize == 4)
+                            *(uint*)pPtr = *(uint*)((obj as DnaObject).dnaPtr);
+                        else if (pTypeDef->instanceMemSize == 8)
+                            *(ulong*)pPtr = *(ulong*)((obj as DnaObject).dnaPtr);
+                        else
+                            Mem.memcpy(pPtr, (obj as DnaObject).dnaPtr, pTypeDef->stackSize);
+                    } else {
+                        // Marshalling to memory in an instance or in an array
+                        if (pTypeDef->instanceMemSize == 1)
+                            *(byte*)pPtr = *(byte*)((obj as DnaObject).dnaPtr);
+                        else if (pTypeDef->instanceMemSize == 2)
+                            *(ushort*)pPtr = *(ushort*)((obj as DnaObject).dnaPtr);
+                        else if (pTypeDef->instanceMemSize == 4)
+                            *(uint*)pPtr = *(uint*)((obj as DnaObject).dnaPtr);
+                        else if (pTypeDef->instanceMemSize == 8)
+                            *(ulong*)pPtr = *(ulong*)((obj as DnaObject).dnaPtr);
+                        else
+                            Mem.memcpy(pPtr, (obj as DnaObject).dnaPtr, pTypeDef->instanceMemSize);
+                    }
+                } else {
+                    *(byte**)pPtr = (obj as DnaObject).dnaPtr;
                 }
+                return;
             }
+
+            switch (pTypeDef->typeInitId) {
+                case Type.TYPE_SYSTEM_OBJECT:
+                    MarshalFromObject(pPtr, ref obj);
+                    return;
+                case Type.TYPE_SYSTEM_STRING:
+                    *(byte**)pPtr = System_String.FromMonoString(obj as string);
+                    return;
+                case Type.TYPE_SYSTEM_BOOLEAN:
+                    if (toStack)
+                        *(uint*)pPtr = (uint)((bool)obj ? 1 : 0);
+                    else
+                        *(bool*)pPtr = (bool)obj;
+                    return;
+                case Type.TYPE_SYSTEM_BYTE:
+                    if (toStack)
+                        *(uint*)pPtr = (uint)(byte)obj;
+                    else
+                        *(byte*)pPtr = (byte)obj;
+                    return;
+                case Type.TYPE_SYSTEM_SBYTE:
+                    if (toStack)
+                        *(uint*)pPtr = (uint)(sbyte)obj;
+                    else
+                        *(sbyte*)pPtr = (sbyte)obj;
+                    return;
+                case Type.TYPE_SYSTEM_CHAR:
+                    if (toStack)
+                        *(uint*)pPtr = (uint)(char)obj;
+                    else
+                        *(char*)pPtr = (char)obj;
+                    return;
+                case Type.TYPE_SYSTEM_UINT16:
+                    if (toStack)
+                        *(uint*)pPtr = (uint)(ushort)obj;
+                    else
+                        *(ushort*)pPtr = (ushort)obj;
+                    return;
+                case Type.TYPE_SYSTEM_INT16:
+                    if (toStack)
+                        *(uint*)pPtr = (uint)(short)obj;
+                    else
+                        *(short*)pPtr = (short)obj;
+                    return;
+                case Type.TYPE_SYSTEM_UINT32:
+                    *(uint*)pPtr = (uint)obj;
+                    return;
+                case Type.TYPE_SYSTEM_INT32:
+                    *(int*)pPtr = (int)obj;
+                    return;
+                case Type.TYPE_SYSTEM_UINT64:
+                    *(ulong*)pPtr = (ulong)obj;
+                    return;
+                case Type.TYPE_SYSTEM_INT64:
+                    *(long*)pPtr = (long)obj;
+                    return;
+                case Type.TYPE_SYSTEM_SINGLE:
+                    *(float*)pPtr = (float)obj;
+                    return;
+                case Type.TYPE_SYSTEM_DOUBLE:
+                    *(double*)pPtr = (double)obj;
+                    return;
+#if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
+                case Type.TYPE_UNITYENGINE_VECTOR2:
+                    Vector2 v2 = (Vector2)obj;
+                    *(float*)(pPtr + 0) = v2.x;
+                    *(float*)(pPtr + 4) = v2.y;
+                    return;
+                case Type.TYPE_UNITYENGINE_VECTOR3:
+                    Vector3 v3 = (Vector3)obj;
+                    *(float*)(pPtr + 0) = v3.x;
+                    *(float*)(pPtr + 4) = v3.y;
+                    *(float*)(pPtr + 8) = v3.z;
+                    return;
+                case Type.TYPE_UNITYENGINE_COLOR:
+                    Color c = (Color)obj;
+                    *(float*)(pPtr + 0) = c.r;
+                    *(float*)(pPtr + 4) = c.g;
+                    *(float*)(pPtr + 8) = c.b;
+                    *(float*)(pPtr + 12) = c.a;
+                    return;
+                case Type.TYPE_UNITYENGINE_COLOR32:
+                    Color32 c32 = (Color32)obj;
+                    *(byte*)(pPtr + 0) = c32.r;
+                    *(byte*)(pPtr + 1) = c32.g;
+                    *(byte*)(pPtr + 2) = c32.b;
+                    *(byte*)(pPtr + 3) = c32.a;
+                    return;
+                case Type.TYPE_UNITYENGINE_VECTOR4:
+                    Vector4 v4 = (Vector4)obj;
+                    *(float*)(pPtr + 0) = v4.x;
+                    *(float*)(pPtr + 4) = v4.y;
+                    *(float*)(pPtr + 8) = v4.z;
+                    *(float*)(pPtr + 12) = v4.w;
+                    return;
+                case Type.TYPE_UNITYENGINE_QUATERNION:
+                    Quaternion q = (Quaternion)obj;
+                    *(float*)(pPtr + 0) = q.x;
+                    *(float*)(pPtr + 4) = q.y;
+                    *(float*)(pPtr + 8) = q.z;
+                    *(float*)(pPtr + 12) = q.w;
+                    return;
+                case Type.TYPE_UNITYENGINE_VECTOR2INT:
+                    Vector2Int v2i = (Vector2Int)obj;
+                    *(int*)(pPtr + 0) = v2i.x;
+                    *(int*)(pPtr + 4) = v2i.y;
+                    return;
+                case Type.TYPE_UNITYENGINE_VECTOR3INT:
+                    Vector3Int v3i = (Vector3Int)obj;
+                    *(int*)(pPtr + 0) = v3i.x;
+                    *(int*)(pPtr + 4) = v3i.y;
+                    *(int*)(pPtr + 8) = v3i.z;
+                    return;
+                case Type.TYPE_UNITYENGINE_RECT:
+                    Rect r = (Rect)obj;
+                    *(float*)(pPtr + 0) = r.x;
+                    *(float*)(pPtr + 4) = r.y;
+                    *(float*)(pPtr + 8) = r.width;
+                    *(float*)(pPtr + 12) = r.height;
+                    return;
+                case Type.TYPE_UNITYENGINE_RECTINT:
+                    RectInt ri = (RectInt)obj;
+                    *(int*)(pPtr + 0) = ri.x;
+                    *(int*)(pPtr + 4) = ri.y;
+                    *(int*)(pPtr + 8) = ri.width;
+                    *(int*)(pPtr + 12) = ri.height;
+                    return;
+                case Type.TYPE_UNITYENGINE_RECTOFFSET:
+                    RectOffset ro = (RectOffset)obj;
+                    *(float*)(pPtr + 0) = ro.left;
+                    *(float*)(pPtr + 4) = ro.top;
+                    *(float*)(pPtr + 8) = ro.right;
+                    *(float*)(pPtr + 12) = ro.bottom;
+                    return;
+                case Type.TYPE_UNITYENGINE_RAY2D:
+                    Ray2D r2d = (Ray2D)obj;
+                    Vector2 r2do = r2d.origin;
+                    Vector2 r2dd = r2d.direction;
+                    *(float*)(pPtr + 0) = r2do.x;
+                    *(float*)(pPtr + 4) = r2do.y;
+                    *(float*)(pPtr + 8) = r2dd.x;
+                    *(float*)(pPtr + 12) = r2dd.y;
+                    return;
+                case Type.TYPE_UNITYENGINE_RAY:
+                    Ray ry = (Ray)obj;
+                    Vector3 ryo = ry.origin;
+                    Vector3 ryd = ry.direction;
+                    *(float*)(pPtr + 0) = ryo.x;
+                    *(float*)(pPtr + 4) = ryo.y;
+                    *(float*)(pPtr + 8) = ryo.z;
+                    *(float*)(pPtr + 12) = ryd.x;
+                    *(float*)(pPtr + 16) = ryd.y;
+                    *(float*)(pPtr + 20) = ryd.z;
+                    return;
+                case Type.TYPE_UNITYENGINE_BOUNDS:
+                    Bounds b = (Bounds)obj;
+                    Vector3 bct = b.center;
+                    Vector3 bex = b.extents;
+                    *(float*)(pPtr + 0) = bct.x;
+                    *(float*)(pPtr + 4) = bct.y;
+                    *(float*)(pPtr + 8) = bct.z;
+                    *(float*)(pPtr + 12) = bex.x;
+                    *(float*)(pPtr + 16) = bex.y;
+                    *(float*)(pPtr + 20) = bex.z;
+                    return;
+                case Type.TYPE_UNITYENGINE_PLANE:
+                    Plane p = (Plane)obj;
+                    Vector3 pnm = p.normal;
+                    float pds = p.distance;
+                    *(float*)(pPtr + 0) = pnm.x;
+                    *(float*)(pPtr + 4) = pnm.y;
+                    *(float*)(pPtr + 8) = pnm.z;
+                    *(float*)(pPtr + 12) = pds;
+                    return;
+                case Type.TYPE_UNITYENGINE_RANGEINT:
+                    RangeInt rin = (RangeInt)obj;
+                    *(int*)(pPtr + 0) = rin.start;
+                    *(int*)(pPtr + 4) = rin.length;
+                    return;
+                case Type.TYPE_UNITYENGINE_MATRIX4X4:
+                    Matrix4x4 m = (Matrix4x4)obj;
+                    Vector4 c1 = m.GetColumn(0);
+                    *(float*)(pPtr + 0) = c1.x; *(float*)(pPtr + 4) = c1.y; *(float*)(pPtr + 8) = c1.z; *(float*)(pPtr + 12) = c1.w;
+                    Vector4 c2 = m.GetColumn(1);
+                    *(float*)(pPtr + 16) = c2.x; *(float*)(pPtr + 20) = c2.y; *(float*)(pPtr + 24) = c2.z; *(float*)(pPtr + 28) = c2.w;
+                    Vector4 c3 = m.GetColumn(2);
+                    *(float*)(pPtr + 32) = c3.x; *(float*)(pPtr + 36) = c3.y; *(float*)(pPtr + 40) = c3.z; *(float*)(pPtr + 44) = c3.w;
+                    Vector4 c4 = m.GetColumn(3);
+                    *(float*)(pPtr + 48) = c4.x; *(float*)(pPtr + 52) = c4.y; *(float*)(pPtr + 56) = c4.z; *(float*)(pPtr + 60) = c4.w;
+                    return;
+#endif          
+            }
+
+            if (pTypeDef->monoType != null) {
+                if (pTypeDef->isValueType == 0) {
+                    *(byte**)pPtr = Heap.AllocMonoObject(pTypeDef, obj);
+                } else {
+                    System.Type monoType = H.ToObj(pTypeDef->monoType) as System.Type;
+                    if (monoType.IsEnum) {
+                        *(int*)pPtr = (int)obj;
+                    } else {
+                        System.Runtime.InteropServices.Marshal.StructureToPtr(obj, (IntPtr)pPtr, false);
+                    }
+                }
+                return;
+            }
+
             Sys.Crash("Marshaling code not defined yet for this class");
         }
 
@@ -585,8 +675,8 @@ namespace DnaUnity
                 *(byte**)pPtr = null;
                 return;
             }
-            tMD_TypeDef* pTypeDef = GetTypeForMonoType(o.GetType());
-            if (pTypeDef->isValueType != 0) { 
+            tMD_TypeDef* pTypeDef = GetTypeForMonoObject(o, null, null);
+            if (pTypeDef->isValueType != 0) {
                 // Box the value type
                 *(byte**)pPtr = Heap.AllocType(pTypeDef);
                 MarshalFromMonoObj(pTypeDef, o, *(byte**)pPtr);
@@ -596,35 +686,46 @@ namespace DnaUnity
             }
         }
 
-        public static fnInternalCall GetGenericTrampoline(tMD_MethodDef* pMethodDef, MethodInfo methodInfo)
+        public static fnInternalCall GetGenericTrampoline(tMD_MethodDef* pMethodDef, MethodBase methodBase)
         {
             int numParams = pMethodDef->numberOfParameters;
+            int start = 0;
+            object[] paramsAry = null;
+            bool isConstructor = methodBase is ConstructorInfo;
+
+            if (!MetaData.METHOD_ISSTATIC(pMethodDef)) {
+                start = 1;
+            }
+
+            if (numParams > start) {
+                paramsAry = new object[numParams - start];
+            }
 
             return (_c, _t, _p, _r) => {
                 object _this = null;
-                int start = 0;
+                uint thisOfs = 0;
 
                 // Get this
                 tMD_TypeDef* pThisType = null;
-                if (!MetaData.METHOD_ISSTATIC(pMethodDef)) {
+                if (isConstructor) {
+                    thisOfs = sizeof(PTR);
+                } else if (!MetaData.METHOD_ISSTATIC(pMethodDef)) {
                     if (MetaData.PARAM_ISBYREF(&pMethodDef->pParams[0])) {
-                        pThisType = pMethodDef->pParams[0].pStackTypeDef;
+                        pThisType = pMethodDef->pParams[0].pByRefTypeDef;
                         _this = MarshalToMonoObj(pThisType, *(byte**)_t);
                     } else {
-                        pThisType = pMethodDef->pParams[0].pByRefTypeDef;
+                        pThisType = pMethodDef->pParams[0].pStackTypeDef;
                         _this = MarshalToMonoObj(pThisType, _t);
                     }
-                    start = 1;
+                    thisOfs = pMethodDef->pParams[0].pStackTypeDef->stackSize;
                 }
 
                 // Get params
-                object[] paramsAry = null;
                 bool hasRefParam = false;
-                if (numParams > 0) {
-                    paramsAry = new object[numParams];
+                if (numParams > start) {
                     for (int i = start; i < numParams; i++) {
                         tParameter* pParameter = &pMethodDef->pParams[i];
-                        byte* pParamPtr = _p + pParameter->offset;
+                        byte* pParamPtr = _p + (pParameter->offset - thisOfs);
                         if (MetaData.PARAM_ISBYREF(pParameter)) {
                             paramsAry[i - start] = MarshalToMonoObj(pParameter->pByRefTypeDef, *(byte**)pParamPtr);
                             hasRefParam = true;
@@ -635,10 +736,12 @@ namespace DnaUnity
                 }
 
                 // Call
-                object retVal = methodInfo.Invoke(_this, paramsAry);
+                object retVal = methodBase.Invoke(_this, paramsAry);
 
                 // Marshal this back (if needed)
-                if (pThisType != null && pThisType->isValueType != 0) {
+                if (isConstructor) {
+                    MarshalFromMonoObj(pMethodDef->pParentType, retVal, _t);
+                } else if (pThisType != null && pThisType->isValueType != 0) {
                     if (MetaData.PARAM_ISBYREF(&pMethodDef->pParams[0])) {
                         MarshalFromMonoObj(pThisType, _this, *(byte**)_t);
                     } else {
@@ -647,16 +750,18 @@ namespace DnaUnity
                 }
 
                 // Marshal back any ref params (if needed)
-                if (hasRefParam)
-                {
-                    for (int i = start; i < numParams; i++)
-                    {
+                if (hasRefParam) {
+                    for (int i = start; i < numParams; i++) {
                         tParameter* pParameter = &pMethodDef->pParams[i];
                         byte* pParamPtr = _p + pParameter->offset;
                         if (MetaData.PARAM_ISBYREF(pParameter)) {
-                            MarshalFromMonoObj(pParameter->pStackTypeDef, paramsAry[i - start], *(byte**)pParamPtr);
+                            MarshalFromMonoObj(pParameter->pByRefTypeDef, paramsAry[i - start], *(byte**)pParamPtr);
                         }
                     }
+                }
+
+                if (pMethodDef->pReturnType != null) {
+                    MarshalFromMonoObj(pMethodDef->pReturnType, retVal, _r);
                 }
 
                 return null;
@@ -673,8 +778,7 @@ namespace DnaUnity
                 if (numParams == 2 && pMethodDef->pParams[0].pByRefTypeDef == null && pMethodDef->pParams[1].pByRefTypeDef == null) {
                     tMD_TypeDef* pThisType = pMethodDef->pParams[0].pStackTypeDef;
                     uint typeInitId = pMethodDef->pParams[1].pStackTypeDef->typeInitId;
-                    switch (typeInitId)
-                    {
+                    switch (typeInitId) {
                         case Type.TYPE_SYSTEM_OBJECT:
                             Action<T, object> callO = (Action<T, object>)System.Delegate.CreateDelegate(typeof(Action<T, object>), methodInfo);
                             func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); object o; MarshalToObject(_p, out o); callO(_this as T, o); return null; };
@@ -742,19 +846,17 @@ namespace DnaUnity
                             break;
                         case Type.TYPE_UNITYENGINE_MATRIX4X4:
                             Action<T, Matrix4x4> callM = (Action<T, Matrix4x4>)System.Delegate.CreateDelegate(typeof(Action<T, Matrix4x4>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Matrix4x4 m; MarshalToMatrix4x4(_p, out m); callM(_this as T, m);  return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); Matrix4x4 m; MarshalToMatrix4x4(_p, out m); callM(_this as T, m); return null; };
                             break;
 #endif
                     }
 
                 }
             }
-            else if (numParams == 1 && pMethodDef->pParams[0].pByRefTypeDef == null)
-            {
+            else if (numParams == 1 && pMethodDef->pParams[0].pByRefTypeDef == null) {
                 tMD_TypeDef* pThisType = pMethodDef->pParams[0].pStackTypeDef;
                 uint typeInitId = pMethodDef->pReturnType->typeInitId;
-                switch (typeInitId)
-                {
+                switch (typeInitId) {
                     case Type.TYPE_SYSTEM_OBJECT:
                         Func<T, object> funcO = (Func<T, object>)System.Delegate.CreateDelegate(typeof(Func<object>), methodInfo);
                         func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); object o = funcO(_this as T); MarshalFromObject(_r, ref o); return null; };
@@ -840,20 +942,17 @@ namespace DnaUnity
         public delegate void MarshalToMethod<T>(byte* pPtr, out T value) where T : struct;
         public delegate void MarshalFromMethod<T>(byte* pPtr, ref T value) where T : struct;
 
-        public static fnInternalCall GetValueTypeTrampoline<T>(tMD_MethodDef* pMethodDef, MethodInfo methodInfo, MarshalToMethod<T> marshalTo, MarshalFromMethod<T>  marshalFrom)
+        public static fnInternalCall GetValueTypeTrampoline<T>(tMD_MethodDef* pMethodDef, MethodInfo methodInfo, MarshalToMethod<T> marshalTo, MarshalFromMethod<T> marshalFrom)
             where T : struct
         {
             fnInternalCall func = null;
             int numParams = pMethodDef->numberOfParameters;
 
-            if (methodInfo.ReturnType == typeof(void))
-            {
-                if (numParams == 2 && pMethodDef->pParams[0].pByRefTypeDef == null && pMethodDef->pParams[1].pByRefTypeDef == null)
-                {
+            if (methodInfo.ReturnType == typeof(void)) {
+                if (numParams == 2 && pMethodDef->pParams[0].pByRefTypeDef == null && pMethodDef->pParams[1].pByRefTypeDef == null) {
                     tMD_TypeDef* pThisType = pMethodDef->pParams[0].pStackTypeDef;
                     uint typeInitId = pMethodDef->pParams[1].pStackTypeDef->typeInitId;
-                    switch (typeInitId)
-                    {
+                    switch (typeInitId) {
                         case Type.TYPE_SYSTEM_OBJECT:
                             RefAction<T, object> callO = (RefAction<T, object>)System.Delegate.CreateDelegate(typeof(RefAction<T, object>), methodInfo);
                             func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); object o; MarshalToObject(_p, out o); callO(ref _this, o); marshalFrom(_t, ref _this); return null; };
@@ -928,12 +1027,10 @@ namespace DnaUnity
 
                 }
             }
-            else if (numParams == 1 && pMethodDef->pParams[0].pByRefTypeDef == null)
-            {
+            else if (numParams == 1 && pMethodDef->pParams[0].pByRefTypeDef == null) {
                 tMD_TypeDef* pThisType = pMethodDef->pParams[0].pStackTypeDef;
                 uint typeInitId = pMethodDef->pReturnType->typeInitId;
-                switch (typeInitId)
-                {
+                switch (typeInitId) {
                     case Type.TYPE_SYSTEM_OBJECT:
                         RefFunc<T, object> funcO = (RefFunc<T, object>)System.Delegate.CreateDelegate(typeof(RefFunc<T, object>), methodInfo);
                         func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); object o = funcO(ref _this); MarshalFromObject(_r, ref o); marshalFrom(_t, ref _this); return null; };
@@ -1019,18 +1116,14 @@ namespace DnaUnity
             fnInternalCall func = null;
             int numParams = pMethodDef->numberOfParameters;
 
-            if (methodInfo.ReturnType == typeof(void))
-            {
-                if (numParams == 0)
-                {
+            if (methodInfo.ReturnType == typeof(void)) {
+                if (numParams == 0) {
                     Action call = (Action)System.Delegate.CreateDelegate(typeof(Action), methodInfo);
                     func = (_c, _t, _p, _r) => { call(); return null; };
                 }
-                else if (numParams == 1 && pMethodDef->pParams[0].pByRefTypeDef == null)
-                {
+                else if (numParams == 1 && pMethodDef->pParams[0].pByRefTypeDef == null) {
                     uint typeInitId = pMethodDef->pParams[0].pStackTypeDef->typeInitId;
-                    switch (typeInitId)
-                    {
+                    switch (typeInitId) {
                         case Type.TYPE_SYSTEM_OBJECT:
                             Action<object> callO = (Action<object>)System.Delegate.CreateDelegate(typeof(Action<object>), methodInfo);
                             func = (_c, _t, _p, _r) => { object o; MarshalToObject(_p, out o); callO(o); return null; };
@@ -1105,11 +1198,9 @@ namespace DnaUnity
 
                 }
             }
-            else if (numParams == 0)
-            {
+            else if (numParams == 0) {
                 uint typeInitId = pMethodDef->pReturnType->typeInitId;
-                switch (typeInitId)
-                {
+                switch (typeInitId) {
                     case Type.TYPE_SYSTEM_OBJECT:
                         Func<object> funcO = (Func<object>)System.Delegate.CreateDelegate(typeof(Func<object>), methodInfo);
                         func = (_c, _t, _p, _r) => { object o = funcO(); MarshalFromObject(_r, ref o); return null; };
@@ -1194,41 +1285,58 @@ namespace DnaUnity
         {
             fnInternalCall func = null;
             tMD_MethodDef* pMethodDef = pCallNative->pMethodDef;
-            MethodInfo methodInfo = H.ToObj(pMethodDef->monoMethodInfo) as MethodInfo;
+            MethodBase methodBase = H.ToObj(pMethodDef->monoMethodInfo) as MethodBase;
+            MethodInfo methodInfo = methodBase as MethodInfo;
 
-            if (MetaData.METHOD_ISSTATIC(pCallNative->pMethodDef))
-            {
-                func = GetStaticMethodTrampoline(pMethodDef, methodInfo);
-            }
-            else
-            {
-                System.Type targetType = H.ToObj(pMethodDef->pParentType->monoType) as System.Type;
-#if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
-                switch (pMethodDef->pParentType->typeInitId)
-                {
-                    case Type.TYPE_UNITYENGINE_VECTOR2:
-                        func = GetValueTypeTrampoline<Vector2>(pMethodDef, methodInfo, MarshalToVector2, MarshalFromVector2);
-                        break;
-                    case Type.TYPE_UNITYENGINE_VECTOR3:
-                        func = GetValueTypeTrampoline<Vector3>(pMethodDef, methodInfo, MarshalToVector3, MarshalFromVector3);
-                        break;
-                    case Type.TYPE_UNITYENGINE_QUATERNION:
-                        func = GetValueTypeTrampoline<Quaternion>(pMethodDef, methodInfo, MarshalToQuaternion, MarshalFromQuaternion);
-                        break;
-                    case Type.TYPE_UNITYENGINE_RECT:
-                        func = GetValueTypeTrampoline<Rect>(pMethodDef, methodInfo, MarshalToRect, MarshalFromRect);
-                        break;
+            if (methodInfo != null) {
+                if (MetaData.METHOD_ISSTATIC(pCallNative->pMethodDef)) {
+                    func = GetStaticMethodTrampoline(pMethodDef, methodInfo);
                 }
+                else {
+#if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
+                    switch (pMethodDef->pParentType->typeInitId) {
+                        case Type.TYPE_UNITYENGINE_VECTOR2:
+                            func = GetValueTypeTrampoline<Vector2>(pMethodDef, methodInfo, MarshalToVector2, MarshalFromVector2);
+                            break;
+                        case Type.TYPE_UNITYENGINE_VECTOR3:
+                            func = GetValueTypeTrampoline<Vector3>(pMethodDef, methodInfo, MarshalToVector3, MarshalFromVector3);
+                            break;
+                        case Type.TYPE_UNITYENGINE_QUATERNION:
+                            func = GetValueTypeTrampoline<Quaternion>(pMethodDef, methodInfo, MarshalToQuaternion, MarshalFromQuaternion);
+                            break;
+                        case Type.TYPE_UNITYENGINE_RECT:
+                            func = GetValueTypeTrampoline<Rect>(pMethodDef, methodInfo, MarshalToRect, MarshalFromRect);
+                            break;
+                    }
+                    if (func == null) {
+                        System.Type targetType = H.ToObj(pMethodDef->pParentType->monoType) as System.Type;
+                        if (targetType.FullName == "UnityEngine.MonoBehaviour")
+                            func = GetRefTypeTrampoline<MonoBehaviour>(pMethodDef, methodInfo);
+                        else if (targetType.FullName == "UnityEngine.Behaviour")
+                            func = GetRefTypeTrampoline<Behaviour>(pMethodDef, methodInfo);
+                        else if (targetType.FullName == "UnityEngine.Component")
+                            func = GetRefTypeTrampoline<Component>(pMethodDef, methodInfo);
+                        else if (targetType.FullName == "UnityEngine.Transform")
+                            func = GetRefTypeTrampoline<Transform>(pMethodDef, methodInfo);
+                        else if (targetType.FullName == "UnityEngine.GameObject")
+                            func = GetRefTypeTrampoline<GameObject>(pMethodDef, methodInfo);
+                        else if (targetType.FullName == "UnityEngine.Object")
+                            func = GetRefTypeTrampoline<UnityEngine.Object>(pMethodDef, methodInfo);
+                    }
 #endif
+                }
             }
 
             if (func == null)
-                func = GetGenericTrampoline(pMethodDef, methodInfo);
+                func = GetGenericTrampoline(pMethodDef, methodBase);
+
+            pCallNative->pMethodDef->monoMethodCall = new H(func);
 
             return func(pCallNative, pThis_, pParams, pReturnValue);
         }
 
-        public static tMD_TypeDef* GetTypeForMonoType(System.Type monoType)
+        public static tMD_TypeDef* GetTypeForMonoType(System.Type monoType,
+            tMD_TypeDef** ppClassTypeArgs, tMD_TypeDef** ppMethodTypeArgs)
         {
             byte* nameSpace = stackalloc byte[256];
             byte* name = stackalloc byte[256];
@@ -1238,8 +1346,7 @@ namespace DnaUnity
 
             System.TypeCode typeCode = System.Type.GetTypeCode(monoType);
 
-            switch (typeCode)
-            {
+            switch (typeCode) {
                 case System.TypeCode.Object:
                     if (monoType == typeof(System.Object))
                         return Type.types[DnaUnity.Type.TYPE_SYSTEM_OBJECT];
@@ -1251,21 +1358,37 @@ namespace DnaUnity
                 case System.TypeCode.Char:
                     return Type.types[DnaUnity.Type.TYPE_SYSTEM_CHAR];
                 case System.TypeCode.SByte:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_SBYTE];
+                    if (!monoType.IsEnum)
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_SBYTE];
+                    break;
                 case System.TypeCode.Byte:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_BYTE];
+                    if (!monoType.IsEnum)
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_BYTE];
+                    break;
                 case System.TypeCode.Int16:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT16];
+                    if (!monoType.IsEnum)
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT16];
+                    break;
                 case System.TypeCode.UInt16:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT16];
+                    if (!monoType.IsEnum)
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT16];
+                    break;
                 case System.TypeCode.Int32:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT32];
+                    if (!monoType.IsEnum)
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT32];
+                    break;
                 case System.TypeCode.UInt32:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT32];
+                    if (!monoType.IsEnum)
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT32];
+                    break;
                 case System.TypeCode.Int64:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT64];
+                    if (!monoType.IsEnum)
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT64];
+                    break;
                 case System.TypeCode.UInt64:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT64];
+                    if (!monoType.IsEnum)
+                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT64];
+                    break;
                 case System.TypeCode.Single:
                     return Type.types[DnaUnity.Type.TYPE_SYSTEM_SINGLE];
                 case System.TypeCode.Double:
@@ -1288,13 +1411,20 @@ namespace DnaUnity
                 return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_OBJECT];
             else if (monoType == typeof(byte[]))
                 return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_BYTE];
+            else if (monoType == typeof(char[]))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_CHAR];
             else if (monoType == typeof(int[]))
                 return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_INT32];
             else if (monoType == typeof(string[]))
                 return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_STRING];
+            else if (monoType == typeof(object[]))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_OBJECT];
+            else if (monoType == typeof(System.Type[]))
+                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_TYPE];
 
             if (monoType.IsArray) {
-                return Type.GetArrayTypeDef(GetTypeForMonoType(monoType.GetElementType()), null, null);
+                tMD_TypeDef* pElemType = GetTypeForMonoType(monoType.GetElementType(), ppClassTypeArgs, ppMethodTypeArgs);
+                return Type.GetArrayTypeDef(pElemType, null, null);
             }
 
             S.snprintf(nameSpace, 256, monoType.Namespace);
@@ -1303,429 +1433,686 @@ namespace DnaUnity
             return CLIFile.FindTypeInAllLoadedAssemblies(nameSpace, name);
         }
 
-        public static void Fill_FieldDef(tMD_TypeDef *pParentType, FieldInfo fieldInfo, tMD_FieldDef *pFieldDef, 
-            uint memOffset, uint* pAlignment, tMD_TypeDef **ppClassTypeArgs) 
+        public static tMD_TypeDef* GetTypeForMonoObject(object obj,
+            tMD_TypeDef** ppClassTypeArgs, tMD_TypeDef** ppMethodTypeArgs)
         {
-        	tMetaData *pMetaData;
+            if (obj == null) {
+                return Type.types[DnaUnity.Type.ELEMENT_TYPE_OBJECT];
+            }
+            if (obj is DnaObject) {
+                byte* ptr = ((DnaObject)obj).dnaPtr;
+                if (ptr == null)
+                    return Type.types[DnaUnity.Type.ELEMENT_TYPE_OBJECT];
+                return Heap.GetType(ptr);
+            }
+            return GetTypeForMonoType(obj.GetType(), ppClassTypeArgs, ppMethodTypeArgs);
+        }
+
+        public static void Fill_FieldDef(tMD_TypeDef* pParentType, FieldInfo fieldInfo, tMD_FieldDef* pFieldDef,
+            uint memOffset, uint* pAlignment, tMD_TypeDef** ppClassTypeArgs)
+        {
+            tMetaData* pMetaData;
             uint fieldSize;
             uint fieldAlignment;
 
-        	pFieldDef->pParentType = pParentType;
+            pFieldDef->pParentType = pParentType;
 
-            pFieldDef->pType = MonoType.GetTypeForMonoType(fieldInfo.FieldType);
-        	if (pFieldDef->pType == null) {
-        		// If the field is a core generic type definition, then we can't do anything more
-        		return;
-        	}
-        	MetaData.Fill_TypeDef(pFieldDef->pType, null, null);
-            // A check for 0 is done so if a type has a field of it's own type it is handled correctly.
-            if (pFieldDef->pType->instanceMemSize != 0)
+            pFieldDef->pType = MonoType.GetTypeForMonoType(fieldInfo.FieldType, ppClassTypeArgs, null);
+            if (pFieldDef->pType == null) {
+                // If the field is a core generic type definition, then we can't do anything more
+                return;
+            }
+            if (pFieldDef->pType->fillState < Type.TYPE_FILL_LAYOUT) {
+                MetaData.Fill_TypeDef(pFieldDef->pType, null, null);
+            } else if (pFieldDef->pType->fillState < Type.TYPE_FILL_ALL) {
+                MetaData.Fill_Defer(pFieldDef->pType, null, null);
+            }
+            if (pFieldDef->pType->isValueType != 0) {
                 fieldSize = pFieldDef->pType->instanceMemSize;
-            else if (pFieldDef->pType->stackSize != 0)
-                fieldSize = pFieldDef->pType->stackSize;
-            else
-                fieldSize = sizeof(PTR);
-            fieldAlignment = (pFieldDef->pType->isValueType == 0 || pFieldDef->pType->alignment == 0) ? sizeof(PTR) : pFieldDef->pType->alignment;
+                fieldAlignment = (pFieldDef->pType->isValueType == 0 || pFieldDef->pType->alignment == 0) ? sizeof(PTR) : pFieldDef->pType->alignment;
+            } else {
+                fieldSize = fieldAlignment = sizeof(PTR);
+            }
             if (pAlignment != null && *pAlignment < fieldAlignment)
                 *pAlignment = fieldAlignment;
             pFieldDef->memOffset = (memOffset + fieldAlignment - 1) & ~(fieldAlignment - 1);
             pFieldDef->memSize = fieldSize;
-        	pFieldDef->pFieldDef = pFieldDef;
+            pFieldDef->pFieldDef = pFieldDef;
 
             pFieldDef->monoFieldInfo = new H(fieldInfo);
             pFieldDef->monoGetter = new H(GetFieldTrampoline);
             pFieldDef->monoSetter = new H(SetFieldTrampoline);
 
-        	pMetaData = pFieldDef->pMetaData;
+            pMetaData = pFieldDef->pMetaData;
         }
 
-        public static void Fill_MethodDef(tMD_TypeDef *pParentType, MethodInfo methodInfo, tMD_MethodDef *pMethodDef, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
+        public static void Fill_MethodDef(tMD_TypeDef* pParentType, MethodBase methodBase, tMD_MethodDef* pMethodDef, 
+            tMD_TypeDef** ppClassTypeArgs, tMD_TypeDef** ppMethodTypeArgs)
         {
-        	uint i, totalSize, start;
+            uint i, totalSize, start;
 
             if (pMethodDef->isFilled == 1) {
                 return;
             }
 
-        	pMethodDef->pParentType = pParentType;
-        	pMethodDef->pMethodDef = pMethodDef;
-        	pMethodDef->isFilled = 1;
+            pMethodDef->pParentType = pParentType;
+            pMethodDef->pMethodDef = pMethodDef;
+            pMethodDef->isFilled = 1;
 
-        	if (methodInfo.IsGenericMethodDefinition) {
-        		// Generic definition method, so can't do any more.
-        		//Sys.log_f("Method<>: %s.%s.%s()\n", pParentType->nameSpace, pParentType->name, pMethodDef->name);
-        		return;
-        	}
+            if (methodBase.IsGenericMethodDefinition) {
+                // Generic definition method, so can't do any more.
+                //Sys.log_f("Method<>: %s.%s.%s()\n", pParentType->nameSpace, pParentType->name, pMethodDef->name);
+                return;
+            }
 
-            ParameterInfo[] paramInfos = methodInfo.GetParameters();
+            ParameterInfo[] paramInfos = methodBase.GetParameters();
 
-            pMethodDef->numberOfParameters = (ushort)(paramInfos.Length + (methodInfo.IsStatic?0:1));
-            pMethodDef->pReturnType = GetTypeForMonoType(methodInfo.ReturnType);
-            if (pMethodDef->pReturnType == Type.types[Type.TYPE_SYSTEM_VOID])
+            pMethodDef->numberOfParameters = (ushort)(paramInfos.Length + (methodBase.IsStatic ? 0 : 1));
+            if (methodBase is MethodInfo) {
+                pMethodDef->pReturnType = GetTypeForMonoType(((MethodInfo)methodBase).ReturnType, 
+                    ppClassTypeArgs, ppMethodTypeArgs);
+            } else {
                 pMethodDef->pReturnType = null;
-        	if (pMethodDef->pReturnType != null) {
-        		MetaData.Fill_TypeDef(pMethodDef->pReturnType, null, null);
-        	}
+            }
+            if (pMethodDef->pReturnType == Type.types[Type.TYPE_SYSTEM_VOID]) {
+                pMethodDef->pReturnType = null;
+            }
+            if (pMethodDef->pReturnType != null && pMethodDef->pReturnType->fillState < Type.TYPE_FILL_ALL) {
+                MetaData.Fill_Defer(pMethodDef->pReturnType, null, null);
+            }
             pMethodDef->pParams = (tParameter*)Mem.malloc((SIZE_T)(pMethodDef->numberOfParameters * sizeof(tParameter)));
-        	totalSize = 0;
+            totalSize = 0;
             start = 0;
-        	if (!methodInfo.IsStatic) {
-        		// Fill in parameter info for the 'this' pointer
-        		pMethodDef->pParams->offset = 0;
-        		if (pParentType->isValueType != 0) {
-        			// If this is a value-type then the 'this' pointer is actually an IntPtr to the value-type's location
+            if (!methodBase.IsStatic) {
+                // Fill in parameter info for the 'this' pointer
+                pMethodDef->pParams->offset = 0;
+                if (pParentType->isValueType != 0) {
+                    // If this is a value-type then the 'this' pointer is actually an IntPtr to the value-type's location
                     pMethodDef->pParams->size = sizeof(PTR);
-        			pMethodDef->pParams->pStackTypeDef = Type.types[Type.TYPE_SYSTEM_INTPTR];
-        		} else {
+                    pMethodDef->pParams->pStackTypeDef = Type.types[Type.TYPE_SYSTEM_INTPTR];
+                } else {
                     pMethodDef->pParams->size = sizeof(PTR);
-        			pMethodDef->pParams->pStackTypeDef = pParentType;
-        		}
+                    pMethodDef->pParams->pStackTypeDef = pParentType;
+                }
                 totalSize = sizeof(PTR);
                 start = 1;
-        	}
-        	for (i=start; i<pMethodDef->numberOfParameters; i++) {
-        		tMD_TypeDef *pStackTypeDef;
+            }
+            for (i = start; i < pMethodDef->numberOfParameters; i++) {
+                tMD_TypeDef* pStackTypeDef;
                 tMD_TypeDef* pByRefTypeDef;
-        		uint size;
+                uint size;
 
                 // NOTE: Byref values are treated as intptr's in DNA
                 System.Type paramType = paramInfos[i - start].ParameterType;
                 if (paramType.IsByRef) {
                     pStackTypeDef = Type.types[Type.TYPE_SYSTEM_INTPTR];
-                    pByRefTypeDef = GetTypeForMonoType(paramType.GetElementType());
+                    pByRefTypeDef = GetTypeForMonoType(paramType.GetElementType(), 
+                        ppClassTypeArgs, ppMethodTypeArgs);
                 } else {
-                    pStackTypeDef = GetTypeForMonoType(paramType);
+                    pStackTypeDef = GetTypeForMonoType(paramType, 
+                        ppClassTypeArgs, ppMethodTypeArgs);
                     pByRefTypeDef = null;
                 }
 
                 if (pStackTypeDef != null) {
-                    MetaData.Fill_TypeDef(pStackTypeDef, null, null);
+                    if (pStackTypeDef->fillState < Type.TYPE_FILL_LAYOUT) {
+                        MetaData.Fill_TypeDef(pStackTypeDef, null, null, Type.TYPE_FILL_LAYOUT);
+                    } else if (pStackTypeDef->fillState < Type.TYPE_FILL_ALL) {
+                        MetaData.Fill_Defer(pStackTypeDef, null, null);
+                    }
                     size = pStackTypeDef->stackSize;
                 } else {
                     size = 0;
                 }
                 if (pByRefTypeDef != null) {
-                    MetaData.Fill_TypeDef(pByRefTypeDef, null, null);
+                    if (pByRefTypeDef->fillState < Type.TYPE_FILL_LAYOUT) {
+                        MetaData.Fill_TypeDef(pByRefTypeDef, null, null, Type.TYPE_FILL_LAYOUT);
+                    } else if (pByRefTypeDef->fillState < Type.TYPE_FILL_ALL) {
+                        MetaData.Fill_Defer(pByRefTypeDef, null, null);
+                    }
                 }
                 pMethodDef->pParams[i].pStackTypeDef = pStackTypeDef;
                 pMethodDef->pParams[i].pByRefTypeDef = pByRefTypeDef;
                 pMethodDef->pParams[i].offset = totalSize;
-        		pMethodDef->pParams[i].size = size;
-        		totalSize += size;
-        	}
-        	pMethodDef->parameterStackSize = totalSize;
+                pMethodDef->pParams[i].size = size;
+                totalSize += size;
+            }
+            pMethodDef->parameterStackSize = totalSize;
 
-            if (pMethodDef->monoMethodInfo == null) 
-                pMethodDef->monoMethodInfo = new H(methodInfo);
+            if (pMethodDef->monoMethodInfo == null)
+                pMethodDef->monoMethodInfo = new H(methodBase);
             if (pMethodDef->monoMethodCall == null)
                 pMethodDef->monoMethodCall = new H(CallMethodTrampoline);
         }
 
-        public static void Fill_TypeDef(tMD_TypeDef *pTypeDef, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
+        // Get only public methods, or public/protected if type is not sealed
+        public static MethodInfo[] GetMethods(System.Type monoType)
         {
-        	uint instanceMemSize, staticMemSize, virtualOfs, i, j, k;
-            int lastPeriod;
-        	tMetaData *pMetaData;
-        	tMD_TypeDef *pParent;
-            System.Type monoType;
-            FieldInfo[] fieldInfos;
-            FieldInfo fieldInfo;
-            tMD_FieldDef* pFieldDefs = null;
-            MethodInfo[] methodInfos;
-            MethodInfo methodInfo;
-            tMD_MethodDef* pMethodDef;
-            tMD_MethodDef* pMethodDefs = null;
+            MethodInfo[] methodInfos = monoType.GetMethods(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
 
-            if (pTypeDef->isFilled == 1) {
+            List<MethodInfo> interfaceMethods = null;
+
+            // Make sure we include non-public methods implementing interfaces
+            System.Type[] interfaceTypes = monoType.GetInterfaces();
+            if (interfaceTypes.Length > 0 && !monoType.IsGenericTypeDefinition) {
+                for (int i = 0; i < interfaceTypes.Length; i++) {
+                    InterfaceMapping interfaceMapping = monoType.GetInterfaceMap(interfaceTypes[i]);
+                    MethodInfo[] targetMethods = interfaceMapping.TargetMethods;
+                    if (interfaceMethods == null)
+                        interfaceMethods = new List<MethodInfo>();
+                    interfaceMethods.AddRange(targetMethods);
+                }
+            }
+
+            List<MethodInfo> finalInfos = new List<MethodInfo>();
+            foreach (MethodInfo methodInfo in methodInfos) {
+                if (methodInfo.IsPublic || (!monoType.IsSealed && methodInfo.IsFamily)) {
+                    finalInfos.Add(methodInfo);
+                } else if (interfaceMethods != null && interfaceMethods.Contains(methodInfo)) { 
+                    finalInfos.Add(methodInfo);
+                }
+            }
+            return finalInfos.ToArray();
+        }
+
+        // Get only public methods, or public/protected if type is not sealed
+        public static ConstructorInfo[] GetConstructors(System.Type monoType)
+        {
+            ConstructorInfo[] constructorInfos = monoType.GetConstructors(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+            List<ConstructorInfo> finalInfos = new List<ConstructorInfo>();
+            foreach (ConstructorInfo constructorInfo in constructorInfos) {
+                if (constructorInfo.IsPublic || (!monoType.IsSealed && constructorInfo.IsFamily)) {
+                    finalInfos.Add(constructorInfo);
+                } else {
+                    // Also add no param constructor
+                    ParameterInfo[] parms = constructorInfo.GetParameters();
+                    if (parms.Length == 0)
+                        finalInfos.Add(constructorInfo);
+                }
+            }
+            return finalInfos.ToArray();
+        }
+
+        // Get only public methods, or public/protected if type is not sealed
+        public static FieldInfo[] GetFields(System.Type monoType)
+        {
+            FieldInfo[] fieldInfos = monoType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
+            List<FieldInfo> finalInfos = new List<FieldInfo>();
+            foreach (FieldInfo fieldInfo in fieldInfos) {
+                if (fieldInfo.IsPublic || (monoType.IsValueType && !fieldInfo.IsStatic))
+                    finalInfos.Add(fieldInfo);
+            }
+            return finalInfos.ToArray();
+        }
+
+        public static tMD_MethodDef* FindInterfaceOverriddenMethod(tMD_TypeDef* pInterfaceTargetType, 
+            tMD_MethodDef* pInterfaceMethod, MethodInfo[] interfaceMethods, MethodInfo[] targetMethods)
+        {
+            MethodInfo interfaceMethodInfo = null;
+            for (int i = 0; i < interfaceMethods.Length; i++) {
+                if (S.strcmp(pInterfaceMethod->name, interfaceMethods[i].Name) == 0) {
+                    interfaceMethodInfo = targetMethods[i];
+                    break;
+                }
+            }
+            if (interfaceMethodInfo == null) {
+                Sys.Crash("Unable to find mapped method %s", (PTR)(pInterfaceMethod->name));
+            }
+            tMD_MethodDef* pOverriddenMethod = null;
+            for (int i = 0; i < pInterfaceTargetType->numMethods; i++) {
+                tMD_MethodDef* pMethodDef = pInterfaceTargetType->ppMethods[i];
+                MethodInfo methodInfo = H.ToObj(pMethodDef->monoMethodInfo) as MethodInfo;
+                if (methodInfo == interfaceMethodInfo) {
+                    return pInterfaceTargetType->ppMethods[i];
+                }
+            }
+            return null;
+        }
+
+        public static void Fill_TypeDef(tMD_TypeDef* pTypeDef, tMD_TypeDef** ppClassTypeArgs, 
+            tMD_TypeDef** ppMethodTypeArgs, uint resolve = Type.TYPE_FILL_ALL)
+        {
+            uint instanceMemSize, staticMemSize, virtualOfs, isDeferred, i, j;
+            int lastPeriod;
+            tMetaData* pMetaData;
+            tMD_TypeDef* pParent;
+            System.Type monoType;
+            tMD_FieldDef* pFieldDefs;
+            tMD_MethodDef* pMethodDefs;
+            FieldInfo[] fieldInfos = null;
+            FieldInfo fieldInfo;
+            MethodInfo[] methodInfos = null;
+            ConstructorInfo[] constructorInfos = null;
+            MethodBase methodBase;
+            tMD_MethodDef* pMethodDef;
+
+            if (pTypeDef->fillState >= resolve) {
                 return;
             }
 
-            if (pTypeDef->monoType == null)
-            {
-                MetaData.Fill_TypeDef(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs);
+            if (pTypeDef->monoType == null) {
+                MetaData.Fill_TypeDef(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs, resolve);
                 return;
             }
 
             //Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
 
+            if (resolve < Type.TYPE_FILL_ALL) {
+                MetaData.Fill_Defer(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs);
+            }
+
+            if (MetaData.typesToFill == null) {
+                MetaData.Fill_StartDefer();
+                isDeferred = 1;
+            } else {
+                isDeferred = 0;
+            }
+
             monoType = H.ToObj(pTypeDef->monoType) as System.Type;
-            fieldInfos = monoType.GetFields(BindingFlags.FlattenHierarchy | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
-            methodInfos = monoType.GetMethods(BindingFlags.FlattenHierarchy | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
             pMetaData = pTypeDef->pMetaData;
-        	pTypeDef->isFilled = 1;
-        	pTypeDef->pTypeDef = pTypeDef;
 
-            pTypeDef->pParent = MonoType.GetTypeForMonoType(monoType.BaseType);
-        	pParent = pTypeDef->pParent;
+            if (pTypeDef->fillState < Type.TYPE_FILL_PARENTS) {
+                pTypeDef->fillState = Type.TYPE_FILL_PARENTS;
 
-        	if (pParent != null) {
-        		MetaData.Fill_TypeDef(pParent, null, null);
-        		virtualOfs = pParent->numVirtualMethods;
-        	} else {
-        		virtualOfs = 0;
-        	}
-            pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
-            pTypeDef->alignment = 1;
+                // For Methods, we get only public if sealed, or public/protected if not sealed
+                methodInfos = GetMethods(monoType);
+                // For fields, we only get private fields for value types
+                fieldInfos = GetFields(monoType);
+                // For constructors, we get only public if sealed, or public/protected if not sealed
+                constructorInfos = GetConstructors(monoType);
 
-            // Mark all ref types as having a base GCHandle pointer as the first slot in their instance data.  This allows
-            // the Heap system to call FREE on this GCHandle whenever we garbage collect mono wrapped or derived heap objects.
-            pTypeDef->hasMonoBase = (byte)(monoType.IsValueType ? 0 : 1);
+                pTypeDef->pTypeDef = pTypeDef;
 
-            // If not primed, then work out how many methods & fields there are.
-            if (pTypeDef->isPrimed == 0) {
-        		// Methods
-                pTypeDef->numMethods = (uint)methodInfos.Length;
-        		// Fields
-        		pTypeDef->numFields = (uint)fieldInfos.Length;
-        	}
+                pTypeDef->pParent = MonoType.GetTypeForMonoType(monoType.BaseType, null, null);
+                pParent = pTypeDef->pParent;
 
-        	// This only needs to be done for non-generic Type.types, or for generic type that are not a definition
-        	// I.e. Fully instantiated generic Type.types
-        	if (pTypeDef->isGenericDefinition == 0) {
+                if (pParent != null) {
+                    MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_PARENTS);
+                }
+                pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
+                pTypeDef->alignment = 1;
 
-        	    // Populate methods
-                pTypeDef->ppMethods = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef*)));
-                pMethodDefs = (tMD_MethodDef*)Mem.mallocForever((SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef)));
-                Mem.memset(pMethodDefs, 0, (SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef)));
-                for (i = 0; i < methodInfos.Length; i++) {
-                    methodInfo = methodInfos[i];
-                    pMethodDef = &pMethodDefs[i];
+                // Mark all ref types as having a base GCHandle pointer as the first slot in their instance data.  This allows
+                // the Heap system to call FREE on this GCHandle whenever we garbage collect mono wrapped or derived heap objects.
+                pTypeDef->hasMonoBase = (byte)(monoType.IsValueType ? 0 : 1);
 
-                    lastPeriod = methodInfo.Name.LastIndexOf('.');
-                    if (lastPeriod == -1) {
-                        pMethodDef->name = new S(methodInfo.Name);
-                    } else {
-                        string nameMinusExclInterfaceName = methodInfo.Name.Substring(lastPeriod + 1);
-                        pMethodDef->name = new S(nameMinusExclInterfaceName);
+                // If not primed, then work out how many methods & fields there are.
+                if (pTypeDef->isPrimed == 0) {
+                    // Methods
+                    pTypeDef->numMethods = (uint)(constructorInfos.Length + methodInfos.Length);
+                    // Fields
+                    pTypeDef->numFields = (uint)fieldInfos.Length;
+                }
+
+                // If this is an enum type, then pretend its stack type is its underlying type
+                if (pTypeDef->pParent == Type.types[Type.TYPE_SYSTEM_ENUM]) {
+                    pTypeDef->stackType = EvalStack.EVALSTACK_INT32;
+                }
+
+                if (pTypeDef->fillState >= resolve)
+                    return;
+
+            } else {
+
+                pParent = pTypeDef->pParent;
+
+            }
+
+            if (pTypeDef->fillState < Type.TYPE_FILL_LAYOUT) {
+                pTypeDef->fillState = Type.TYPE_FILL_LAYOUT;
+
+                if (pParent != null) {
+                    if (pParent->fillState < Type.TYPE_FILL_LAYOUT) {
+                        MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_LAYOUT);
+                    } else if (pParent->fillState < Type.TYPE_FILL_ALL) {
+                        MetaData.Fill_Defer(pParent, null, null);
                     }
-                    pMethodDef->monoMethodInfo = new H(methodInfo);
-                    pMethodDef->pMetaData = pMetaData;
-                    pMethodDef->pParentType = pTypeDef;
-                    pMethodDef->flags = (ushort)(
-                        (methodInfo.IsVirtual ? MetaData.METHODATTRIBUTES_VIRTUAL : 0) |
-                        (methodInfo.IsStatic ? MetaData.METHODATTRIBUTES_STATIC : 0));
+                }
 
-                    // NOTE: All mono calls are considered internal calls
-                    pMethodDef->implFlags = (ushort)MetaData.METHODIMPLATTRIBUTES_INTERNALCALL;
-        		    pTypeDef->ppMethods[i] = pMethodDef;
+                // This only needs to be done for non-generic Type.types, or for generic type that are not a definition
+                // I.e. Fully instantiated generic Type.types
+                if (pTypeDef->isGenericDefinition == 0) {
 
-                    // Assign vtable slots
-        			if (methodInfo.IsVirtual) {
-                        if (methodInfo.GetBaseDefinition().DeclaringType == monoType) {
-        					// Allocate a new vTable slot if method is explicitly marked as NewSlot, or
-        					// this is of type Object.
-        					pMethodDef->vTableOfs = virtualOfs++;
-        				} else {
-        					tMD_MethodDef *pVirtualOveriddenMethod;
-        					pVirtualOveriddenMethod = MetaData.FindVirtualOverriddenMethod(pTypeDef->pParent, pMethodDef);
-                            if (pVirtualOveriddenMethod == null) {
-                                Sys.Crash("Unable to find virtual override %s", (PTR)(pMethodDef->name));
+                    // For fields, we only get private fields for value types
+                    if (fieldInfos == null)
+                        fieldInfos = GetFields(monoType);
+
+                    // Resolve fields, members, interfaces.
+                    // Only needs to be done if it's not a generic definition type
+
+                    // It it's not a value-type and the stack-size is not preset, then set it up now.
+                    // It needs to be done here as non-static fields in non-value type can point to the containing type
+                    if (pTypeDef->stackSize == 0 && pTypeDef->isValueType == 0) {
+                        pTypeDef->stackType = EvalStack.EVALSTACK_O;
+                        pTypeDef->stackSize = sizeof(PTR);
+                        pTypeDef->alignment = sizeof(PTR);
+                    }
+                    // Resolve all fields - instance ONLY at this point,
+                    // because static fields in value-Type.types can be of the containing type, and the size is not yet known.
+                    staticMemSize = 0;
+                    if (pTypeDef->numFields > 0) {
+                        pTypeDef->ppFields = (tMD_FieldDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numFields * sizeof(tMD_FieldDef*)));
+                        pFieldDefs = (tMD_FieldDef*)Mem.mallocForever((SIZE_T)(pTypeDef->numFields * sizeof(tMD_FieldDef)));
+                        Mem.memset(pFieldDefs, 0, (SIZE_T)(pTypeDef->numFields * sizeof(tMD_FieldDef)));
+                    } else {
+                        pFieldDefs = null;
+                    }
+                    instanceMemSize = 0;
+                    for (i = 0; i < fieldInfos.Length; i++) {
+
+                        fieldInfo = fieldInfos[i];
+                        tMD_FieldDef* pFieldDef = &pFieldDefs[i];
+
+                        pFieldDef->name = new S(fieldInfo.Name);
+                        pFieldDef->flags = (ushort)(
+                            (fieldInfo.IsStatic ? MetaData.FIELDATTRIBUTES_STATIC : 0) |
+                            (fieldInfo.IsLiteral ? MetaData.FIELDATTRIBUTES_LITERAL : 0)
+                            );
+
+                        if (!fieldInfo.IsStatic) {
+                            if (fieldInfo.IsLiteral /*|| MetaData.FIELD_HASFIELDRVA(pFieldDef)*/) {
+                                // If it's a literal, then analyse the field, but don't include it in any memory allocation
+                                // If is has an RVA, then analyse the field, but don't include it in any memory allocation
+                                MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, 0, null, ppClassTypeArgs);
+                            } else {
+                                MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, instanceMemSize, &(pTypeDef->alignment), ppClassTypeArgs);
+                                instanceMemSize = pFieldDef->memOffset + pFieldDef->memSize;
                             }
-        					pMethodDef->vTableOfs = pVirtualOveriddenMethod->vTableOfs;
-        				}
-        			} else {
-        				// Dummy value - make it obvious it's not valid!
-        				pMethodDef->vTableOfs = 0xffffffff;
-        			}
+                            pTypeDef->ppFields[i] = pFieldDef;
+                        }
+                    }
+                    if (pTypeDef->instanceMemSize == 0) {
+                        if (pTypeDef->isValueType != 0) {
+                            // Our dna value types are the same size as they are in mono (hopefully!)
+                            pTypeDef->instanceMemSize = (instanceMemSize + (pTypeDef->alignment - 1)) & ~(pTypeDef->alignment - 1);
+                        } else {
+                            // For mono reference types, the instance size is ALWAYS ptr size because we're wrapping a mono GCHandle pointer
+                            pTypeDef->instanceMemSize = sizeof(PTR);
+                        }
+                    }
 
-                    pTypeDef->ppMethods[i] = pMethodDef;
-                }
-                // Create the virtual method table
-                pTypeDef->numVirtualMethods = virtualOfs;
+                    // Sort out stack type and size.
+                    // Note that this may already be set, as some basic type have this preset;
+                    // or if it's not a value-type it'll already be set
+                    if (pTypeDef->stackSize == 0) {
+                        // if it gets here then it must be a value type
+                        pTypeDef->stackType = EvalStack.EVALSTACK_VALUETYPE;
+                        pTypeDef->stackSize = pTypeDef->instanceMemSize;
+                    }
 
-                // Resolve fields, members, interfaces.
-                // Only needs to be done if it's not a generic definition type
+                    // Sort out array element size. Note that some basic type will have this preset.
+                    if (pTypeDef->arrayElementSize == 0) {
+                        pTypeDef->arrayElementSize = pTypeDef->stackSize;
+                    }
 
-                // It it's not a value-type and the stack-size is not preset, then set it up now.
-                // It needs to be done here as non-static fields in non-value type can point to the containing type
-                if (pTypeDef->stackSize == 0 && pTypeDef->isValueType == 0) {
-        			pTypeDef->stackType = EvalStack.EVALSTACK_O;
-        			pTypeDef->stackSize = sizeof(PTR);
-                    pTypeDef->alignment = sizeof(PTR);
-                }
-                // Resolve all fields - instance ONLY at this point,
-                // because static fields in value-Type.types can be of the containing type, and the size is not yet known.
-                staticMemSize = 0;
-        		if (pTypeDef->numFields > 0) {
-                    pTypeDef->ppFields = (tMD_FieldDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numFields * sizeof(tMD_FieldDef*)));
-                    pFieldDefs = (tMD_FieldDef*)Mem.mallocForever((SIZE_T)(pTypeDef->numFields * sizeof(tMD_FieldDef)));
-                    Mem.memset(pFieldDefs, 0, (SIZE_T)(pTypeDef->numFields * sizeof(tMD_FieldDef)));
-                }
-        		instanceMemSize = 0;
-        		for (i=0; i < fieldInfos.Length; i++) {
+                    // Make sure stack size is even multiple of stack alignment
+                    pTypeDef->stackSize = (pTypeDef->stackSize + (STACK_ALIGNMENT - 1)) & ~(STACK_ALIGNMENT - 1);
 
-                    fieldInfo = fieldInfos[i];
-                    tMD_FieldDef* pFieldDef = &pFieldDefs[i];
+                    // Handle static fields
+                    for (i = 0; i < fieldInfos.Length; i++) {
 
-                    pFieldDef->name = new S(fieldInfo.Name);
-                    pFieldDef->flags = (ushort)(
-                        (fieldInfo.IsStatic ? MetaData.FIELDATTRIBUTES_STATIC : 0) |
-                        (fieldInfo.IsLiteral ? MetaData.FIELDATTRIBUTES_LITERAL : 0)
-                        );
+                        fieldInfo = fieldInfos[i];
+                        tMD_FieldDef* pFieldDef = &pFieldDefs[i];
 
-        			if (!fieldInfo.IsStatic) {
-        				if (fieldInfo.IsLiteral /*|| MetaData.FIELD_HASFIELDRVA(pFieldDef)*/) {
-        					// If it's a literal, then analyse the field, but don't include it in any memory allocation
-        					// If is has an RVA, then analyse the field, but don't include it in any memory allocation
-        					MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, 0, null, ppClassTypeArgs);
-        				} else {
-                            MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, instanceMemSize, &(pTypeDef->alignment), ppClassTypeArgs);
-        					instanceMemSize += pFieldDef->memSize;
-        				}
-        				pTypeDef->ppFields[i] = pFieldDef;
-        			}
-        		}
-        		if (pTypeDef->instanceMemSize == 0) {
-                    if (pTypeDef->isValueType != 0) {
-                        // Our dna value types are the same size as they are in mono (hopefully!)
-                        pTypeDef->instanceMemSize = (instanceMemSize + (pTypeDef->alignment - 1)) & ~(pTypeDef->alignment - 1);
-                    } else {
-                        // For mono reference types, the instance size is ALWAYS ptr size because we're wrapping a mono GCHandle pointer
-                        pTypeDef->instanceMemSize = sizeof(PTR);
+                        if (fieldInfo.IsStatic) {
+                            if (fieldInfo.IsLiteral /*|| MetaData.FIELD_HASFIELDRVA(pFieldDef)*/) {
+                                // If it's a literal, then analyse the field, but don't include it in any memory allocation
+                                // If is has an RVA, then analyse the field, but don't include it in any memory allocation
+                                MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, 0, null, ppClassTypeArgs);
+                            } else {
+                                MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, staticMemSize, null, ppClassTypeArgs);
+                                staticMemSize += pFieldDef->memSize;
+                            }
+                            pTypeDef->ppFields[i] = pFieldDef;
+                        }
+                    }
+                    if (staticMemSize > 0) {
+                        pTypeDef->staticFieldSize = staticMemSize;
                     }
                 }
 
-        		// Sort out stack type and size.
-        		// Note that this may already be set, as some basic type have this preset;
-        		// or if it's not a value-type it'll already be set
-        		if (pTypeDef->stackSize == 0) {
-        			// if it gets here then it must be a value type
-        			pTypeDef->stackType = EvalStack.EVALSTACK_VALUETYPE;
-        			pTypeDef->stackSize = pTypeDef->instanceMemSize;
-        		}
+                if (pTypeDef->fillState >= resolve)
+                    return;
+            }
 
-        		// Sort out array element size. Note that some basic type will have this preset.
-        		if (pTypeDef->arrayElementSize == 0) {
-        			pTypeDef->arrayElementSize = pTypeDef->stackSize;
-        		}
+            if (pTypeDef->fillState < Type.TYPE_FILL_VTABLE) {
+                pTypeDef->fillState = Type.TYPE_FILL_VTABLE;
 
-        		// Handle static fields
-        		for (i=0; i < fieldInfos.Length; i++) {
+                if (pParent != null) {
+                    if (pParent->fillState < Type.TYPE_FILL_VTABLE) {
+                        MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_VTABLE);
+                    } else if (pParent->fillState < Type.TYPE_FILL_ALL) {
+                        MetaData.Fill_Defer(pParent, null, null);
+                    }
+                }
 
-                    fieldInfo = fieldInfos[i];
-                    tMD_FieldDef* pFieldDef = &pFieldDefs[i];
+                // This only needs to be done for non-generic Type.types, or for generic type that are not a definition
+                // I.e. Fully instantiated generic Type.types
+                if (pTypeDef->isGenericDefinition == 0) {
 
-        			if (fieldInfo.IsStatic) {
-        				if (fieldInfo.IsLiteral /*|| MetaData.FIELD_HASFIELDRVA(pFieldDef)*/) {
-        					// If it's a literal, then analyse the field, but don't include it in any memory allocation
-        					// If is has an RVA, then analyse the field, but don't include it in any memory allocation
-        					MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, 0, null, ppClassTypeArgs);
-        				} else {
-        					MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, staticMemSize, null, ppClassTypeArgs);
-        					staticMemSize += pFieldDef->memSize;
-        				}
-        				pTypeDef->ppFields[i] = pFieldDef;
-        			}
-        		}
-        		if (staticMemSize > 0) {
-        			pTypeDef->staticFieldSize = staticMemSize;
-        		}
+                    virtualOfs = (pParent != null) ? pParent->numVirtualMethods : 0;
 
-        		// Resolve all members
-                pTypeDef->pVTable = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numVirtualMethods * sizeof(tMD_MethodDef*)));
-        		// Copy initial vTable from parent
-        		if (pTypeDef->pParent != null) {
-                    Mem.memcpy(pTypeDef->pVTable, pTypeDef->pParent->pVTable, (SIZE_T)(pTypeDef->pParent->numVirtualMethods * sizeof(tMD_MethodDef*)));
-        		}
-                for (i = 0; i < methodInfos.Length; i++) {
-                    methodInfo = methodInfos[i];
-                    pMethodDef = &pMethodDefs[i];
+                    // For Methods, we get only public if sealed, or public/protected if not sealed
+                    if (methodInfos == null)
+                        methodInfos = GetMethods(monoType);
+                    // For constructors, we get only public if sealed, or public/protected if not sealed
+                    if (constructorInfos == null)
+                        constructorInfos = GetConstructors(monoType);
 
-                    if (methodInfo.IsStatic && methodInfo.Name == ".cctor") {
-        				// This is a static constructor
-        				pTypeDef->pStaticConstructor = pMethodDef;
-        			}
-        			if (methodInfo.IsStatic && pTypeDef->pParent != null &&
-                        methodInfo.Name == "Finalize") {
-        				// This is a Finalizer method, but not for Object.
-        				// Delibrately miss out Object's Finalizer because it's empty and will cause every object
-        				// of any type to have a Finalizer which will be terrible for performance.
-        				pTypeDef->pFinalizer = pMethodDef;
-        			}
-        			if (methodInfo.IsVirtual) {
-        				// This is a virtual method, so enter it in the vTable
-        				pTypeDef->pVTable[pMethodDef->vTableOfs] = pMethodDef;
-        			}
-        		}
+                    // Populate methods
+                    pTypeDef->ppMethods = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef*)));
+                    pMethodDefs = (tMD_MethodDef*)Mem.mallocForever((SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef)));
+                    Mem.memset(pMethodDefs, 0, (SIZE_T)(pTypeDef->numMethods * sizeof(tMD_MethodDef)));
+                    for (i = 0; i < pTypeDef->numMethods; i++) {
+                        methodBase = (i < constructorInfos.Length) ?
+                            (MethodBase)constructorInfos[i] : methodInfos[i - constructorInfos.Length];
+                        pMethodDef = &pMethodDefs[i];
 
-        		// Find inherited Finalizer, if this type doesn't have an explicit Finalizer, and if there is one
-        		if (pTypeDef->pFinalizer == null) {
-        			tMD_TypeDef *pInheritedType = pTypeDef->pParent;
-        			while (pInheritedType != null) {
-        				if (pInheritedType->pFinalizer != null) {
-        					pTypeDef->pFinalizer = pInheritedType->pFinalizer;
-        					break;
-        				}
-        				pInheritedType = pInheritedType->pParent;
-        			}
-        		}
+                        lastPeriod = methodBase.Name.LastIndexOf('.');
+                        if (methodBase is ConstructorInfo || lastPeriod == -1) {
+                            pMethodDef->name = new S(methodBase.Name);
+                        } else {
+                            string nameMinusExclInterfaceName = methodBase.Name.Substring(lastPeriod + 1);
+                            pMethodDef->name = new S(nameMinusExclInterfaceName);
+                        }
 
-        		// Fill all method definitions for this type
-        		for (i=0; i<pTypeDef->numMethods; i++) {
-        			MonoType.Fill_MethodDef(pTypeDef, methodInfos[i], pTypeDef->ppMethods[i], ppClassTypeArgs, ppMethodTypeArgs);
-        		}
+                        pMethodDef->monoMethodInfo = new H(methodBase);
+                        pMethodDef->pMetaData = pMetaData;
+                        pMethodDef->pParentType = pTypeDef;
+                        pMethodDef->flags = (ushort)(
+                            (methodBase.IsVirtual ? MetaData.METHODATTRIBUTES_VIRTUAL : 0) |
+                            (methodBase.IsStatic ? MetaData.METHODATTRIBUTES_STATIC : 0));
 
-        		// Map all interface method calls. This only needs to be done for Classes, not Interfaces
-        		// And is not done for generic definitions.
-        		if (!monoType.IsInterface) {
-                    System.Type[] interfaceTypes = monoType.GetInterfaces();
-                    pTypeDef->numInterfaces = (uint)interfaceTypes.Length;
-        			if (interfaceTypes.Length > 0 && pTypeDef->isGenericDefinition == 0) {
-                        pTypeDef->pInterfaceMaps = (tInterfaceMap*)Mem.mallocForever((SIZE_T)(pTypeDef->numInterfaces * sizeof(tInterfaceMap)));
-        				for (i = 0; i < interfaceTypes.Length; i++) {
-        					// Get the interface that this type implements
-        					tMD_TypeDef* pInterface = MonoType.GetTypeForMonoType(interfaceTypes[i]);
-        					MetaData.Fill_TypeDef(pInterface, null, null);
-        					tInterfaceMap* pMap = &pTypeDef->pInterfaceMaps[i];
-                            pMap->pInterface = pInterface;
-        					pMap->pVTableLookup = (uint*)Mem.mallocForever(pInterface->numVirtualMethods * sizeof(uint));
-        					pMap->ppMethodVLookup = null;
-                            InterfaceMapping interfaceMapping = monoType.GetInterfaceMap(interfaceTypes[i]);
-                            MethodInfo[] interfaceMethods = interfaceMapping.InterfaceMethods;
-                            MethodInfo[] targetMethods = interfaceMapping.TargetMethods;
-                            // Discover interface mapping for each interface method
-                            for (j=0; j<pInterface->numVirtualMethods; j++) {
-                                tMD_MethodDef* pInterfaceMethod = pInterface->pVTable[j];
-                                MethodInfo interfaceMethodInfo = null;
-                                for (k=0; k<interfaceMethods.Length; k++) {
-                                    if (S.strcmp(pInterfaceMethod->name, interfaceMethods[k].Name) == 0) {
-                                        interfaceMethodInfo = targetMethods[k];
-                                        break;
+                        // NOTE: All mono calls are considered internal calls
+                        pMethodDef->implFlags = (ushort)MetaData.METHODIMPLATTRIBUTES_INTERNALCALL;
+                        pTypeDef->ppMethods[i] = pMethodDef;
+
+                        // Assign vtable slots
+                        if (methodBase.IsVirtual) {
+                            if (((MethodInfo)methodBase).GetBaseDefinition().DeclaringType == monoType) {
+                                // Allocate a new vTable slot if method is explicitly marked as NewSlot, or
+                                // this is of type Object.
+                                pMethodDef->vTableOfs = virtualOfs++;
+                            } else {
+                                tMD_MethodDef* pVirtualOveriddenMethod;
+                                pVirtualOveriddenMethod = MetaData.FindVirtualOverriddenMethod(pTypeDef->pParent, pMethodDef);
+                                if (pVirtualOveriddenMethod == null) {
+                                    if (pTypeDef->pParent->monoType == null) {
+                                        // DNA types don't always have all base methods that Unity/Mono has.  In those
+                                        // cases, just add the missing method to the VTable as a new virtual method.
+                                        pMethodDef->vTableOfs = virtualOfs++;
+                                    } else {
+                                        Sys.Crash("Unable to find virtual override %s", (PTR)(pMethodDef->name));
                                     }
+                                } else {
+                                    pMethodDef->vTableOfs = pVirtualOveriddenMethod->vTableOfs;
                                 }
-                                if (interfaceMethodInfo == null) {
-                                    Sys.Crash("Unable to find mapped method %s", (PTR)(pInterfaceMethod->name));
+                            }
+                        } else {
+                            // Dummy value - make it obvious it's not valid!
+                            pMethodDef->vTableOfs = 0xffffffff;
+                        }
+
+                        pTypeDef->ppMethods[i] = pMethodDef;
+                    }
+
+                    // Create the virtual method table
+                    pTypeDef->numVirtualMethods = virtualOfs;
+
+                    // Resolve all members
+                    pTypeDef->pVTable = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numVirtualMethods * sizeof(tMD_MethodDef*)));
+                    // Copy initial vTable from parent
+                    if (pTypeDef->pParent != null) {
+                        Mem.memcpy(pTypeDef->pVTable, pTypeDef->pParent->pVTable, (SIZE_T)(pTypeDef->pParent->numVirtualMethods * sizeof(tMD_MethodDef*)));
+                    }
+                    for (i = 0; i < pTypeDef->numMethods; i++) {
+                        pMethodDef = pTypeDef->ppMethods[i];
+                        methodBase = H.ToObj(pMethodDef->monoMethodInfo) as MethodBase;
+
+                        if (methodBase.IsStatic && methodBase.Name == ".cctor") {
+                            // This is a static constructor
+                            pTypeDef->pStaticConstructor = pMethodDef;
+                        }
+                        if (methodBase.IsStatic && pTypeDef->pParent != null &&
+                            methodBase.Name == "Finalize") {
+                            // This is a Finalizer method, but not for Object.
+                            // Delibrately miss out Object's Finalizer because it's empty and will cause every object
+                            // of any type to have a Finalizer which will be terrible for performance.
+                            pTypeDef->pFinalizer = pMethodDef;
+                        }
+                        if (methodBase.IsVirtual) {
+                            if (pMethodDef->vTableOfs == 0xffffffff) {
+                                Sys.Crash("Illegal vtableoffset");
+                            }
+                            if (pMethodDef->vTableOfs >= pTypeDef->numVirtualMethods) {
+                                Sys.Crash("Illegal vtableoffset");
+                            }
+                            pTypeDef->pVTable[pMethodDef->vTableOfs] = pMethodDef;
+                        }
+                    }
+
+                    // Find inherited Finalizer, if this type doesn't have an explicit Finalizer, and if there is one
+                    if (pTypeDef->pFinalizer == null) {
+                        tMD_TypeDef* pInheritedType = pTypeDef->pParent;
+                        while (pInheritedType != null) {
+                            if (pInheritedType->pFinalizer != null) {
+                                pTypeDef->pFinalizer = pInheritedType->pFinalizer;
+                                break;
+                            }
+                            pInheritedType = pInheritedType->pParent;
+                        }
+                    }
+                }
+
+                if (pTypeDef->fillState >= resolve)
+                    return;
+            }
+
+            if (pTypeDef->fillState < Type.TYPE_FILL_MEMBERS) {
+                pTypeDef->fillState = Type.TYPE_FILL_MEMBERS;
+
+                if (pParent != null) {
+                    if (pParent->fillState < Type.TYPE_FILL_MEMBERS) {
+                        MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_MEMBERS);
+                    } else if (pParent->fillState < Type.TYPE_FILL_ALL) {
+                        MetaData.Fill_Defer(pParent, null, null);
+                    }
+                }
+
+                // This only needs to be done for non-generic Type.types, or for generic type that are not a definition
+                // I.e. Fully instantiated generic Type.types
+                if (pTypeDef->isGenericDefinition == 0) {
+
+                    // Fill all method definitions for this type
+                    for (i = 0; i < pTypeDef->numMethods; i++) {
+                        pMethodDef = pTypeDef->ppMethods[i];
+                        methodBase = H.ToObj(pMethodDef->monoMethodInfo) as MethodBase;
+                        MonoType.Fill_MethodDef(pTypeDef, methodBase, pTypeDef->ppMethods[i], ppClassTypeArgs, ppMethodTypeArgs);
+                    }
+                }
+
+                if (pTypeDef->fillState >= resolve)
+                    return;
+            }
+
+            if (pTypeDef->fillState < Type.TYPE_FILL_INTERFACES) {
+                pTypeDef->fillState = Type.TYPE_FILL_INTERFACES;
+
+                if (pParent != null) {
+                    if (pParent->fillState < Type.TYPE_FILL_INTERFACES) {
+                        MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_INTERFACES);
+                    } else if (pParent->fillState < Type.TYPE_FILL_ALL) {
+                        MetaData.Fill_Defer(pParent, null, null);
+                    }
+                }
+
+                // This only needs to be done for non-generic Type.types, or for generic type that are not a definition
+                // I.e. Fully instantiated generic Type.types
+                if (pTypeDef->isGenericDefinition == 0) {
+
+                    if (pParent != null && pParent->fillState < Type.TYPE_FILL_INTERFACES) {
+                        MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_INTERFACES);
+                    } else if (pParent->fillState < Type.TYPE_FILL_ALL) {
+                        MetaData.Fill_Defer(pParent, null, null);
+                    }
+
+                    // Map all interface method calls. This only needs to be done for Classes, not Interfaces
+                    // And is not done for generic definitions.
+                    if (!monoType.IsInterface) {
+                        System.Type[] interfaceTypes = monoType.GetInterfaces();
+                        pTypeDef->numInterfaces = (uint)interfaceTypes.Length;
+                        if (interfaceTypes.Length > 0 && pTypeDef->isGenericDefinition == 0) {
+                            if (pTypeDef->pInterfaceMaps == null)
+                                pTypeDef->pInterfaceMaps = (tInterfaceMap*)Mem.mallocForever((SIZE_T)(pTypeDef->numInterfaces * sizeof(tInterfaceMap)));
+                            for (i = 0; i < interfaceTypes.Length; i++) {
+                                // Get the interface that this type implements
+                                tMD_TypeDef* pInterface = MonoType.GetTypeForMonoType(interfaceTypes[i], ppClassTypeArgs, ppMethodTypeArgs);
+                                Fill_TypeDef(pInterface, ppClassTypeArgs, null, Type.TYPE_FILL_VTABLE);
+                                InterfaceMapping interfaceMapping = monoType.GetInterfaceMap(interfaceTypes[i]);
+                                tMD_TypeDef* pInterfaceTargetType = pTypeDef;
+                                if (interfaceMapping.TargetType != monoType) {
+                                    pInterfaceTargetType = MonoType.GetTypeForMonoType(interfaceMapping.TargetType,
+                                        ppClassTypeArgs, null);
+                                    Fill_TypeDef(pInterfaceTargetType, ppClassTypeArgs, null, Type.TYPE_FILL_VTABLE);
                                 }
-                                tMD_MethodDef* pOverriddenMethod = null;
-                                for (k=0; k<pTypeDef->numMethods; k++) {
-                                    if ((H.ToObj(pTypeDef->ppMethods[k]->monoMethodInfo) as MethodInfo) == interfaceMethodInfo) {
-                                        pOverriddenMethod = pTypeDef->ppMethods[k];
-                                        break;
+                                MetaData.Fill_TypeDef(pInterface, null, null);
+                                tInterfaceMap* pMap = &pTypeDef->pInterfaceMaps[i];
+                                pMap->pInterface = pInterface;
+                                pMap->pVTableLookup = (uint*)Mem.mallocForever((SIZE_T)(pInterface->numVirtualMethods * sizeof(uint)));
+                                pMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterface->numVirtualMethods * sizeof(tMD_MethodDef*)));
+                                MethodInfo[] interfaceMethods = interfaceMapping.InterfaceMethods;
+                                MethodInfo[] targetMethods = interfaceMapping.TargetMethods;
+                                // Discover interface mapping for each interface method
+                                for (j = 0; j < pInterface->numVirtualMethods; j++) {
+                                    tMD_MethodDef* pInterfaceMethod = pInterface->pVTable[j];
+                                    tMD_MethodDef* pOverriddenMethod = FindInterfaceOverriddenMethod(pInterfaceTargetType, pInterfaceMethod, interfaceMethods, targetMethods);
+                                    if (pOverriddenMethod == null) {
+                                        Sys.Crash("Unable to find override method %s", (PTR)(pInterfaceMethod->name));
                                     }
+                                    pMap->pVTableLookup[j] = pOverriddenMethod->vTableOfs;
+                                    pMap->ppMethodVLookup[j] = pOverriddenMethod;
                                 }
-                                if (pOverriddenMethod == null) {
-                                    Sys.Crash("Unable to find override method %s", (PTR)(pInterfaceMethod->name));
-                                }
-                                pMap->pVTableLookup[j] = pOverriddenMethod->vTableOfs;
-        					}
-        				}
-        			}
-        		}
+                            }
+                        }
+                    }
+                }
 
-        		// If this is an enum type, then pretend its stack type is its underlying type
-        		if (pTypeDef->pParent == Type.types[Type.TYPE_SYSTEM_ENUM]) {
-        			pTypeDef->stackType = EvalStack.EVALSTACK_INT32;
-        		}
-        	}
+                if (pTypeDef->fillState >= resolve)
+                    return;
+            }
 
-        	// If this is a nested type, then find the namespace of it
-        	if (pTypeDef->pNestedIn != null) {
-        		tMD_TypeDef *pRootTypeDef = pTypeDef->pNestedIn;
-        		while (pRootTypeDef->pNestedIn != null) {
-        			pRootTypeDef = pRootTypeDef->pNestedIn;
-        		}
-        		pTypeDef->nameSpace = pRootTypeDef->nameSpace;
-        	}
+            if (pTypeDef->fillState < Type.TYPE_FILL_ALL) {
+                pTypeDef->fillState = Type.TYPE_FILL_ALL;
+
+                if (pParent != null && pParent->fillState < Type.TYPE_FILL_ALL) {
+                    MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_ALL);
+                }
+
+                if (isDeferred != 0) {
+                    MetaData.Fill_ResolveDeferred();
+                }
+
+            }
 
             Sys.log_f(2, "Mono Type:  %s.%s\n", (PTR)pTypeDef->nameSpace, (PTR)pTypeDef->name);
         }

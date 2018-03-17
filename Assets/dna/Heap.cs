@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#define DEBUG_HEAP
+
 using System.Runtime.InteropServices;
 
 #pragma warning disable CS0649
@@ -69,6 +71,7 @@ namespace DnaUnity
 
     public unsafe static class Heap
     {
+        public const uint VALID_HEAP_OBJ_SIG = 0xCAFEBABE;
 
         private unsafe struct tHeapEntry
         {
@@ -87,8 +90,8 @@ namespace DnaUnity
             // Set to 1 if the first PTR size field is a GCHandle to a mono object
             public byte monoGCHandle;
 
-            // unused
-            public uint padding2;
+            // unused (set to DEADBEEF to detect invalid references)
+            public uint signature;
 
             // The type in this heap entry
             public tMD_TypeDef *pTypeDef;
@@ -288,7 +291,8 @@ namespace DnaUnity
 
         public static void GarbageCollect() 
         {
-        	tHeapRoots heapRoots;
+#if NO
+            tHeapRoots heapRoots;
         	tHeapEntry* pNode;
             tHeapEntry** pUp = stackalloc tHeapEntry*[MAX_TREE_DEPTH * 2];
         	int top;
@@ -462,6 +466,7 @@ namespace DnaUnity
         #if DIAG_GC
         	Sys.log_f(1, "GC time = %d ms\n", gcTotalTime / 1000);
         #endif
+            #endif
         }
 
         public static void FreeAllGCHandles()
@@ -528,6 +533,10 @@ namespace DnaUnity
         	uint totalSize;
             byte* pMem;
 
+            if (pTypeDef == null) {
+                Sys.Crash("Invalid heap type!");
+            }
+
             totalSize = (uint)sizeof(tHeapEntry) + size;
 
         	// Trigger garbage collection if required.
@@ -546,7 +555,8 @@ namespace DnaUnity
 
         	pHeapEntry = (tHeapEntry*)Mem.malloc(totalSize);
         	pHeapEntry->pTypeDef = pTypeDef;
-        	pHeapEntry->pSync = null;
+            pHeapEntry->signature = VALID_HEAP_OBJ_SIG;
+            pHeapEntry->pSync = null;
             pHeapEntry->needToFinalize = (byte)((pTypeDef->pFinalizer != null) ? 1 : 0);
             pMem = (byte*)pHeapEntry + sizeof(tHeapEntry);
             Mem.memset(pMem, 0, size);
@@ -580,13 +590,28 @@ namespace DnaUnity
 
         public static tMD_TypeDef* GetType(/*HEAP_PTR*/byte* heapObj) 
         {
-        	tHeapEntry *pHeapEntry = GET_HEAPENTRY(heapObj);
-        	return pHeapEntry->pTypeDef;
+            #if DEBUG_HEAP
+            if (heapObj == null) {
+                Sys.Crash("Null reference to heap obj");
+            }
+            #endif
+            tHeapEntry* pHeapEntry = GET_HEAPENTRY(heapObj);
+            #if DEBUG_HEAP
+            if (pHeapEntry->signature != VALID_HEAP_OBJ_SIG) {
+                Sys.Crash("Invalid heap object in GetMonoObject()");
+            }
+            #endif
+            return pHeapEntry->pTypeDef;
         }
 
         public static object GetMonoObject(/*HEAP_PTR*/byte* heapObj)
         {
             tHeapEntry* pHeapEntry = GET_HEAPENTRY(heapObj);
+            #if DEBUG_HEAP
+            if (pHeapEntry->signature != VALID_HEAP_OBJ_SIG) {
+                Sys.Crash("Invalid heap object in GetMonoObject()");
+            }
+            #endif
             if (pHeapEntry->monoGCHandle != 0) {
                 void* p = *(void**)heapObj;
                 if (p == null)

@@ -137,13 +137,15 @@ namespace DnaUnity
 
         public static void GetReturnValue(tMethodState* pMethodState, byte* pReturnValue) 
         {
-            uint stackSize = pMethodState->pMethod->pReturnType->stackSize;
-            if (stackSize == 4) {
-                *(uint*)pReturnValue = *(uint*)pMethodState->pEvalStack;
-            } else if (stackSize == 8) {
-                *(ulong*)pReturnValue = *(ulong*)pMethodState->pEvalStack;
-            } else {
-                Mem.memcpy(pReturnValue, pMethodState->pEvalStack, stackSize);
+            if (pMethodState->pMethod->pReturnType != null) {
+                uint stackSize = pMethodState->pMethod->pReturnType->stackSize;
+                if (stackSize == 4) {
+                    *(uint*)pReturnValue = *(uint*)pMethodState->pEvalStack;
+                } else if (stackSize == 8) {
+                    *(ulong*)pReturnValue = *(ulong*)pMethodState->pEvalStack;
+                } else {
+                    Mem.memcpy(pReturnValue, pMethodState->pEvalStack, stackSize);
+                }
             }
         }
 

@@ -42,21 +42,33 @@ namespace DnaUnity
             dnaObjects = null;
         }
 
-        public static DnaObject MakeDnaObject(byte* ptr)
+        public static DnaObject CreateInstance(tMD_TypeDef* pTypeDef, object monoBaseObject = null)
         {
-            if (ptr == null)
+            Mem.heapcheck();
+            byte* pPtr = null;
+            if (monoBaseObject != null)
+                pPtr = Heap.AllocMonoObject(pTypeDef, monoBaseObject);
+            else
+                pPtr = Heap.AllocType(pTypeDef);
+            Mem.heapcheck();
+            return WrapObject(pPtr);
+        }
+
+        public static DnaObject WrapObject(byte* pPtr)
+        {
+            if (pPtr == null)
                 return null;
 
             System.WeakReference weak;
             DnaObject obj = null;
-            if (dnaObjects.TryGetValue((PTR)ptr, out weak)) {
+            if (dnaObjects.TryGetValue((PTR)pPtr, out weak)) {
                 obj = weak.Target as DnaObject;
                 if (obj != null)
                     return obj;
             }
 
-            obj = new DnaObject(ptr);
-            dnaObjects.Add((PTR)ptr, new System.WeakReference(obj));
+            obj = new DnaObject(pPtr);
+            dnaObjects.Add((PTR)pPtr, new System.WeakReference(obj));
 
             // If there is a collection - clear dead references
             if (System.GC.CollectionCount(0) != _collectionCount) {
@@ -78,8 +90,10 @@ namespace DnaUnity
                 }
             }
 
-            for (int i = 0; i < deadRefs.Count; i++) {
-                dnaObjects.Remove(deadRefs[i]);
+            if (deadRefs != null) {
+                for (int i = 0; i < deadRefs.Count; i++) {
+                    dnaObjects.Remove(deadRefs[i]);
+                }
             }
         }
 
@@ -87,6 +101,61 @@ namespace DnaUnity
         {
             Heap.MakeUndeletable(ptr);
             dnaPtr = ptr;
+        }
+
+        /// <summary>
+        /// Gets the type def for this object.
+        /// </summary>
+        /// <returns></returns>
+        ulong GetTypeDef()
+        {
+            if (dnaPtr == null)
+                throw new System.NullReferenceException();
+            return (ulong)Heap.GetType(dnaPtr);
+        }
+
+        /// <summary>
+        /// Returns a method def given method name and argument types for this object.
+        /// </summary>
+        /// <param name="methodName"></param>
+        /// <param name="argTypes"></param>
+        /// <returns></returns>
+        public ulong FindMethod(string methodName, System.Type[] argTypes)
+        {
+            if (dnaPtr == null)
+                throw new System.NullReferenceException();
+            tMD_TypeDef* pTypeDef = Heap.GetType(dnaPtr);
+            return Dna.FindMethod((ulong)pTypeDef, methodName, argTypes);
+        }
+
+        /// <summary>
+        /// Call to a DNA method given it's method def.
+        /// </summary>
+        /// <param name="methodDef">The method def</param>
+        /// <param name="args">The arguments to pass (or null for no arguments)</param>
+        /// <returns>The value returned by the method.</returns>
+        public object Call(ulong methodDef, object[] args = null)
+        {
+            if (dnaPtr == null)
+                throw new System.NullReferenceException();
+            tMD_TypeDef* pTypeDef = Heap.GetType(dnaPtr);
+            return Dna.Call(methodDef, this, args);
+        }
+
+        /// <summary>
+        /// Call a method on a DNA type with a typedef and method name.
+        /// </summary>
+        /// <param name="typeDef">Pointer to the type def</param>
+        /// <param name="methodName">The name of the method</param>
+        /// <param name="argTypes">The argument types</param>
+        /// <param name="args">The arguments to pass (or null for no arguments)</param>
+        /// <returns>The value returned by the method.</returns>
+        public object Call(string methodName, System.Type[] argTypes = null, object[] args = null)
+        {
+            if (dnaPtr == null)
+                throw new System.NullReferenceException();
+            tMD_TypeDef* pTypeDef = Heap.GetType(dnaPtr);
+            return Dna.Call((ulong)pTypeDef, methodName, argTypes, this, args);
         }
 
         // Public implementation of Dispose pattern callable by consumers.

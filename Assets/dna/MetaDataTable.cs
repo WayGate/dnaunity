@@ -126,7 +126,7 @@ namespace DnaUnity
         public /*IDX_TABLE*/uint methodList;
 
     	// Has this entry had its extended info filled?
-        public byte isFilled;
+        public byte fillState;
     	// Is this the last entry in this table?
         public byte isLast;
     	// Is this a value type?
@@ -211,138 +211,6 @@ namespace DnaUnity
         #endif
     }
 
-#if NO
-    public unsafe struct TypeDefPtr
-    {
-        private tMD_TypeDef* td;
-
-        public TypeDefPtr(tMD_TypeDef* p)
-        {
-            td = p;
-        }
-
-        // MetaData pointer
-        //public tMetaData* pMetaData;
-
-        // Type attribute flags
-        public /*FLAGS32*/uint flags { get { return td->flags; } }
-        // Type Id of DNA built in types (index into type init array)
-        public uint typeInitId { get { return td->typeInitId; } }
-        // Name of type def - index into string heap
-        public string name { get { return S.str(td->name); } }
-        // Namespace of type def - index into string heap
-        public string nameSpace { get { return S.str(td->nameSpace); } }
-        // The type that this type extends (inherits from)
-        public /*IDX_TABLE*/uint extends { get { return td->extends; } }
-        // The first entry in the Field table of the fields of this type def
-        public /*IDX_TABLE*/uint fieldList { get { return td->fieldList; } }
-        // The first entry in the Method table of the methods of this type def
-        public /*IDX_TABLE*/uint methodList { get { return td->methodList; } }
-
-        // Has this entry had its extended info filled?
-        public byte isFilled { get { return td->isFilled; } }
-        // Is this the last entry in this table?
-        public byte isLast { get { return td->isLast; } }
-        // Is this a value type?
-        public byte isValueType { get { return td->isValueType; } }
-        // The type of evaluation stack entry needed for this type
-        public byte stackType { get { return td->stackType; } }
-        // Total memory size of instances of this type (its in-memory representation) (not static fields)
-        public uint instanceMemSize { get { return td->instanceMemSize; } }
-        // Data alignment for this type
-        public uint alignment {  get { return td->alignment; } }
-        // The parent type definition
-        public object pParent { get { return td->pParent != null ? (object)(new TypeDefPtr(td->pParent)) : null; } }
-        // The virtual method table
-        //public tMD_MethodDef** pVTable;
-        // The number of virtual methods in the vTable
-        public uint numVirtualMethods { get { return td->numVirtualMethods; } }
-        // Padding 3
-        //public uint padding3;
-        // Pointer to the memory for any static fields in this type. This will be null if type has no static fields
-        //public byte* pStaticFields;
-        // Has the static constructor been executed yet?
-        public byte isTypeInitialised {  get { return td->isTypeInitialised; } }
-        // Is this a generic definition (a generic core type)?
-        public byte isGenericDefinition {  get { return td->isGenericDefinition; } }
-        // Is this TypeDef primed - this means that:
-        // numPrimedFields, numPrimedMethods, numVirtualMethods
-        // have been pre-set.
-        public byte isPrimed {  get { return td->isPrimed; } }
-        // Is either a mono reference type, or has a mono reference type as a base class
-        public byte hasMonoBase { get { return td->hasMonoBase; } }
-        // Padding 4
-        // public uint padding4;
-        // If this type has a static constructor, then store it here. null if no static constructor
-        // public tMD_MethodDef* pStaticConstructor;
-        // The size of this type when in an array
-        public uint arrayElementSize {  get { return td->arrayElementSize; } }
-        // The size of this type when on the stack (or in a field)
-        public uint stackSize { get { return td->stackSize; } }
-        // How many interfaces does this type implement
-        public uint numInterfaces { get { return td->numInterfaces; } }
-        // Padding 5
-        //public uint padding5;
-        // All interfaces that this type implements are mapped here
-        //public tInterfaceMap* pInterfaceMaps;
-        // The original table index of this TypeDef
-        //public /*IDX_TABLE*/uint tableIndex;
-        // Padding 6
-        //public uint padding6;
-        // If this is a generic type definition, then store any instantiatations here (in a linked list)
-        //public tGenericInstance* pGenericInstances;
-        // If this is a generic instance, then store link to its core definition type
-        //public tMD_TypeDef* pGenericDefinition;
-        // If this is a generic instance, then store the class type args
-        //public tMD_TypeDef** ppClassTypeArgs;
-        // If this type is System.Array, then this stores the element type
-        //public tMD_TypeDef* pArrayElementType;
-        // The number of fields in this type. This includes and static fields, but not inherited fields
-        public uint numFields { get { return td->numFields; } }
-        // Padding 7
-        //public uint padding7;
-        // Links to all the fields (in memory order), including statics (not inherited)
-        public object[] ppFields
-        {
-            get
-            {
-                object[] fields = new object[td->numFields];
-                for (int i = 0; i < td->numFields; i++)
-                {
-                    fields[i] = new FieldDefPtr(td->ppFields[i]);
-                }
-                return fields;
-            }
-        }
-        // The memory needed for static fields, in bytes
-        public uint staticFieldSize { get { return td->staticFieldSize; } }
-        // The number of methods in this type. This includes static methods, but not inherited methods
-        public uint numMethods { get { return td->numMethods; } }
-        // Links to all method in this type, including statics, not inherited
-        public object[] ppMethods
-        {
-            get
-            {
-                object[] methods = new object[td->numMethods];
-                for (int i = 0; i < td->numMethods; i++)
-                {
-                    methods[i] = new MethodDefPtr(td->ppMethods[i]);
-                }
-                return methods;
-            }
-        }
-        // If this is a nested class, this records which type it is nested within.
-        public object pNestedIn { get { return (td->pNestedIn != null) ? (object)(new TypeDefPtr(td->pNestedIn)) : null; }  }
-        // If this type has a finalizer, point to it here
-        public object pFinalizer { get { return (td->pFinalizer != null) ? (object)(new MethodDefPtr(td->pFinalizer)) : null; } }
-        // Pointer to the heap object which is the Type class object for this type.
-        // This is only allocated as needed, so defaults to null
-        //public /*HEAP_PTR*/byte* typeObject 
-        // The GCHandle to a MonoType object if this is a wrapper around a mono type, null if a native type
-        public System.Type monoType { get { return (td->monoType != null) ? (System.Type)(H.ToObj(td->monoType)) : null;  } }
-    }
-#endif
-
     // Table 0x04 - FieldDef
     public unsafe struct tMD_FieldDef
     {
@@ -389,50 +257,6 @@ namespace DnaUnity
         public string nameS { get { return S.str(name); } }
 #endif
     }
-
-#if NO
-    public unsafe struct FieldDefPtr
-    {
-        private tMD_FieldDef* fd;
-
-        public FieldDefPtr(tMD_FieldDef* p)
-        {
-            fd = p;
-        }
-
-        // MetaData pointer
-        //public tMetaData* pMetaData;
-
-        // Flags - FieldAttributes
-        public /*FLAGS16*/ushort flags { get { return fd->flags; } }
-        // Name of the field
-        public string name { get { return S.str(fd->name); } }
-        // Signature of the field
-        public /*BLOB_*/byte* signature {  get { return fd->signature; } }
-        // The type of this field
-        public object pType {  get { return fd->pType != null ? (object)(new TypeDefPtr(fd->pType)) : null; } }
-        // The type that contains this field
-        public object pParentType { get { return fd->pParentType != null ? (object)(new TypeDefPtr(fd->pParentType)) : null; } }
-        // The field offset within its containing type
-        public uint memOffset {  get { return fd->memOffset; } }
-        // The size in bytes that this field takes up in the memory representation
-        public uint memSize { get { return fd->memSize; } }
-        // The original table index of this FieldDef
-        public /*IDX_TABLE*/uint tableIndex { get { return fd->tableIndex; } }
-        // Padding dummy entry
-        //public uint padding2;
-        // If this is a static field, then the absolute address of this field is stored here.
-        // If this field has an RVA, then the pointer to the memory location is stored here.
-        // If this is a literal field, then this is a pointer to the tMD_Constant literal definition.
-        public byte* pMemory {  get { return fd->pMemory; } }
-        // The GCHandle to the mono Reflection.FieldInfo for field if this is mono type, null if not
-        public /*GCHandle*/ object monoFieldInfo { get { return H.ToObj(fd->monoFieldInfo); } }
-        // The GCHandle to field getter method if this is mono type, null if not
-        public /*GCHandle*/ object monoGetter {  get { return H.ToObj(fd->monoGetter); } }
-        // The GCHandle to field setter method if this is mono type, null if not
-        public /*GCHandle*/ object monoSetter {  get { return H.ToObj(fd->monoSetter); } }
-    }
-#endif
 
     // Table 0x06 - MethodDef
     public unsafe struct tMD_MethodDef
@@ -505,71 +329,6 @@ namespace DnaUnity
         public string nameS { get { return S.str(name); } }
 #endif
     }
-
-#if NO
-    public unsafe struct MethodDefPtr
-    {
-        private tMD_MethodDef* md;
-
-        public MethodDefPtr(tMD_MethodDef* p)
-        {
-            md = p;
-        }
-
-        // MetaData pointer
-        //public tMetaData* pMetaData;
-
-        // RVA converted to pointer. Code for this method
-        public byte* pCIL { get { return md->pCIL; } }
-        // Flags - MethodImplAttributes
-        public /*FLAGS16*/ushort implFlags { get { return md->implFlags; } }
-        // Flags - MethodAttribute
-        public /*FLAGS16*/ushort flags { get { return md->flags; } }
-        // Padding
-        //public uint padding0;
-        // Name of method
-        public string name { get { return S.str(md->name); } }
-        // Signature of method
-        public /*BLOB_*/byte* signature { get { return md->signature; } }
-        // The first entry in the Param table of the parameters of this method def
-        public /*IDX_TABLE*/uint paramList { get { return md->paramList; } }
-        // Padding
-        //public uint padding1;
-        // If this method has been JITted, then this points to it
-        public tJITted* pJITted { get { return md->pJITted; } }
-        // Has the extra infomation in this method been filled in yet?
-        public byte isFilled { get { return md->isFilled; } }
-        // Set true if this method has generic parameters
-        public byte isGenericDefinition { get { return md->isGenericDefinition; } }
-        // The number of parameters for this method. This includes the 'this' parameter if non-static method
-        public ushort numberOfParameters { get { return md->numberOfParameters; } }
-        // Padding
-        //public uint padding2;
-        // The parameter information for this method, including the 'this' parameter if non-static method
-        public tParameter* pParams { get { return md->pParams; } }
-        // The size in bytes needed for the parameters, including the 'this' parameter if non-static method
-        public uint parameterStackSize {  get { return md->parameterStackSize; } }
-        // Padding
-        // public uint padding3;
-        // The method return type
-        public object pReturnType {  get { return md->pReturnType != null ? (object)(new TypeDefPtr(md->pReturnType)) : null; } }
-        // The type that this method is a part of
-        public object pParentType { get { return md->pParentType != null ? (object)(new TypeDefPtr(md->pParentType)) : null; } }
-        // The original table index of this MethodDef
-        public /*IDX_TABLE*/uint tableIndex { get { return md->tableIndex; } }
-        // If this is a virtual method then this contains the offset into the vTable for this method.
-        // This offset is the table index - not the byte offset.
-        public uint vTableOfs {  get { return md->vTableOfs; } }
-        // If this is method has generic parameters, then store the method type args
-        public tMD_TypeDef** ppMethodTypeArgs {  get { return md->ppMethodTypeArgs; } }
-        // If this is a generic core method, then store type instances here.
-        public tGenericMethodInstance* pGenericMethodInstances {  get { return md->pGenericMethodInstances; } }
-        // The GCHandle to the mono Reflection.MethodInfo for method if this is mono type, null if not
-        public object monoMethodInfo {  get { return H.ToObj(md->monoMethodInfo); } }
-        // The GCHandle to the mono call delegate for method if this is mono type, null if not
-        public object monoMethodCall { get { return H.ToObj(md->monoMethodCall); } }
-    }
-#endif
 
     // Table 0x08 - Param
     public unsafe struct tMD_Param

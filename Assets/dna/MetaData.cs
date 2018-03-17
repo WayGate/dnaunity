@@ -187,6 +187,12 @@ namespace DnaUnity
             return (pParam->pByRefTypeDef != null);
         }
 
+        public static tMD_TypeDef* PARAM_ACTUAL_TYPE(tParameter* pParam)
+        {
+            tMD_TypeDef* pByRefType = pParam->pByRefTypeDef;
+            return (pByRefType != null) ? pByRefType : pParam->pStackTypeDef;
+        }
+
         public static bool FIELD_HASFIELDRVA(tMD_FieldDef* pField) 
         { 
             return ((pField)->flags & FIELDATTRIBUTES_HASFIELDRVA) != 0; 
@@ -235,6 +241,33 @@ namespace DnaUnity
         public static uint MAKE_TABLE_INDEX(uint table, uint index) 
         { 
             return ((/*IDX_TABLE*/uint)(((table) << 24) | ((index) & 0x00ffffff))); 
+        }
+
+        public static bool TYPE_IMPLEMENTS(tMD_TypeDef* pTypeDef, tMD_TypeDef* pInterfaceDef)
+        {
+            for (int i = 0; i < pTypeDef->numInterfaces; i++) {
+                tMD_TypeDef* pTypeInterfaceDef = pTypeDef->pInterfaceMaps[i].pInterface;
+                while (pTypeInterfaceDef != null) {
+                    if (pTypeInterfaceDef == pInterfaceDef)
+                        return true;
+                    pTypeInterfaceDef = pTypeInterfaceDef->pParent;
+                }
+            }
+            return false;
+        }
+
+        public static bool TYPE_ISASSIGNABLE_TO(tMD_TypeDef* pTypeDef, tMD_TypeDef* pToTypeDef)
+        {
+            if (TYPE_ISINTERFACE(pToTypeDef)) {
+                return TYPE_IMPLEMENTS(pTypeDef, pToTypeDef);
+            } else {
+                while (pTypeDef != null) {
+                    if (pTypeDef == pToTypeDef)
+                        return true;
+                    pTypeDef = pTypeDef->pParent;
+                }
+            }
+            return false;
         }
 
         // Definition strings
@@ -289,8 +322,12 @@ namespace DnaUnity
             return rowSize;
         }
 
+        static byte* scSystem, scValueType, scObject;
+
         public static void Init() 
         {
+             scSystem = scValueType = scObject = null;
+
             /*
         Format of definition strings:
         Always 2 characters to togther. 1st character defines source, 2nd defines destination.
@@ -563,6 +600,7 @@ namespace DnaUnity
             codedTags = null;
             tableRowSize = null;
             codedTagBits = null;
+            scSystem = scValueType = scObject = null;
         }
 
         public static uint DecodeSigEntry(/*SIG*/byte* *pSig) {

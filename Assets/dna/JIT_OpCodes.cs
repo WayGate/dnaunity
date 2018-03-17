@@ -25,6 +25,14 @@ namespace DnaUnity
         // JIT opcodes may be up to 9 bits long
         public const uint JIT_OPCODE_MAXBITS = 9;
         public const uint JIT_OPCODE_MAXNUM = (1 << (int)JIT_OPCODE_MAXBITS);
+
+
+        public const uint JIT_CONV_OFFSET_I32 = 0;
+        public const uint JIT_CONV_OFFSET_U32 = 1;
+        public const uint JIT_CONV_OFFSET_I64 = 2;
+        public const uint JIT_CONV_OFFSET_U64 = 3;
+        public const uint JIT_CONV_OFFSET_R32 = 4;
+        public const uint JIT_CONV_OFFSET_R64 = 5;
     }
 
     public enum JitOps : uint
@@ -395,60 +403,53 @@ namespace DnaUnity
         JIT_LOADFIELD_4 =                     0x13b,
         JIT_LOADFIELD_8 =                     0x13c,
 
-        JIT_CONV_OFFSET_I32 =                 0,
-        JIT_CONV_OFFSET_U32 =                 1,
-        JIT_CONV_OFFSET_I64 =                 2,
-        JIT_CONV_OFFSET_U64 =                 3,
-        JIT_CONV_OFFSET_R32 =                 4,
-        JIT_CONV_OFFSET_R64 =                 5,
-
         JIT_CONV_FROM_I32 =                   0x140,
-        JIT_CONV_I32_I32 =                    (JIT_CONV_FROM_I32 + JIT_CONV_OFFSET_I32),
-        JIT_CONV_I32_U32 =                    (JIT_CONV_FROM_I32 + JIT_CONV_OFFSET_U32),
-        JIT_CONV_I32_I64 =                    (JIT_CONV_FROM_I32 + JIT_CONV_OFFSET_I64),
-        JIT_CONV_I32_U64 =                    (JIT_CONV_FROM_I32 + JIT_CONV_OFFSET_U64),
-        JIT_CONV_I32_R32 =                    (JIT_CONV_FROM_I32 + JIT_CONV_OFFSET_R32),
-        JIT_CONV_I32_R64 =                    (JIT_CONV_FROM_I32 + JIT_CONV_OFFSET_R64),
+        JIT_CONV_I32_I32 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_I32),
+        JIT_CONV_I32_U32 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_U32),
+        JIT_CONV_I32_I64 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_I64),
+        JIT_CONV_I32_U64 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_U64),
+        JIT_CONV_I32_R32 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_R32),
+        JIT_CONV_I32_R64 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
         JIT_CONV_FROM_U32 =                   0x146,
-        JIT_CONV_U32_I32 =                    (JIT_CONV_FROM_U32 + JIT_CONV_OFFSET_I32),
-        JIT_CONV_U32_U32 =                    (JIT_CONV_FROM_U32 + JIT_CONV_OFFSET_U32),
-        JIT_CONV_U32_I64 =                    (JIT_CONV_FROM_U32 + JIT_CONV_OFFSET_I64),
-        JIT_CONV_U32_U64 =                    (JIT_CONV_FROM_U32 + JIT_CONV_OFFSET_U64),
-        JIT_CONV_U32_R32 =                    (JIT_CONV_FROM_U32 + JIT_CONV_OFFSET_R32),
-        JIT_CONV_U32_R64 =                    (JIT_CONV_FROM_U32 + JIT_CONV_OFFSET_R64),
+        JIT_CONV_U32_I32 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_I32),
+        JIT_CONV_U32_U32 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_U32),
+        JIT_CONV_U32_I64 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_I64),
+        JIT_CONV_U32_U64 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_U64),
+        JIT_CONV_U32_R32 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_R32),
+        JIT_CONV_U32_R64 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
         JIT_CONV_FROM_I64 =                   0x14c,
-        JIT_CONV_I64_I32 =                    (JIT_CONV_FROM_I64 + JIT_CONV_OFFSET_I32),
-        JIT_CONV_I64_U32 =                    (JIT_CONV_FROM_I64 + JIT_CONV_OFFSET_U32),
-        JIT_CONV_I64_I64 =                    (JIT_CONV_FROM_I64 + JIT_CONV_OFFSET_I64), // Not used
-        JIT_CONV_I64_U64 =                    (JIT_CONV_FROM_I64 + JIT_CONV_OFFSET_U64), // Not used
-        JIT_CONV_I64_R32 =                    (JIT_CONV_FROM_I64 + JIT_CONV_OFFSET_R32),
-        JIT_CONV_I64_R64 =                    (JIT_CONV_FROM_I64 + JIT_CONV_OFFSET_R64),
+        JIT_CONV_I64_I32 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_I32),
+        JIT_CONV_I64_U32 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_U32),
+        JIT_CONV_I64_I64 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_I64), // Not used
+        JIT_CONV_I64_U64 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_U64), // Not used
+        JIT_CONV_I64_R32 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_R32),
+        JIT_CONV_I64_R64 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
         JIT_CONV_FROM_U64 =                   0x152,
-        JIT_CONV_U64_I32 =                    (JIT_CONV_FROM_U64 + JIT_CONV_OFFSET_I32),
-        JIT_CONV_U64_U32 =                    (JIT_CONV_FROM_U64 + JIT_CONV_OFFSET_U32),
-        JIT_CONV_U64_I64 =                    (JIT_CONV_FROM_U64 + JIT_CONV_OFFSET_I64), // Not used
-        JIT_CONV_U64_U64 =                    (JIT_CONV_FROM_U64 + JIT_CONV_OFFSET_U64), // Not used
-        JIT_CONV_U64_R32 =                    (JIT_CONV_FROM_U64 + JIT_CONV_OFFSET_R32),
-        JIT_CONV_U64_R64 =                    (JIT_CONV_FROM_U64 + JIT_CONV_OFFSET_R64),
+        JIT_CONV_U64_I32 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_I32),
+        JIT_CONV_U64_U32 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_U32),
+        JIT_CONV_U64_I64 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_I64), // Not used
+        JIT_CONV_U64_U64 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_U64), // Not used
+        JIT_CONV_U64_R32 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_R32),
+        JIT_CONV_U64_R64 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
         JIT_CONV_FROM_R32 =                   0x158,
-        JIT_CONV_R32_I32 =                    (JIT_CONV_FROM_R32 + JIT_CONV_OFFSET_I32),
-        JIT_CONV_R32_U32 =                    (JIT_CONV_FROM_R32 + JIT_CONV_OFFSET_U32),
-        JIT_CONV_R32_I64 =                    (JIT_CONV_FROM_R32 + JIT_CONV_OFFSET_I64),
-        JIT_CONV_R32_U64 =                    (JIT_CONV_FROM_R32 + JIT_CONV_OFFSET_U64),
-        JIT_CONV_R32_R32 =                    (JIT_CONV_FROM_R32 + JIT_CONV_OFFSET_R32),
-        JIT_CONV_R32_R64 =                    (JIT_CONV_FROM_R32 + JIT_CONV_OFFSET_R64),
+        JIT_CONV_R32_I32 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_I32),
+        JIT_CONV_R32_U32 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_U32),
+        JIT_CONV_R32_I64 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_I64),
+        JIT_CONV_R32_U64 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_U64),
+        JIT_CONV_R32_R32 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_R32),
+        JIT_CONV_R32_R64 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
         JIT_CONV_FROM_R64 =                   0x15e,
-        JIT_CONV_R64_I32 =                    (JIT_CONV_FROM_R64 + JIT_CONV_OFFSET_I32),
-        JIT_CONV_R64_U32 =                    (JIT_CONV_FROM_R64 + JIT_CONV_OFFSET_U32),
-        JIT_CONV_R64_I64 =                    (JIT_CONV_FROM_R64 + JIT_CONV_OFFSET_I64),
-        JIT_CONV_R64_U64 =                    (JIT_CONV_FROM_R64 + JIT_CONV_OFFSET_U64),
-        JIT_CONV_R64_R32 =                    (JIT_CONV_FROM_R64 + JIT_CONV_OFFSET_R32),
-        JIT_CONV_R64_R64 =                    (JIT_CONV_FROM_R64 + JIT_CONV_OFFSET_R64),
+        JIT_CONV_R64_I32 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_I32),
+        JIT_CONV_R64_U32 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_U32),
+        JIT_CONV_R64_I64 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_I64),
+        JIT_CONV_R64_U64 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_U64),
+        JIT_CONV_R64_R32 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_R32),
+        JIT_CONV_R64_R64 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
         JIT_INVOKE_SYSTEM_REFLECTION_METHODBASE =     0x164,
         JIT_REFLECTION_DYNAMICALLY_BOX_RETURN_VALUE = 0x165,

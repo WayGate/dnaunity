@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System.Reflection;
+using System.Collections.Generic;
+
 namespace DnaUnity
 {
     #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
@@ -72,8 +75,10 @@ namespace DnaUnity
                         tMD_TypeDef *pParamType;
                         tMD_TypeDef *pThisParamType;
 
-        			    pParamType = Type.GetTypeFromSig(pSigMetaData, &sig, ppSigClassTypeArgs, ppSigMethodTypeArgs);
-        			    pThisParamType = Type.GetTypeFromSig(pMethod->pMetaData, &thisSig, ppMethodClassTypeArgs, ppMethodMethodTypeArgs);
+        			    pParamType = Type.GetTypeFromSig(pSigMetaData, &sig, 
+                            ppSigClassTypeArgs, ppSigMethodTypeArgs, null);
+        			    pThisParamType = Type.GetTypeFromSig(pMethod->pMetaData, &thisSig, 
+                            ppMethodClassTypeArgs, ppMethodMethodTypeArgs, null);
         			    if (pParamType != pThisParamType) {
         				    return 0;
         			    }
@@ -87,39 +92,44 @@ namespace DnaUnity
                     /*SIG*/
                     byte* sig;
                     uint e, paramCount, i;
-                    System.Reflection.MethodInfo methodInfo = H.ToObj(pMethod->monoMethodInfo) as System.Reflection.MethodInfo;
+                   MethodBase methodBase = H.ToObj(pMethod->monoMethodInfo) as MethodBase;
 
                     sig = MetaData.GetBlob(sigBlob, null);
 
                     e = MetaData.DecodeSigEntry(&sig);
                     // Check method call type (static, etc...)
-                    if (methodInfo.IsStatic && (e & (SIG_METHODDEF_HASTHIS | SIG_METHODDEF_EXPLICITTHIS)) != 0)
+                    if (methodBase.IsStatic && (e & (SIG_METHODDEF_HASTHIS | SIG_METHODDEF_EXPLICITTHIS)) != 0)
                         return 0;
 
                     // If method has generic arguments, check the generic type argument count
                     if ((e & SIG_METHODDEF_GENERIC) != 0)
                     {
-                        if (!methodInfo.IsGenericMethod)
+                        if (!methodBase.IsGenericMethod)
                             return 0;
 
                         e = MetaData.DecodeSigEntry(&sig);
                         // Generic argument count
-                        if (e != methodInfo.GetGenericArguments().Length)
+                        if (e != methodBase.GetGenericArguments().Length)
                             return 0;
                     }
 
                     paramCount = MetaData.DecodeSigEntry(&sig);
-                    System.Reflection.ParameterInfo[] paramInfos = methodInfo.GetParameters();
+                    System.Reflection.ParameterInfo[] paramInfos = methodBase.GetParameters();
                     if (paramCount != paramInfos.Length)
                         return 0;
 
-                    tMD_TypeDef* pReturnType = Type.GetTypeFromSig(pSigMetaData, &sig, ppSigClassTypeArgs, ppSigMethodTypeArgs);
-                    tMD_TypeDef* pThisReturnType = MonoType.GetTypeForMonoType(methodInfo.ReturnType);
-                    if (pReturnType == null) {
-                        if (pThisReturnType != Type.types[Type.TYPE_SYSTEM_VOID])
+                    tMD_TypeDef* pReturnType = Type.GetTypeFromSig(pSigMetaData, &sig, 
+                        ppSigClassTypeArgs, ppSigMethodTypeArgs, null);
+                    if (methodBase is MethodInfo) {
+                        tMD_TypeDef* pThisReturnType = MonoType.GetTypeForMonoType(((MethodInfo)methodBase).ReturnType, 
+                            ppMethodClassTypeArgs, ppMethodMethodTypeArgs);
+                        if (pReturnType == null) {
+                            if (pThisReturnType != Type.types[Type.TYPE_SYSTEM_VOID])
+                                return 0;
+                        }
+                        else if (pReturnType != pThisReturnType)
                             return 0;
-                    } else if (pReturnType != pThisReturnType)
-                        return 0;
+                    }
 
                     // check all parameters
                     for (i = 0; i < paramCount; i++)
@@ -127,8 +137,10 @@ namespace DnaUnity
                         tMD_TypeDef* pParamType;
                         tMD_TypeDef* pThisParamType;
 
-                        pParamType = Type.GetTypeFromSig(pSigMetaData, &sig, ppSigClassTypeArgs, ppSigMethodTypeArgs);
-                        pThisParamType = MonoType.GetTypeForMonoType(paramInfos[i].ParameterType);
+                        pParamType = Type.GetTypeFromSig(pSigMetaData, &sig, 
+                            ppSigClassTypeArgs, ppSigMethodTypeArgs, null);
+                        pThisParamType = MonoType.GetTypeForMonoType(paramInfos[i].ParameterType, 
+                            ppMethodClassTypeArgs, ppMethodMethodTypeArgs);
                         if (pParamType != pThisParamType)
                             return 0;
                     }
@@ -143,35 +155,38 @@ namespace DnaUnity
             return 0;
         }
 
-        public static uint CompareNameAndMethodInfo(/*STRING*/byte* name, System.Reflection.MethodInfo methodInfo, tMetaData* pSigMetaData,
+        public static uint CompareNameAndMethodInfo(/*STRING*/byte* name, System.Reflection.MethodBase methodBase, tMetaData* pSigMetaData,
             tMD_TypeDef** ppSigClassTypeArgs, tMD_TypeDef** ppSigMethodTypeArgs, tMD_MethodDef* pMethod, tMD_TypeDef** ppMethodClassTypeArgs,
             tMD_TypeDef** ppMethodMethodTypeArgs)
         {
             if (S.strcmp(name, pMethod->name) == 0) {
                 uint i;
 
-                if (METHOD_ISSTATIC(pMethod) != methodInfo.IsStatic ||
-                    METHOD_ISVIRTUAL(pMethod) != methodInfo.IsVirtual)
+                if (METHOD_ISSTATIC(pMethod) != methodBase.IsStatic ||
+                    METHOD_ISVIRTUAL(pMethod) != methodBase.IsVirtual)
                     return 0;
 
-                System.Reflection.ParameterInfo[] paramInfos = methodInfo.GetParameters();
+                System.Reflection.ParameterInfo[] paramInfos = methodBase.GetParameters();
 
-                uint numberOfParameters = (uint)(paramInfos.Length + (methodInfo.IsStatic ? 0 : 1));
+                uint numberOfParameters = (uint)(paramInfos.Length + (methodBase.IsStatic ? 0 : 1));
                 if ((uint)pMethod->numberOfParameters != numberOfParameters)
                     return 0;
 
-                if (methodInfo.IsGenericMethod != (pMethod->isGenericDefinition != 0))
+                if (methodBase.IsGenericMethod != (pMethod->isGenericDefinition != 0))
                     return 0;
 
-                if (pMethod->pReturnType == null) {
-                    if (methodInfo.ReturnType != typeof(void))
+                if (methodBase is MethodInfo) { 
+                    if (pMethod->pReturnType == null) {
+                        if (((MethodInfo)methodBase).ReturnType != typeof(void))
+                            return 0;
+                    } else if (pMethod->pReturnType != MonoType.GetTypeForMonoType(((MethodInfo)methodBase).ReturnType, 
+                        ppMethodClassTypeArgs, ppMethodMethodTypeArgs)) { 
                         return 0;
-                } else if (pMethod->pReturnType != MonoType.GetTypeForMonoType(methodInfo.ReturnType)) { 
-                    return 0;
+                    }
                 }
 
                 uint start = 0;
-                if (!methodInfo.IsStatic) {
+                if (!methodBase.IsStatic) {
 //                    if (pMethod->pParams[0].pStackTypeDef != MonoType.GetTypeForMonoType(methodInfo.DeclaringType))
 //                        return 0;
                     start = 1;
@@ -182,7 +197,8 @@ namespace DnaUnity
                     System.Reflection.ParameterInfo paramInfo = paramInfos[i - start];
                     
                     // NOTE: We are not checking to see if params are REF params here.  Potentially a problem.
-                    if (pParam->pStackTypeDef != MonoType.GetTypeForMonoType(paramInfo.ParameterType))
+                    if (pParam->pStackTypeDef != MonoType.GetTypeForMonoType(paramInfo.ParameterType, 
+                        ppMethodClassTypeArgs, ppMethodMethodTypeArgs))
                         return 0;
                 }
 
@@ -199,6 +215,10 @@ namespace DnaUnity
         {
         	uint i;
         	tMD_TypeDef *pLookInType = pTypeDef;
+
+            if (pLookInType->fillState < Type.TYPE_FILL_MEMBERS) {
+                MetaData.Fill_TypeDef(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs, Type.TYPE_FILL_MEMBERS);
+            }
 
         	do {
         		for (i=0; i<pLookInType->numMethods; i++) {
@@ -230,13 +250,13 @@ namespace DnaUnity
         			MetaData.DecodeSigEntry(&sig);
         		}
         		numParams = MetaData.DecodeSigEntry(&sig);
-        		pParamTypeDef = Type.GetTypeFromSig(pSigMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs); // return type
+        		pParamTypeDef = Type.GetTypeFromSig(pSigMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs, null); // return type
         		if (pParamTypeDef != null) {
                     pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, "%s ", (PTR)pParamTypeDef->name);
         		}
                 pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, "%s.%s.%s(", (PTR)pTypeDef->nameSpace, (PTR)pTypeDef->name, (PTR)name);
         		for (j=0; j<numParams; j++) {
-        			pParamTypeDef = Type.GetTypeFromSig(pSigMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs);
+        			pParamTypeDef = Type.GetTypeFromSig(pSigMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs, null);
         			if (j > 0) {
                         pMsgPos = S.scatprintf(pMsgPos, pMsgEnd, ",");
         			}
@@ -255,7 +275,7 @@ namespace DnaUnity
         {
         	uint i;
 
-        	MetaData.Fill_TypeDef(pTypeDef, null, null);
+        	MetaData.Fill_TypeDef(pTypeDef, null, null, Type.TYPE_FILL_LAYOUT);
 
         	for (i=0; i<pTypeDef->numFields; i++) {
         		if (S.strcmp(pTypeDef->ppFields[i]->name, name) == 0) {
@@ -337,7 +357,8 @@ namespace DnaUnity
         	return MetaData.GetTypeDefFromName(pTypeMetaData, nameSpace, name, null, /* assertExists */ 1);
         }
 
-        public static tMD_TypeDef* GetTypeDefFromDefRefOrSpec(tMetaData *pMetaData, /*IDX_TABLE*/uint token, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
+        public static tMD_TypeDef* GetTypeDefFromDefRefOrSpec(tMetaData *pMetaData, /*IDX_TABLE*/uint token, 
+            tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
         {
         	void *pTableEntry;
 
@@ -346,6 +367,9 @@ namespace DnaUnity
         		return null;
         	}
         	if (((tMDC_ToTypeDef*)pTableEntry)->pTypeDef != null) {
+                if (((tMDC_ToTypeDef*)pTableEntry)->pTypeDef->fillState < Type.TYPE_FILL_ALL) {
+                    MetaData.Fill_Defer(((tMDC_ToTypeDef*)pTableEntry)->pTypeDef, null, null);
+                }
         		return ((tMDC_ToTypeDef*)pTableEntry)->pTypeDef;
         	}
 
@@ -363,7 +387,10 @@ namespace DnaUnity
         				pTypeRef = (tMD_TypeRef*)pTableEntry;
         				pTypeDefMetaData = MetaData.GetResolutionScopeMetaData(pMetaData, pTypeRef->resolutionScope, &pInNestedClass);
         				pTypeDef = MetaData.GetTypeDefFromName(pTypeDefMetaData, pTypeRef->nameSpace, pTypeRef->name, pInNestedClass, /* assertExists */ 1);
-        				pTypeRef->pTypeDef = pTypeDef;
+                        if (pTypeDef->fillState < Type.TYPE_FILL_ALL) {
+                            MetaData.Fill_Defer(pTypeDef, null, null);
+                        }
+                        pTypeRef->pTypeDef = pTypeDef;
         				return pTypeDef;
         			}
         		case MetaDataTable.MD_TABLE_TYPESPEC:
@@ -374,7 +401,7 @@ namespace DnaUnity
 
         				pTypeSpec = (tMD_TypeSpec*)pTableEntry;
         				sig = MetaData.GetBlob(pTypeSpec->signature, null);
-        				pTypeDef = Type.GetTypeFromSig(pTypeSpec->pMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs);
+        				pTypeDef = Type.GetTypeFromSig(pTypeSpec->pMetaData, &sig, ppClassTypeArgs, ppMethodTypeArgs, null);
         				// Note: Cannot cache the TypeDef for this TypeSpec because it
         				// can change depending on class arguemnts given.
 
@@ -546,7 +573,7 @@ namespace DnaUnity
         				tMD_TypeDef *pTypeDef;
 
         				pTypeDef = MetaData.GetTypeDefFromDefRefOrSpec(pMetaData, token, ppClassTypeArgs, ppMethodTypeArgs);
-        				MetaData.Fill_TypeDef(pTypeDef, null, null);
+        				//MetaData.Fill_TypeDef(pTypeDef, null, null);
         				*pObjectType = 0;
         				return (byte*)pTypeDef;
         			}
@@ -560,7 +587,7 @@ namespace DnaUnity
         					tMD_TypeDef *pTypeDef;
 
         					pTypeDef = MetaData.GetTypeDefFromMethodDef(pMethodDef);
-        					MetaData.Fill_TypeDef(pTypeDef, null, null);
+        					//MetaData.Fill_TypeDef(pTypeDef, null, null);
         				}
         				*pObjectType = 1;
         				return (byte*)pMethodDef;
@@ -575,7 +602,7 @@ namespace DnaUnity
         					tMD_TypeDef *pTypeDef;
 
         					pTypeDef = MetaData.GetTypeDefFromFieldDef(pFieldDef);
-        					MetaData.Fill_TypeDef(pTypeDef, null, null);
+        					//MetaData.Fill_TypeDef(pTypeDef, null, null);
         				}
         				*pObjectType = 2;
         				return (byte*)pFieldDef;

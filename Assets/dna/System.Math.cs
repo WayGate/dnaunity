@@ -59,6 +59,13 @@ namespace DnaUnity
         	return null;
         }
 
+        public static tAsyncCall* Round(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
+        {
+            *(double*)pReturnValue = System.Math.Round((*((double*)(pParams + 0))));
+
+            return null;
+        }
+
     }
 
 }

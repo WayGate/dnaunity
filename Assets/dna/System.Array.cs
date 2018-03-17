@@ -159,7 +159,7 @@ namespace DnaUnity
 
             pArray = (*((tSystemArray**)(pParams + 0)));
             index = (*((uint*)(pParams + Sys.S_PTR)));
-            length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT)));
+            length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32)));
         	pArrayType = Heap.GetType((/*HEAP_PTR*/byte*)pArray);
         	elementSize = pArrayType->pArrayElementType->arrayElementSize;
             pElements = tSystemArray.GetElements(pArray);
@@ -175,7 +175,7 @@ namespace DnaUnity
             byte* pSrcElements, pDstElements;
 
             pSrc = (*((tSystemArray**)(pParams + 0)));
-            pDst = (*((tSystemArray**)(pParams + Sys.S_PTR + Sys.S_INT)));
+            pDst = (*((tSystemArray**)(pParams + Sys.S_PTR + Sys.S_INT32)));
         	
         	// Check if we can do a fast-copy with these two arrays
         	pSrcType = Heap.GetType((/*HEAP_PTR*/byte*)pSrc);
@@ -186,8 +186,8 @@ namespace DnaUnity
         		uint srcIndex, dstIndex, length, elementSize;
 
                 srcIndex = (*((uint*)(pParams + Sys.S_PTR)));
-                dstIndex = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT + Sys.S_PTR)));
-                length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT + Sys.S_PTR + Sys.S_INT)));
+                dstIndex = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32 + Sys.S_PTR)));
+                length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32 + Sys.S_PTR + Sys.S_INT32)));
 
         #if WIN32 && _DEBUG
         		// Do bounds check
@@ -254,7 +254,7 @@ namespace DnaUnity
 
             pArray = (*((tSystemArray**)(pParams + 0)));
             index = (*((uint*)(pParams + Sys.S_PTR)));
-            length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT)));
+            length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32)));
 
         	pArrayType = Heap.GetType((/*HEAP_PTR*/byte*)pArray);
         	elementSize = pArrayType->pArrayElementType->arrayElementSize;

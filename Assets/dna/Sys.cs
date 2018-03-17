@@ -60,12 +60,20 @@ namespace DnaUnity
             return *(void**)r = (void*)(val);
         }
 
-#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
-        public const int S_PTR = 4;
-#else
-        public const int S_PTR = 8;
-#endif
-        public const int S_INT = 4;
+        // Stack sizes of basic types - used to calculate positions of params on stack when calling
+        // internal methods, other stack eval uses.  Note that all integers, char and bool that are 
+        // less than INT32 size are always INT32 size.
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+        public const int S_PTR   = 4;
+        public const int S_INT32 = 4;
+        public const int S_FLOAT = 4;
+        #else
+        public const int S_PTR   = 8;
+        public const int S_INT32 = 8;
+        public const int S_FLOAT = 8;
+        #endif
+        public const int S_I64 = 8;
+        public const int S_DOUBLE = 8;
 
         public static uint logLevel = 3;
 

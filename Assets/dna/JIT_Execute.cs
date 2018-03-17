@@ -32,6 +32,12 @@ namespace DnaUnity
 
     public unsafe static class JIT_Execute
     {
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+        const int PTR_SIZE = 4;
+        #else
+        const int PTR_SIZE = 8;
+        #endif
+
         static tThread *pThread;
         static tJITted *pJIT;
         static tMethodState *pCurrentMethodState;
@@ -49,6 +55,18 @@ namespace DnaUnity
 
         static byte** /*char**/ opNames = null;
 
+        // Constants used in calculating stack offsets for 32/64 bit.  These match
+        // constants defined in Sys for use with internal methods.
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+        const int S_INT32   = 4;
+        const int S_FLOAT   = 4;
+        #else
+        const int S_INT32   = 8;
+        const int S_FLOAT   = 8;
+        #endif
+        const int S_INT64 = 8;
+        const int S_DOUBLE = 8;
+
         public static void Init()
         {
             scNone = null;
@@ -60,7 +78,9 @@ namespace DnaUnity
 
             string[] opnameStrs = new string[JitOpsConsts.JIT_OPCODE_MAXNUM];
             for (int i = 0; i < JitOpsConsts.JIT_OPCODE_MAXNUM; i++) {
-                opnameStrs[i] = System.Enum.GetName(typeof(JitOps), (JitOps)i);
+                JitOps op = (JitOps)i;
+                string opName = System.Enum.GetName(typeof(JitOps), op);
+                opnameStrs[i] = opName;
             }
             opNames = S.buildArray(opnameStrs);
         }
@@ -116,8 +136,14 @@ namespace DnaUnity
         // Push a uint value on the top of the stack
         static void PUSH_U32(uint value)
         {
+            #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
             *(uint*)pCurEvalStack = (uint)(value); 
             pCurEvalStack += 4;
+            #else
+            *(uint*)pCurEvalStack = (uint)(value);
+            *(uint*)(pCurEvalStack + 4) = 0; // Unused
+            pCurEvalStack += 8;
+            #endif
         }
 
         // Push a ulong value on the top of the stack
@@ -130,8 +156,14 @@ namespace DnaUnity
         // Push a float value on the top of the stack
         static void PUSH_FLOAT(float value) 
         {
+            #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
             *(float*)pCurEvalStack = (float)(value); 
             pCurEvalStack += 4;
+            #else
+            *(float*)pCurEvalStack = (float)(value);
+            *(uint*)(pCurEvalStack + 4) = 0; // Unused
+            pCurEvalStack += 8;
+            #endif
         }
 
         // Push a double value on the top of the stack
@@ -150,8 +182,14 @@ namespace DnaUnity
         // DUP4() duplicates the top 4 bytes on the eval stack
         static void DUP4()
         {
+            #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
             *(uint*)pCurEvalStack = *(uint*)(pCurEvalStack - 4); 
             pCurEvalStack += 4;
+            #else
+            *(uint*)pCurEvalStack = *(uint*)(pCurEvalStack - 8);
+            *(uint*)(pCurEvalStack + 4) = 0; // Unused
+            pCurEvalStack += 8;
+            #endif
         }
 
         // DUP8() duplicates the top 4 bytes on the eval stack
@@ -171,7 +209,11 @@ namespace DnaUnity
         // Pop a uint value from the stack
         static uint POP_U32()
         {
+            #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
             return (*(uint*)(pCurEvalStack -= 4));
+            #else
+            return (*(uint*)(pCurEvalStack -= 8));
+            #endif
         }
 
         // Pop a ulong value from the stack
@@ -183,7 +225,11 @@ namespace DnaUnity
         // Pop a float value from the stack
         static float POP_FLOAT()
         {
+            #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
             return (*(float*)(pCurEvalStack -= 4));
+            #else
+            return (*(float*)(pCurEvalStack -= 8));
+            #endif
         }
 
         // Pop a double value from the stack
@@ -195,9 +241,15 @@ namespace DnaUnity
         // Pop 2 uint's from the stack
         static void POP_U32_U32(out uint v1, out uint v2)
         {
+            #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
             pCurEvalStack -= 8; 
             v1 = *(uint*)pCurEvalStack; 
             v2 = *(uint*)(pCurEvalStack + 4);
+            #else
+            pCurEvalStack -= 16;
+            v1 = *(uint*)pCurEvalStack;
+            v2 = *(uint*)(pCurEvalStack + 8);
+            #endif
         }
 
         // Pop 2 ulong's from the stack
@@ -211,9 +263,15 @@ namespace DnaUnity
         // Pop 2 F32's from the stack
         static void POP_F32_F32(out float v1, out float v2)
         {
+            #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
             pCurEvalStack -= 8; 
             v1 = *(float*)pCurEvalStack; 
             v2 = *(float*)(pCurEvalStack + 4);
+            #else
+            pCurEvalStack -= 16; 
+            v1 = *(float*)pCurEvalStack; 
+            v2 = *(float*)(pCurEvalStack + 8);
+            #endif
         }
 
         // Pop 2 F64's from the stack
@@ -380,25 +438,23 @@ namespace DnaUnity
 
 #else
 
-        [System.Diagnostics.Conditional("TRACE_OPCODES")]
+        //[System.Diagnostics.Conditional("TRACE_OPCODES")]
         static void OPCODE_USE(JitOps op)
         {
             int stackpos = (int)(pCurEvalStack - pCurrentMethodState->pEvalStack);
             uint a, b;
-            if (stackpos < 4) {
-                a = 0xDEADBEEF;
-                b = 0xDEADBEEF;
-            } else if (stackpos < 8) {
-                a = 0xDEADBEEF;
-                b = *(uint*)(pCurEvalStack - 4);
-            } else {
-                a = *(uint*)(pCurEvalStack - 8);
-                b = *(uint*)(pCurEvalStack - 4);
+
+            byte* stackBuf = stackalloc byte[1024];
+
+            byte* p = stackBuf;
+            for (int i = 0; i < stackpos; i += 4) {
+                p = S.scatprintf(p, stackBuf + 1024, "%08X ", *(uint*)(pCurrentMethodState->pEvalStack + i));
             }
-            Sys.printf("%s: %d %08X %08X %s \n", (PTR)pCurrentMethodState->pMethod->name, stackpos, (int)a, (int)b, (PTR)opNames[(int)op]);
+
+            Sys.printf("%s: %d %s %s \n", (PTR)pCurrentMethodState->pMethod->name, stackpos, (PTR)stackBuf, (PTR)opNames[(int)op]);
         }
 
-        #endif
+#endif
 
         static void RUN_FINALIZER() 
         {
@@ -418,10 +474,10 @@ namespace DnaUnity
                 return 0;
             }
 
-        #if DIAG_OPCODE_TIMES
+#if DIAG_OPCODE_TIMES
             ulong opcodeStartTime = rdtsc();
             uint realOp;
-        #endif
+#endif
 
             LOAD_METHOD_STATE();
          
@@ -527,15 +583,15 @@ namespace DnaUnity
                     case JitOps.JIT_LOADPARAMLOCAL_PTR:
                         OPCODE_USE(JitOps.JIT_LOADPARAMLOCAL_O);
                         {
-                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             uint ofs = GET_OP();
                             uint value = PARAMLOCAL_U32(ofs);
                             PUSH_U32(value);
-                    #else
+#else
                             uint ofs = GET_OP();
                             ulong value = PARAMLOCAL_U64(ofs);
                             PUSH_U64(value);
-                    #endif
+#endif
                         }
                         break;
                         
@@ -629,15 +685,15 @@ namespace DnaUnity
                     case JitOps.JIT_STOREPARAMLOCAL_PTR:
                         OPCODE_USE(JitOps.JIT_STOREPARAMLOCAL_PTR);
                         {
-                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             uint ofs = GET_OP();
                             uint value = POP_U32();
                             SET_PARAMLOCAL_U32(ofs, value);
-                    #else
+#else
                             uint ofs = GET_OP();
                             ulong value = POP_U64();
                             SET_PARAMLOCAL_U64(ofs, value);
-                    #endif
+#endif
                         }
                         break;
                         
@@ -706,10 +762,38 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_LOADINDIRECT_I8:
-                    case JitOps.JIT_LOADINDIRECT_I16:
-                    case JitOps.JIT_LOADINDIRECT_I32:
+                        OPCODE_USE(JitOps.JIT_LOADINDIRECT_I8); {
+                            byte* pMem = POP_PTR();
+                            uint value = (uint)*(sbyte*)pMem;
+                            PUSH_U32(value);
+                        }
+                        break;
+
                     case JitOps.JIT_LOADINDIRECT_U8:
+                        OPCODE_USE(JitOps.JIT_LOADINDIRECT_U8); {
+                            byte* pMem = POP_PTR();
+                            uint value = *(byte*)pMem;
+                            PUSH_U32(value);
+                        }
+                        break;
+
+                    case JitOps.JIT_LOADINDIRECT_I16:
+                        OPCODE_USE(JitOps.JIT_LOADINDIRECT_I16); {
+                            byte* pMem = POP_PTR();
+                            uint value = (uint)*(short*)pMem;
+                            PUSH_U32(value);
+                        }
+                        break;
+
                     case JitOps.JIT_LOADINDIRECT_U16:
+                        OPCODE_USE(JitOps.JIT_LOADINDIRECT_U8); {
+                            byte* pMem = POP_PTR();
+                            uint value = *(ushort*)pMem;
+                            PUSH_U32(value);
+                        }
+                        break;
+
+                    case JitOps.JIT_LOADINDIRECT_I32:
                     case JitOps.JIT_LOADINDIRECT_U32:
                     case JitOps.JIT_LOADINDIRECT_R32:
                         OPCODE_USE(JitOps.JIT_LOADINDIRECT_U32);
@@ -724,13 +808,13 @@ namespace DnaUnity
                         OPCODE_USE(JitOps.JIT_LOADINDIRECT_U32);
                         {
                             byte* pMem = POP_PTR();
-                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             uint value = *(uint*)pMem;
                             PUSH_U32(value);
-                    #else
+#else
                             ulong value = *(ulong*)pMem;
                             PUSH_U64(value);
-                    #endif
+#endif
                         }
                         break;
                         
@@ -745,7 +829,21 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_STOREINDIRECT_U8:
+                        OPCODE_USE(JitOps.JIT_STOREINDIRECT_U8); {
+                            uint value = POP_U32(); // The value to store
+                            byte* pMem = POP_PTR(); // The address to store to
+                            *(byte*)pMem = (byte)value;
+                        }
+                        break;
+
                     case JitOps.JIT_STOREINDIRECT_U16:
+                        OPCODE_USE(JitOps.JIT_STOREINDIRECT_U16); {
+                            uint value = POP_U32(); // The value to store
+                            byte* pMem = POP_PTR(); // The address to store to
+                            *(ushort*)pMem = (ushort)value;
+                        }
+                        break;
+
                     case JitOps.JIT_STOREINDIRECT_U32:
                         OPCODE_USE(JitOps.JIT_STOREINDIRECT_U32);
                         {
@@ -758,15 +856,15 @@ namespace DnaUnity
                     case JitOps.JIT_STOREINDIRECT_REF:
                         OPCODE_USE(JitOps.JIT_STOREINDIRECT_U32);
                         {
-                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+                            #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             uint value = POP_U32(); // The value to store
                             byte* pMem = POP_PTR(); // The address to store to
                             *(uint*)pMem = value;
-                    #else
+                            #else
                             ulong value = POP_U64(); // The value to store
                             byte* pMem = POP_PTR(); // The address to store to
                             *(ulong*)pMem = value;
-                    #endif
+                            #endif
                         }
                         break;
                         
@@ -967,7 +1065,7 @@ namespace DnaUnity
                                     } else {
                                         tMD_TypeDef *currentParamType = Heap.GetType(currentParam);
 
-                                        if (Type.IsValueType(currentParamType) != 0) {
+                                        if (currentParamType->isValueType != 0) {
                                             PUSH_VALUETYPE(currentParam, currentParamType->stackSize, currentParamType->stackSize);
                                         } else {
                                             PUSH_O(currentParam);
@@ -992,7 +1090,7 @@ namespace DnaUnity
                                 // It was a void method, so it won't have put anything on the stack. We need to put
                                 // a null value there as a return value, because MethodBase.Invoke isn't void.
                                 PUSH_O(null);
-                            } else if (Type.IsValueType(pLastInvocationReturnType) != 0) {
+                            } else if (pLastInvocationReturnType->isValueType != 0) {
                                 // For value Type.types, remove the raw value data from the stack and replace it with a
                                 // boxed copy, because MethodBase.Invoke returns object.
                                 /*HEAP_PTR*/byte* heapPtr = Heap.AllocType(pLastInvocationReturnType);
@@ -1063,7 +1161,11 @@ namespace DnaUnity
                                     goto throwHeapPtr;
                                 }
                                 pThisType = Heap.GetType(heapPtr);
+                                Sys.log_f(4, "This ptr %lX type ptr %lX\n", (PTR)heapPtr, (PTR)pThisType);
                                 if (MetaData.METHOD_ISVIRTUAL(pCallMethod)) {
+                                    if (pCallMethod->vTableOfs >= pThisType->numVirtualMethods) {
+                                        Sys.Crash("Vtable offset out of range offset: %d type: %s method: %s", pCallMethod->vTableOfs, (PTR)pThisType->name, (PTR)pCallMethod->name);
+                                    }
                                     pCallMethod = pThisType->pVTable[pCallMethod->vTableOfs];
                                 }
                             } else if (op == JitOps.JIT_CALL_INTERFACE) {
@@ -1080,9 +1182,8 @@ namespace DnaUnity
                                 for (i=(int)pThisType->numInterfaces-1; i >= 0; i--) {
                                     if (pThisType->pInterfaceMaps[i].pInterface == pInterface) {
                                         // Found the right interface map
-                                        if (pThisType->pInterfaceMaps[i].pVTableLookup != null) {
-                                            vIndex = pThisType->pInterfaceMaps[i].pVTableLookup[pCallMethod->vTableOfs];
-                                            System.Diagnostics.Debug.Assert(vIndex != 0xffffffff);
+                                        vIndex = pThisType->pInterfaceMaps[i].pVTableLookup[pCallMethod->vTableOfs];
+                                        if (vIndex != 0xffffffff) {
                                             pCallMethod = pThisType->pVTable[vIndex];
                                         } else {
                                             pCallMethod = pThisType->pInterfaceMaps[i].ppMethodVLookup[pCallMethod->vTableOfs];
@@ -1614,98 +1715,98 @@ namespace DnaUnity
 
                     case JitOps.JIT_CEQ_I32I32: // Handles int and O
                         OPCODE_USE(JitOps.JIT_CEQ_I32I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) == *(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) == *(uint*)(pCurEvalStack - S_INT32 + S_INT32) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CGT_I32I32:
                         OPCODE_USE(JitOps.JIT_CGT_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(int*)(pCurEvalStack - sizeof(uint)) > *(int*)(pCurEvalStack - sizeof(uint) + sizeof(int)) ? 1U : 0U;
+                        pCurEvalStack -= sizeof(int) + sizeof(int) - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) > *(int*)(pCurEvalStack - S_INT32 + sizeof(int)) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CGT_UN_I32I32: // Handles int and O
                         OPCODE_USE(JitOps.JIT_CGT_UN_I32I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) > *(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) > *(uint*)(pCurEvalStack - S_INT32 + S_INT32) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CLT_I32I32:
                         OPCODE_USE(JitOps.JIT_CLT_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(int*)(pCurEvalStack - sizeof(uint)) < *(int*)(pCurEvalStack - sizeof(uint) + sizeof(int)) ? 1U : 0U;
+                        pCurEvalStack -= sizeof(int) + sizeof(int) - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) < *(int*)(pCurEvalStack - S_INT32 + sizeof(int)) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CLT_UN_I32I32:
                         OPCODE_USE(JitOps.JIT_CLT_UN_I32I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) < *(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) < *(uint*)(pCurEvalStack - S_INT32 + S_INT32) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CEQ_I64I64:
                         OPCODE_USE(JitOps.JIT_CEQ_I64I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(ulong) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(ulong*)(pCurEvalStack - sizeof(uint)) == *(ulong*)(pCurEvalStack - sizeof(uint) + sizeof(ulong)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(ulong*)(pCurEvalStack - S_INT32) == *(ulong*)(pCurEvalStack - S_INT32 + S_INT64) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CGT_I64I64:
                         OPCODE_USE(JitOps.JIT_CGT_I64I64);
-                        pCurEvalStack -= sizeof(long) + sizeof(long) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(long*)(pCurEvalStack - sizeof(uint)) > *(long*)(pCurEvalStack - sizeof(uint) + sizeof(long)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(long*)(pCurEvalStack - S_INT32) > *(long*)(pCurEvalStack - S_INT32 + S_INT64) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CGT_UN_I64I64:
                         OPCODE_USE(JitOps.JIT_CGT_UN_I64I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(ulong) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(ulong*)(pCurEvalStack - sizeof(uint)) > *(ulong*)(pCurEvalStack - sizeof(uint) + sizeof(ulong)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(ulong*)(pCurEvalStack - S_INT32) > *(ulong*)(pCurEvalStack - S_INT32 + S_INT64) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CLT_I64I64:
                         OPCODE_USE(JitOps.JIT_CLT_I64I64);
-                        pCurEvalStack -= sizeof(long) + sizeof(long) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(long*)(pCurEvalStack - sizeof(uint)) < *(long*)(pCurEvalStack - sizeof(uint) + sizeof(long)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(long*)(pCurEvalStack - S_INT32) < *(long*)(pCurEvalStack - S_INT32 + S_INT64) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CLT_UN_I64I64:
                         OPCODE_USE(JitOps.JIT_CLT_UN_I64I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(ulong) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(ulong*)(pCurEvalStack - sizeof(uint)) < *(ulong*)(pCurEvalStack - sizeof(uint) + sizeof(ulong)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(ulong*)(pCurEvalStack - S_INT32) < *(ulong*)(pCurEvalStack - S_INT32 + S_INT64) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CEQ_F32F32:
                         OPCODE_USE(JitOps.JIT_CEQ_F32F32);
-                        pCurEvalStack -= sizeof(float) + sizeof(float) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(float*)(pCurEvalStack - sizeof(uint)) == *(float*)(pCurEvalStack - sizeof(uint) + sizeof(float)) ? 1U : 0U;
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(float*)(pCurEvalStack - S_INT32) == *(float*)(pCurEvalStack - S_INT32 + S_FLOAT) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CEQ_F64F64:
                         OPCODE_USE(JitOps.JIT_CEQ_F64F64);
-                        pCurEvalStack -= sizeof(double) + sizeof(double) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(double*)(pCurEvalStack - sizeof(uint)) == *(double*)(pCurEvalStack - sizeof(uint) + sizeof(double)) ? 1U : 0U;
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(double*)(pCurEvalStack - S_INT32) == *(double*)(pCurEvalStack - S_INT32 + S_DOUBLE) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CGT_F32F32:
                         OPCODE_USE(JitOps.JIT_CGT_F32F32);
-                        pCurEvalStack -= sizeof(float) + sizeof(float) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(float*)(pCurEvalStack - sizeof(uint)) > *(float*)(pCurEvalStack - sizeof(uint) + sizeof(float)) ? 1U : 0U;
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(float*)(pCurEvalStack - S_INT32) > *(float*)(pCurEvalStack - S_INT32 + S_FLOAT) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CGT_F64F64:
                         OPCODE_USE(JitOps.JIT_CGT_F64F64);
-                        pCurEvalStack -= sizeof(double) + sizeof(double) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(double*)(pCurEvalStack - sizeof(uint)) > *(double*)(pCurEvalStack - sizeof(uint) + sizeof(double)) ? 1U : 0U;
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(double*)(pCurEvalStack - S_INT32) > *(double*)(pCurEvalStack - S_INT32 + S_DOUBLE) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CLT_F32F32:
                         OPCODE_USE(JitOps.JIT_CLT_F32F32);
-                        pCurEvalStack -= sizeof(float) + sizeof(float) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(float*)(pCurEvalStack - sizeof(uint)) < *(float*)(pCurEvalStack - sizeof(uint) + sizeof(float)) ? 1U : 0U;
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(float*)(pCurEvalStack - S_INT32) < *(float*)(pCurEvalStack - S_INT32 + S_FLOAT) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CLT_F64F64:
                         OPCODE_USE(JitOps.JIT_CLT_F64F64);
-                        pCurEvalStack -= sizeof(double) + sizeof(double) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(double*)(pCurEvalStack - sizeof(uint)) < *(double*)(pCurEvalStack - sizeof(uint) + sizeof(double)) ? 1U : 0U;
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(double*)(pCurEvalStack - S_INT32) < *(double*)(pCurEvalStack - S_INT32 + S_DOUBLE) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_ADD_OVF_I32I32:
@@ -1812,20 +1913,20 @@ namespace DnaUnity
 
                     case JitOps.JIT_ADD_I64I64:
                         OPCODE_USE(JitOps.JIT_ADD_I64I64);
-                        pCurEvalStack -= sizeof(long) + sizeof(long) - sizeof(long); 
-                        *(long*)(pCurEvalStack - sizeof(long)) = *(long*)(pCurEvalStack - sizeof(long)) + *(long*)(pCurEvalStack - sizeof(long) + sizeof(long));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
+                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) + *(long*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_ADD_F32F32:
                         OPCODE_USE(JitOps.JIT_ADD_F32F32);
-                        pCurEvalStack -= sizeof(float) + sizeof(float) - sizeof(float); 
-                        *(float*)(pCurEvalStack - sizeof(float)) = *(float*)(pCurEvalStack - sizeof(float)) + *(float*)(pCurEvalStack - sizeof(float) + sizeof(float));
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_FLOAT; 
+                        *(float*)(pCurEvalStack - S_FLOAT) = *(float*)(pCurEvalStack - S_FLOAT) + *(float*)(pCurEvalStack - S_FLOAT + S_FLOAT);
                         break;
 
                     case JitOps.JIT_ADD_F64F64:
                         OPCODE_USE(JitOps.JIT_ADD_F64F64);
-                        pCurEvalStack -= sizeof(double) + sizeof(double) - sizeof(double); 
-                        *(double*)(pCurEvalStack - sizeof(double)) = *(double*)(pCurEvalStack - sizeof(double)) + *(double*)(pCurEvalStack - sizeof(double) + sizeof(double));
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE; 
+                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) + *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
                         break;
 
                     case JitOps.JIT_SUB_I32I32:
@@ -1836,20 +1937,20 @@ namespace DnaUnity
 
                     case JitOps.JIT_SUB_I64I64:
                         OPCODE_USE(JitOps.JIT_SUB_I64I64);
-                        pCurEvalStack -= sizeof(long) + sizeof(long) - sizeof(long);
-                        *(long*)(pCurEvalStack - sizeof(long)) = *(long*)(pCurEvalStack - sizeof(long)) - *(long*)(pCurEvalStack - sizeof(long) + sizeof(long));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64;
+                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) - *(long*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_SUB_F32F32:
                         OPCODE_USE(JitOps.JIT_SUB_F32F32);
-                        pCurEvalStack -= sizeof(double) + sizeof(double) - sizeof(double);
-                        *(double*)(pCurEvalStack - sizeof(double)) = *(double*)(pCurEvalStack - sizeof(double)) - *(double*)(pCurEvalStack - sizeof(double) + sizeof(double));
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE;
+                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) - *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
                         break;
 
                     case JitOps.JIT_SUB_F64F64:
                         OPCODE_USE(JitOps.JIT_SUB_F64F64);
-                        pCurEvalStack -= sizeof(double) + sizeof(double) - sizeof(double); 
-                        *(double*)(pCurEvalStack - sizeof(double)) = *(double*)(pCurEvalStack - sizeof(double)) - *(double*)(pCurEvalStack - sizeof(double) + sizeof(double));
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE; 
+                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) - *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
                         break;
 
                     case JitOps.JIT_MUL_I32I32:
@@ -1860,20 +1961,20 @@ namespace DnaUnity
 
                     case JitOps.JIT_MUL_I64I64:
                         OPCODE_USE(JitOps.JIT_MUL_I64I64);
-                        pCurEvalStack -= sizeof(long) + sizeof(long) - sizeof(long); 
-                        *(long*)(pCurEvalStack - sizeof(long)) = *(long*)(pCurEvalStack - sizeof(long)) * *(long*)(pCurEvalStack - sizeof(long) + sizeof(long));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
+                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) * *(long*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_MUL_F32F32:
                         OPCODE_USE(JitOps.JIT_MUL_F32F32);
-                        pCurEvalStack -= sizeof(float) + sizeof(float) - sizeof(float); 
-                        *(float*)(pCurEvalStack - sizeof(float)) = *(float*)(pCurEvalStack - sizeof(float)) * *(float*)(pCurEvalStack - sizeof(float) + sizeof(float));
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_FLOAT; 
+                        *(float*)(pCurEvalStack - S_FLOAT) = *(float*)(pCurEvalStack - S_FLOAT) * *(float*)(pCurEvalStack - S_FLOAT + S_FLOAT);
                         break;
 
                     case JitOps.JIT_MUL_F64F64:
                         OPCODE_USE(JitOps.JIT_MUL_F64F64);
-                        pCurEvalStack -= sizeof(double) + sizeof(double) - sizeof(double); 
-                        *(double*)(pCurEvalStack - sizeof(double)) = *(double*)(pCurEvalStack - sizeof(double)) * *(double*)(pCurEvalStack - sizeof(double) + sizeof(double));
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE; 
+                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) * *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
                         break;
 
                     case JitOps.JIT_DIV_I32I32:
@@ -1884,32 +1985,32 @@ namespace DnaUnity
 
                     case JitOps.JIT_DIV_I64I64:
                         OPCODE_USE(JitOps.JIT_DIV_I64I64);
-                        pCurEvalStack -= sizeof(long) + sizeof(long) - sizeof(long); 
-                        *(long*)(pCurEvalStack - sizeof(long)) = *(long*)(pCurEvalStack - sizeof(long)) / *(long*)(pCurEvalStack - sizeof(long) + sizeof(long));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
+                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) / *(long*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_DIV_F32F32:
                         OPCODE_USE(JitOps.JIT_DIV_F32F32);
-                        pCurEvalStack -= sizeof(float) + sizeof(float) - sizeof(float); 
-                        *(float*)(pCurEvalStack - sizeof(float)) = *(float*)(pCurEvalStack - sizeof(float)) / *(float*)(pCurEvalStack - sizeof(float) + sizeof(float));
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_FLOAT; 
+                        *(float*)(pCurEvalStack - S_FLOAT) = *(float*)(pCurEvalStack - S_FLOAT) / *(float*)(pCurEvalStack - S_FLOAT + S_FLOAT);
                         break;
 
                     case JitOps.JIT_DIV_F64F64:
                         OPCODE_USE(JitOps.JIT_DIV_F64F64);
-                        pCurEvalStack -= sizeof(double) + sizeof(double) - sizeof(double); 
-                        *(double*)(pCurEvalStack - sizeof(double)) = *(double*)(pCurEvalStack - sizeof(double)) / *(double*)(pCurEvalStack - sizeof(double) + sizeof(double));
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE; 
+                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) / *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
                         break;
 
                     case JitOps.JIT_DIV_UN_I32I32:
                         OPCODE_USE(JitOps.JIT_DIV_UN_I32I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) / *(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) / *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_DIV_UN_I64I64:
                         OPCODE_USE(JitOps.JIT_DIV_UN_I64I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(ulong) - sizeof(ulong); 
-                        *(ulong*)(pCurEvalStack - sizeof(ulong)) = *(ulong*)(pCurEvalStack - sizeof(ulong)) / *(ulong*)(pCurEvalStack - sizeof(ulong) + sizeof(ulong));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) / *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_REM_I32I32:
@@ -1920,56 +2021,56 @@ namespace DnaUnity
 
                     case JitOps.JIT_REM_I64I64:
                         OPCODE_USE(JitOps.JIT_REM_I64I64);
-                        pCurEvalStack -= sizeof(long) + sizeof(long) - sizeof(long); 
-                        *(long*)(pCurEvalStack - sizeof(long)) = *(long*)(pCurEvalStack - sizeof(long)) % *(long*)(pCurEvalStack - sizeof(long) + sizeof(long));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
+                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) % *(long*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_REM_UN_I32I32:
                         OPCODE_USE(JitOps.JIT_REM_UN_I32I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) % *(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) % *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_REM_UN_I64I64:
                         OPCODE_USE(JitOps.JIT_REM_UN_I64I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(ulong) - sizeof(ulong);
-                        *(ulong*)(pCurEvalStack - sizeof(ulong)) = *(ulong*)(pCurEvalStack - sizeof(ulong)) % *(ulong*)(pCurEvalStack - sizeof(ulong) + sizeof(ulong));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64;
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) % *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_AND_I32I32:
                         OPCODE_USE(JitOps.JIT_AND_I32I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) & *(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) & *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_AND_I64I64:
                         OPCODE_USE(JitOps.JIT_AND_I64I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(ulong) - sizeof(ulong); 
-                        *(ulong*)(pCurEvalStack - sizeof(ulong)) = *(ulong*)(pCurEvalStack - sizeof(ulong)) & *(ulong*)(pCurEvalStack - sizeof(ulong) + sizeof(ulong));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) & *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_OR_I32I32:
                         OPCODE_USE(JitOps.JIT_OR_I32I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) | *(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) | *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_OR_I64I64:
                         OPCODE_USE(JitOps.JIT_OR_I64I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(ulong) - sizeof(ulong); 
-                        *(ulong*)(pCurEvalStack - sizeof(ulong)) = *(ulong*)(pCurEvalStack - sizeof(ulong)) | *(ulong*)(pCurEvalStack - sizeof(ulong) + sizeof(ulong));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) | *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_XOR_I32I32:
                         OPCODE_USE(JitOps.JIT_XOR_I32I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) ^ *(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) ^ *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_XOR_I64I64:
                         OPCODE_USE(JitOps.JIT_XOR_I64I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(ulong) - sizeof(ulong); 
-                        *(ulong*)(pCurEvalStack - sizeof(ulong)) = *(ulong*)(pCurEvalStack - sizeof(ulong)) ^ *(ulong*)(pCurEvalStack - sizeof(ulong) + sizeof(ulong));
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) ^ *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_NEG_I32:
@@ -1979,53 +2080,53 @@ namespace DnaUnity
 
                     case JitOps.JIT_NEG_I64:
                         OPCODE_USE(JitOps.JIT_NEG_I64);
-                        *(long*)(pCurEvalStack - sizeof(long)) = - *(long*)(pCurEvalStack - sizeof(long));
+                        *(long*)(pCurEvalStack - S_INT64) = - *(long*)(pCurEvalStack - S_INT64);
                         break;
 
                     case JitOps.JIT_NOT_I32:
                         OPCODE_USE(JitOps.JIT_NOT_I32);
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = ~ *(uint*)(pCurEvalStack - sizeof(uint));
+                        *(uint*)(pCurEvalStack - S_INT32) = ~ *(uint*)(pCurEvalStack - S_INT32);
                         break;
 
                     case JitOps.JIT_NOT_I64:
                         OPCODE_USE(JitOps.JIT_NOT_I64);
-                        *(ulong*)(pCurEvalStack - sizeof(ulong)) = ~ *(ulong*)(pCurEvalStack - sizeof(ulong));
+                        *(ulong*)(pCurEvalStack - S_INT64) = ~ *(ulong*)(pCurEvalStack - S_INT64);
                         break;
 
                     case JitOps.JIT_SHL_I32:
                         OPCODE_USE(JitOps.JIT_SHL_I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) << (int)*(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) << (int)*(uint*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_SHR_I32:
                         OPCODE_USE(JitOps.JIT_SHR_I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(uint) - sizeof(int); 
+                        pCurEvalStack -= sizeof(int) + S_INT32 - sizeof(int); 
                         *(int*)(pCurEvalStack - sizeof(int)) = *(int*)(pCurEvalStack - sizeof(int)) >> (int)*(uint*)(pCurEvalStack - sizeof(int) + sizeof(int));
                         break;
 
                     case JitOps.JIT_SHR_UN_I32:
                         OPCODE_USE(JitOps.JIT_SHR_UN_I32);
-                        pCurEvalStack -= sizeof(uint) + sizeof(uint) - sizeof(uint); 
-                        *(uint*)(pCurEvalStack - sizeof(uint)) = *(uint*)(pCurEvalStack - sizeof(uint)) >> (int)*(uint*)(pCurEvalStack - sizeof(uint) + sizeof(uint));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) >> (int)*(uint*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_SHL_I64:
                         OPCODE_USE(JitOps.JIT_SHL_I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(uint) - sizeof(ulong); 
-                        *(ulong*)(pCurEvalStack - sizeof(ulong)) = *(ulong*)(pCurEvalStack - sizeof(ulong)) << (int)*(uint*)(pCurEvalStack - sizeof(ulong) + sizeof(ulong));
+                        pCurEvalStack -= S_INT64 + S_INT32 - S_INT64; 
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) << (int)*(uint*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_SHR_I64:
                         OPCODE_USE(JitOps.JIT_SHR_I64);
-                        pCurEvalStack -= sizeof(long) + sizeof(uint) - sizeof(long); 
-                        *(long*)(pCurEvalStack - sizeof(long)) = *(long*)(pCurEvalStack - sizeof(long)) >> (int)*(uint*)(pCurEvalStack - sizeof(long) + sizeof(long));
+                        pCurEvalStack -= S_INT64 + S_INT32 - S_INT64; 
+                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) >> (int)*(uint*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                     case JitOps.JIT_SHR_UN_I64:
                         OPCODE_USE(JitOps.JIT_SHR_UN_I64);
-                        pCurEvalStack -= sizeof(ulong) + sizeof(uint) - sizeof(ulong); 
-                        *(ulong*)(pCurEvalStack - sizeof(ulong)) = *(ulong*)(pCurEvalStack - sizeof(ulong)) >> (int)*(uint*)(pCurEvalStack - sizeof(ulong) + sizeof(ulong));
+                        pCurEvalStack -= S_INT64 + S_INT32 - S_INT64; 
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) >> (int)*(uint*)(pCurEvalStack - S_INT64 + S_INT64);
                         break;
 
                         // Conversion operations
@@ -2035,7 +2136,7 @@ namespace DnaUnity
                         OPCODE_USE(JitOps.JIT_CONV_I32_U32);
                         {
                             uint mask = GET_OP();
-                            *(uint*)(pCurEvalStack - sizeof(uint)) &= mask;
+                            *(uint*)(pCurEvalStack - S_INT32) &= mask;
                         }
                         break;
 
@@ -2287,7 +2388,8 @@ namespace DnaUnity
                             byte* pTempPtr;
 
                             pConstructorDef = (tMD_MethodDef*)GET_PTR();
-                            isInternalConstructor = (pConstructorDef->implFlags & MetaData.METHODIMPLATTRIBUTES_INTERNALCALL) != 0;
+                            isInternalConstructor = (pConstructorDef->implFlags & MetaData.METHODIMPLATTRIBUTES_INTERNALCALL) != 0 &&
+                                        pConstructorDef->monoMethodInfo == null;
 
                             if (!isInternalConstructor) {
                                 // All internal constructors MUST allocate their own 'this' objects
@@ -2325,7 +2427,8 @@ namespace DnaUnity
                             byte* pTempPtr, pMem;
 
                             pConstructorDef = (tMD_MethodDef*)GET_PTR();
-                            isInternalConstructor = (pConstructorDef->implFlags & MetaData.METHODIMPLATTRIBUTES_INTERNALCALL) != 0;
+                            isInternalConstructor = (pConstructorDef->implFlags & MetaData.METHODIMPLATTRIBUTES_INTERNALCALL) != 0 &&
+                                pConstructorDef->monoMethodInfo == null;
 
                             // Allocate space on the eval-stack for the new value-type here
                             pMem = pCurEvalStack - (pConstructorDef->parameterStackSize - sizeof(byte*));
@@ -2564,7 +2667,7 @@ namespace DnaUnity
                     case JitOps.JIT_STOREFIELD_PTR:
                         OPCODE_USE(JitOps.JIT_STOREFIELD_PTR);
                         {
-                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
                             uint value;
@@ -2576,7 +2679,7 @@ namespace DnaUnity
                             pMem = heapPtr + pFieldDef->memOffset;
                     //        printf("  val 0x%x off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (ulong)heapPtr);
                             *(uint*)pMem = value;
-                    #else
+#else
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
                             ulong value;
@@ -2590,7 +2693,7 @@ namespace DnaUnity
                             Sys.printf("  val 0x%llx off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (ulong)heapPtr);
 #endif
                             *(ulong*)pMem = value;
-                    #endif
+#endif
                         }
                         break;
                         
@@ -2644,7 +2747,7 @@ namespace DnaUnity
                         {
                             uint ofs = GET_OP();
                             byte* heapPtr = POP_O();
-                    //        printf("  ofs %d ptr 0x%llx val 0x%x\n", ofs, (ulong)heapPtr, *(uint*)(heapPtr + ofs));
+                            Sys.printf("  ofs %d ptr 0x%llx val 0x%x\n", ofs, (ulong)heapPtr, *(uint*)(heapPtr + ofs));
                             PUSH_U32(*(uint*)(heapPtr + ofs));
                         }
                         break;
@@ -2654,7 +2757,7 @@ namespace DnaUnity
                         {
                             uint ofs = GET_OP();
                             byte* heapPtr = POP_O();
-                    //        printf("  ofs %d ptr 0x%llx val 0x%llx\n", ofs, (ulong)heapPtr, *(ulong*)(heapPtr + ofs));
+                            Sys.printf("  ofs %d ptr 0x%llx val 0x%llx\n", ofs, (ulong)heapPtr, *(ulong*)(heapPtr + ofs));
                             PUSH_U64(*(ulong*)(heapPtr + ofs));
                         }
                         break;
@@ -2712,7 +2815,7 @@ namespace DnaUnity
                     case JitOps.JIT_STORESTATICFIELD_PTR: // only for 32-bit
                         OPCODE_USE(JitOps.JIT_STORESTATICFIELD_INT32);
                         {
-                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
                             uint value;
@@ -2721,7 +2824,7 @@ namespace DnaUnity
                             value = POP_U32();
                             pMem = pFieldDef->pMemory;
                             *(uint*)pMem = value;
-                    #else
+#else
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
                             ulong value;
@@ -2730,7 +2833,7 @@ namespace DnaUnity
                             value = POP_U64();
                             pMem = pFieldDef->pMemory;
                             *(ulong*)pMem = value;
-                    #endif
+#endif
                         }
                         break;
                         
@@ -2812,7 +2915,7 @@ namespace DnaUnity
                                 PUSH_U64(value);
                             } else if (op == JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_PTR ||
                                        op == JitOps.JIT_LOADSTATICFIELDADDRESS_CHECKTYPEINIT) {
-                    #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                                 uint value;
                                 if (op == JitOps.JIT_LOADSTATICFIELDADDRESS_CHECKTYPEINIT) {
                                     value = (uint)(pFieldDef->pMemory);
@@ -2820,7 +2923,7 @@ namespace DnaUnity
                                     value = *(uint*)(pFieldDef->pMemory);
                                 }
                                 PUSH_U32(value);
-                    #else
+#else
                                 ulong value;
                                 if (op == JitOps.JIT_LOADSTATICFIELDADDRESS_CHECKTYPEINIT) {
                                     value = (ulong)(pFieldDef->pMemory);
@@ -2828,7 +2931,7 @@ namespace DnaUnity
                                     value = *(ulong*)(pFieldDef->pMemory);
                                 }
                                 PUSH_U64(value);
-                    #endif
+#endif
                             } else if (op == JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_VALUETYPE) {
                                 PUSH_VALUETYPE(pFieldDef->pMemory, pFieldDef->memSize, pFieldDef->memSize);
                             } else {

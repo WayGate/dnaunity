@@ -21,6 +21,7 @@
 #if !LOCALTEST
 
 namespace System {
+
 	public struct Decimal {
 
 		// internal representation of decimal

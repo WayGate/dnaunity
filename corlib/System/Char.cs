@@ -27,10 +27,13 @@ using System.Runtime.CompilerServices;
 using System.Globalization;
 
 namespace System {
-	public struct Char : IComparable, IComparable<char>, IEquatable<char> {
+	public struct Char : IComparable, IConvertible, IComparable<char>, IEquatable<char> {
 
-		// Note that this array must be ordered, because binary searching is used on it.
-		internal static readonly char[] WhiteChars = {
+        public const char MaxValue = (char)0xFFFF;
+        public const char MinValue = (char)0x00;
+
+        // Note that this array must be ordered, because binary searching is used on it.
+        internal static readonly char[] WhiteChars = {
 			(char) 0x9, (char) 0xA, (char) 0xB, (char) 0xC, (char) 0xD,
 			(char) 0x85, (char) 0x1680, (char) 0x2028, (char) 0x2029,
 			(char) 0x20, (char) 0xA0, (char) 0x2000, (char) 0x2001,
@@ -208,9 +211,98 @@ namespace System {
 			return this.m_value == x;
 		}
 
-		#endregion
+        #endregion
 
-	}
+        #region IConvertible Members
+
+        public TypeCode GetTypeCode()
+        {
+            return TypeCode.Char;
+        }
+
+        bool IConvertible.ToBoolean(IFormatProvider provider)
+        {
+            return Convert.ToBoolean(this);
+        }
+
+        char IConvertible.ToChar(IFormatProvider provider)
+        {
+            return this;
+        }
+
+        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        {
+            return Convert.ToSByte(this);
+        }
+
+        byte IConvertible.ToByte(IFormatProvider provider)
+        {
+            return Convert.ToByte(this);
+        }
+
+        short IConvertible.ToInt16(IFormatProvider provider)
+        {
+            return Convert.ToInt16(this);
+        }
+
+        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        {
+            return Convert.ToUInt16(this);
+        }
+
+        int IConvertible.ToInt32(IFormatProvider provider)
+        {
+            return Convert.ToInt32(this);
+        }
+
+        uint IConvertible.ToUInt32(IFormatProvider provider)
+        {
+            return Convert.ToUInt32(this);
+        }
+
+        long IConvertible.ToInt64(IFormatProvider provider)
+        {
+            return Convert.ToInt64(this);
+        }
+
+        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        {
+            return Convert.ToUInt64(this);
+        }
+
+        float IConvertible.ToSingle(IFormatProvider provider)
+        {
+            return Convert.ToSingle(this);
+        }
+
+        double IConvertible.ToDouble(IFormatProvider provider)
+        {
+            return Convert.ToDouble(this);
+        }
+
+        Decimal IConvertible.ToDecimal(IFormatProvider provider)
+        {
+            throw new NotImplementedException();
+        }
+
+        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        {
+            throw new NotImplementedException();
+        }
+
+        string IConvertible.ToString(IFormatProvider provider)
+        {
+            return this.ToString();
+        }
+
+        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        {
+            return Convert.ChangeType(this, conversionType);
+        }
+
+        #endregion
+
+    }
 }
 
 #endif

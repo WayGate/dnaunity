@@ -22,7 +22,7 @@
 
 using System.Globalization;
 namespace System {
-	public struct Int16 : IFormattable, IComparable, IComparable<short>, IEquatable<short> {
+	public struct Int16 : IFormattable, IComparable, IConvertible, IComparable<short>, IEquatable<short> {
 		public const short MaxValue = 0x7fff;
 		public const short MinValue = -32768;
 
@@ -38,7 +38,9 @@ namespace System {
 			return (int)this.m_value;
 		}
 
-		public override string ToString() {
+        #region ToString methods
+
+        public override string ToString() {
 			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value));
 		}
 
@@ -55,9 +57,95 @@ namespace System {
 			return NumberFormatter.NumberToString(format, m_value, nfi);
 		}
 
-		#region IComparable Members
+        #endregion
 
-		public int CompareTo(object obj) {
+        #region Parse methods
+
+        public static short Parse(String s)
+        {
+            return Parse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo);
+        }
+
+        public static short Parse(String s, NumberStyles style)
+        {
+            return Parse(s, style, NumberFormatInfo.CurrentInfo);
+        }
+
+        public static short Parse(String s, IFormatProvider provider)
+        {
+            return Parse(s, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
+        }
+
+        public static short Parse(String s, NumberStyles style, IFormatProvider provider)
+        {
+            return Parse(s, style, NumberFormatInfo.GetInstance(provider));
+        }
+
+        private static short Parse(String s, NumberStyles style, NumberFormatInfo info)
+        {
+
+            int i = 0;
+            try {
+                i = Int32.Parse(s, style, info);
+            }
+            catch (OverflowException e) {
+                throw new OverflowException();
+            }
+
+            // We need this check here since we don't allow signs to specified in hex numbers. So we fixup the result
+            // for negative numbers
+            if ((style & NumberStyles.AllowHexSpecifier) != 0) { // We are parsing a hexadecimal number
+                if ((i < 0) || (i > UInt16.MaxValue)) {
+                    throw new OverflowException();
+                }
+                return (short)i;
+            }
+
+            if (i < MinValue || i > MaxValue) throw new OverflowException();
+            return (short)i;
+        }
+
+        public static bool TryParse(String s, out Int16 result)
+        {
+            return TryParse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
+        }
+
+        public static bool TryParse(String s, NumberStyles style, IFormatProvider provider, out Int16 result)
+        {
+            return TryParse(s, style, NumberFormatInfo.GetInstance(provider), out result);
+        }
+
+        private static bool TryParse(String s, NumberStyles style, NumberFormatInfo info, out Int16 result)
+        {
+
+            result = 0;
+            int i;
+            if (!Int32.TryParse(s, style, info, out i)) {
+                return false;
+            }
+
+            // We need this check here since we don't allow signs to specified in hex numbers. So we fixup the result
+            // for negative numbers
+            if ((style & NumberStyles.AllowHexSpecifier) != 0) { // We are parsing a hexadecimal number
+                if ((i < 0) || i > UInt16.MaxValue) {
+                    return false;
+                }
+                result = (Int16)i;
+                return true;
+            }
+
+            if (i < MinValue || i > MaxValue) {
+                return false;
+            }
+            result = (Int16)i;
+            return true;
+        }
+
+        #endregion
+
+        #region IComparable Members
+
+        public int CompareTo(object obj) {
 			if (obj == null) {
 				return 1;
 			}
@@ -83,9 +171,96 @@ namespace System {
 			return this.m_value == x;
 		}
 
-		#endregion
+        #endregion
 
-	}
+        #region IConvertible Members
+
+        public TypeCode GetTypeCode()
+        {
+            return TypeCode.Int16;
+        }
+
+        bool IConvertible.ToBoolean(IFormatProvider provider)
+        {
+            return Convert.ToBoolean(this);
+        }
+
+        char IConvertible.ToChar(IFormatProvider provider)
+        {
+            return Convert.ToChar(this);
+        }
+
+        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        {
+            return Convert.ToSByte(this);
+        }
+
+        byte IConvertible.ToByte(IFormatProvider provider)
+        {
+            return Convert.ToByte(this);
+        }
+
+        short IConvertible.ToInt16(IFormatProvider provider)
+        {
+            return this;
+        }
+
+        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        {
+            return Convert.ToUInt16(this);
+        }
+
+        int IConvertible.ToInt32(IFormatProvider provider)
+        {
+            return Convert.ToInt32(this);
+        }
+
+        uint IConvertible.ToUInt32(IFormatProvider provider)
+        {
+            return Convert.ToUInt32(this);
+        }
+
+        long IConvertible.ToInt64(IFormatProvider provider)
+        {
+            return Convert.ToInt64(this);
+        }
+
+        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        {
+            return Convert.ToUInt64(this);
+        }
+
+        float IConvertible.ToSingle(IFormatProvider provider)
+        {
+            return Convert.ToSingle(this);
+        }
+
+        double IConvertible.ToDouble(IFormatProvider provider)
+        {
+            return Convert.ToDouble(this);
+        }
+
+        Decimal IConvertible.ToDecimal(IFormatProvider provider)
+        {
+            throw new NotImplementedException();
+        }
+
+        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        {
+            throw new NotImplementedException();
+        }
+
+        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        {
+            if (conversionType == typeof(string))
+                return this.ToString(provider);
+            else
+                return Convert.ChangeType(this, conversionType);
+        }
+
+        #endregion
+
+    }
 }
 
 #endif

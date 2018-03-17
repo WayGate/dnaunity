@@ -30,8 +30,10 @@ namespace DnaUnity
             System.Reflection.Assembly.LoadFile("c:/Program Files/Unity/Editor/Data/Managed/UnityEngine/UnityEngine.UIModule.dll");
 
             Dna.Init(10000000, assemblySearchPaths);
-            Dna.Load("Test01_Expressions.dll");
-            Dna.Call("Test01_Expressions.Test");
+            Dna.Load("SpinCube.dll");
+            ulong typeDef = Dna.FindType("SpinCubeComponent");
+            DnaObject obj = Dna.CreateInstance(typeDef, null);
+            Dna.Call("Testing", "Test");
         }
     }
 }

@@ -1,0 +1,6 @@
+C:\Users\bcool\projects\dnaunity\corlib\obj\Debug\netstandard1.3\corlib.csproj.CoreCompileInputs.cache
+C:\Users\bcool\projects\dnaunity\corlib\bin\Debug\netstandard1.3\corlib.deps.json
+C:\Users\bcool\projects\dnaunity\corlib\bin\Debug\netstandard1.3\corlib.dll
+C:\Users\bcool\projects\dnaunity\corlib\bin\Debug\netstandard1.3\corlib.pdb
+C:\Users\bcool\projects\dnaunity\corlib\obj\Debug\netstandard1.3\corlib.dll
+C:\Users\bcool\projects\dnaunity\corlib\obj\Debug\netstandard1.3\corlib.pdb

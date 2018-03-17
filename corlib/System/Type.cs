@@ -131,6 +131,9 @@ namespace System {
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         extern private object GetMethodInternal(string name);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern private static TypeCode GetTypeCode(Type type);
     }
 }
 

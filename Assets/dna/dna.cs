@@ -28,9 +28,12 @@ namespace DnaUnity
     using PTR = System.UInt64;
     #endif           
 
+    /// <summary>
+    /// Root class for interfacing with the DNA scripting engine.
+    /// </summary>
     public unsafe static class Dna
     {
-        static bool isInitialized;
+        static bool _isInitialized;
 
         public const int DEFAULT_MEM_SIZE = 256 * 1024;
 
@@ -47,9 +50,14 @@ namespace DnaUnity
         };
         #endif
 
+        /// <summary>
+        /// Initializes the DNA script engine.
+        /// </summary>
+        /// <param name="memsize">The heap memory size to use (note: can not be expanded)</param>
+        /// <param name="assemblySearchPaths">Array of assembly search paths to use when loading assemblies</param>
         public static void Init(int memsize = DEFAULT_MEM_SIZE, string[] assemblySearchPaths = null)
         {
-            if (isInitialized)
+            if (_isInitialized)
                 throw new System.InvalidOperationException("Dna has already been initialized.  Use Dna.Reset() to reset the interpreter");
 
             if (assemblySearchPaths == null)
@@ -82,9 +90,12 @@ namespace DnaUnity
             CLIFile.Init(finalAssemblySearchPaths);
             Type.Init();
 
-            isInitialized = true;
+            _isInitialized = true;
         }
 
+        /// <summary>
+        /// Resets entire DNA environment to it's initial state, clearing all DnaObject references to null.
+        /// </summary>
         public static void Reset()
         {
             Type.Clear();
@@ -101,12 +112,23 @@ namespace DnaUnity
             H.Clear();
             Mem.Clear();
 
-            isInitialized = false;
+            _isInitialized = false;
+        }
+
+        /// <summary>
+        /// True if the DNA scripting engine is currently initialized.
+        /// </summary>
+        public static bool isInitialized
+        {
+            get
+            {
+                return _isInitialized;
+            }
         }
 
         static int InternalLoadAndRun(bool tryRun, string[] args) 
         {
-            if (!isInitialized)
+            if (!_isInitialized)
                 Init();
 
             /*char**/byte *pFileName = new S(args[0]);
@@ -247,72 +269,336 @@ namespace DnaUnity
         	return retValue;
         }
 
-        public static int Load(string filename)
+        /// <summary>
+        /// Load a .NET DLL or EXE assembly.
+        /// </summary>
+        /// <param name="filename">The filename of the assembly to load.</param>
+        public static void Load(string filename)
         {
-            return InternalLoadAndRun(false, new string[] { filename });
+            InternalLoadAndRun(false, new string[] { filename });
         }
 
+        /// <summary>
+        /// Runs the "main" entrypoint function in the loaded EXE or DLL.
+        /// </summary>
+        /// <param name="args">The arguments to pass to the "main" entrypoint function</param>
+        /// <returns>The integer return value (0 = no error, non zero = error code)</returns>
         public static int Run(string[] args)
         {
             return InternalLoadAndRun(true, args);
         }
 
-        public static int Call(string method) 
+        /// <summary>
+        /// Returns a DNA TypeDef for a given type.
+        /// </summary>
+        /// <param name="type">The fully qualified name of the type (namespace and type name)</param>
+        /// <returns>The TypeDef or 0 if no type by that name was found</returns>
+        public static ulong FindType(string type)
         {
-            int result = 1;
+            byte* className = stackalloc byte[128];
+            byte* nameSpace = stackalloc byte[128];
 
-            if (!isInitialized)
+            if (!_isInitialized)
                 Init();
 
-            string[] split = method.Split('.');
+            string[] split = type.Split('.');
 
-            if (split.Length < 2)
-                throw new System.ArgumentException("Method must have at least class name and method name");
+            if (split.Length < 1)
+                throw new System.ArgumentException("Type must have at least a type name");
 
-            byte* nameSpace = new S("");
-            if (split.Length > 2) {
+            if (split.Length > 1)
+            {
                 System.Text.StringBuilder sb = new System.Text.StringBuilder();
-                for (int i = 0; i < split.Length - 2; i++) {
+                for (int i = 0; i < split.Length - 1; i++)
+                {
                     if (i > 0)
                         sb.Append('.');
                     sb.Append(split[i]);
                 }
-                nameSpace = new S(sb.ToString());
-            } else {
-                nameSpace = new S("");
+                S.strncpy(nameSpace, sb.ToString(), 128);
             }
-            byte* className = new S(split[split.Length - 2]);
-            byte* methodName = new S(split[split.Length - 1]);
-            // TODO: Can't we reuse threads? Need to reset their state somehow.
-            tThread *pThread = Thread.New();
+            else
+            {
+                nameSpace[0] = 0;
+            }
+            S.strncpy(className, split[split.Length - 1], 128);
 
             // Find any overload of the named method; assume it's the right one.
             // Specifying it exactly (type generic args, method generic args, arguments themselves, picking the
             // inherited methods if needed), is complex and not required at the moment.
-            tMD_TypeDef *pTypeDef = CLIFile.FindTypeInAllLoadedAssemblies(nameSpace, className);
-            if (pTypeDef == null) {
-                result = 1;
-            } else { 
+            tMD_TypeDef* pTypeDef = CLIFile.FindTypeInAllLoadedAssemblies(nameSpace, className);
+            if (pTypeDef->fillState < Type.TYPE_FILL_ALL) {
                 MetaData.Fill_TypeDef(pTypeDef, null, null);
-                for (int i=0; i<pTypeDef->numMethods; i++) {
-                    if (S.strcmp(pTypeDef->ppMethods[i]->name, methodName) == 0) {
-                        tMD_MethodDef *pMethodDef = pTypeDef->ppMethods[i];
+            }
 
-                        // We found the method - now call it
-                        Thread.SetEntryPoint(pThread, pTypeDef->pMetaData, pMethodDef->tableIndex, null, 0);
-                        result = Thread.Execute();
+            return (ulong)pTypeDef;
+        }
+
+        /// <summary>
+        /// Creates an instance of the given DNA object that also potentially wraps an existing mono base object.
+        /// </summary>
+        /// <param name="typeDef">The type to create.</param>
+        /// <returns>The DNA wrapper object.</returns>
+        public static DnaObject CreateInstance(ulong typeDef, object monoBaseObject = null)
+        {
+            return DnaObject.CreateInstance((tMD_TypeDef*)typeDef, monoBaseObject);
+        }
+
+        /// <summary>
+        /// Returns the DNA methodDef for a method given a typeDef, method name, and argument types.
+        /// </summary>
+        /// <param name="typeDef">The DNA typeDef for a type</param>
+        /// <param name="methodName">The method name</param>
+        /// <param name="argTypes">The types of the method's arguments or null if no arguments</param>
+        /// <returns>The methodDef found or 0 if no method matches</returns>
+        public static ulong FindMethod(ulong typeDef, string methodName, System.Type[] argTypes = null)
+        {
+            if (!_isInitialized)
+                Init();
+
+            int numArgs = argTypes != null ? argTypes.Length : 0;
+
+            byte* mName = stackalloc byte[128];
+            S.strncpy(mName, methodName, 128);
+
+            // Find any overload of the named method; assume it's the right one.
+            // Specifying it exactly (type generic args, method generic args, arguments themselves, picking the
+            // inherited methods if needed), is complex and not required at the moment.
+            tMD_TypeDef* pTypeDef = (tMD_TypeDef*)(PTR)typeDef;
+            tMD_MethodDef* pMethodDef = null;
+            bool matches = false;
+            while (pTypeDef != null) {
+                if (pTypeDef->fillState < Type.TYPE_FILL_ALL) {
+                    MetaData.Fill_TypeDef(pTypeDef, null, null);
+                }
+                for (int i = 0; i < pTypeDef->numMethods; i++) {
+                    tMD_MethodDef* pCheckMethodDef = pTypeDef->ppMethods[i];
+                    int start = 0;
+                    if (!MetaData.METHOD_ISSTATIC(pCheckMethodDef))
+                        start = 1;
+                    matches = false;
+                    if (S.strcmp(pCheckMethodDef->name, mName) == 0 && 
+                        (pCheckMethodDef->numberOfParameters - start == numArgs)) {
+                        matches = true;
+                        for (int j = start; j < pCheckMethodDef->numberOfParameters; j++) {
+                            tMD_TypeDef* pArgType = MonoType.GetTypeForMonoType(argTypes[j - start], null, null);
+                            if (pArgType != pCheckMethodDef->pParams[j].pStackTypeDef) {
+                                matches = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (matches) {
+                        pMethodDef = pCheckMethodDef;
                         break;
                     }
                 }
+                if (matches)
+                    break;
+                pTypeDef = pTypeDef->pParent;
             }
 
-            Mem.free(nameSpace);
-            Mem.free(className);
-            Mem.free(methodName);
-
-            return result;
+            return (ulong)pMethodDef;
         }
 
+        static object[] noArgs = new object[0];
+
+        /// <summary>
+        /// Call to a DNA method given it's method def (with a byref this).
+        /// </summary>
+        /// <param name="methodDef">The method def</param>
+        /// <param name="_this">The this object (or null if method is static)</param>
+        /// <param name="args">The arguments to pass (or null for no arguments)</param>
+        /// <returns>The value returned by the method.</returns>
+        public static object CallRefThis(ulong methodDef, ref object _this, object[] args = null)
+        {
+            tMD_MethodDef* pMethodDef = (tMD_MethodDef*)methodDef;
+            uint start = 0;
+            uint byRefSize = 0;
+            bool byRefThis = false;
+            bool byRefArgs = false;
+            uint paramsSize = 0;
+            uint retValSize = 0;
+            byte* pByRefPtr;
+            byte* pStackPtr;
+            object ret = null;
+
+            byte* pBuf = stackalloc byte[256];
+            uint bufSize = 256;
+
+            tMD_TypeDef* pThisType = null;
+            tMD_TypeDef* pMethodThisType = null;
+
+            if (args == null)
+                args = noArgs;
+
+            // First pass.. check types and get by ref buf size..
+
+            if (!MetaData.METHOD_ISSTATIC(pMethodDef)) {
+                if (_this == null)
+                    throw new System.NullReferenceException("Call to member method can not have null this");
+                pThisType = MonoType.GetTypeForMonoObject(_this, null, null);
+                pMethodThisType = MetaData.PARAM_ACTUAL_TYPE(&pMethodDef->pParams[0]);
+                if (!MetaData.TYPE_ISASSIGNABLE_TO(pThisType, pMethodThisType))
+                    throw new System.InvalidOperationException("This type is not compatible with method this type");
+                if (MetaData.PARAM_ISBYREF(&pMethodDef->pParams[0])) {
+                    byRefSize += pMethodThisType->stackSize;
+                    paramsSize += (uint)sizeof(byte*);
+                    byRefThis = true;
+                }
+                else {
+                    paramsSize += pMethodDef->pParams[0].pStackTypeDef->stackSize;
+                }
+                start = 1;
+            }
+
+            if (args.Length != pMethodDef->numberOfParameters - start) {
+                throw new System.InvalidOperationException("Wrong number of parameters for this method");
+            }
+
+            for (uint i = start; i < args.Length; i++) {
+                tMD_TypeDef* pParamType = MetaData.PARAM_ACTUAL_TYPE(&pMethodDef->pParams[i]);
+                tMD_TypeDef* pArgType = args[i - start] != null ? MonoType.GetTypeForMonoObject(args[i - start], null, null) : null;
+                if (pArgType == null && pParamType->isValueType == 0)
+                    pArgType = pParamType;
+                if (!MetaData.TYPE_ISASSIGNABLE_TO(pArgType, pParamType))
+                    throw new System.InvalidOperationException("Argument types are not compatible");
+                if (MetaData.PARAM_ISBYREF(&pMethodDef->pParams[i])) {
+                    byRefSize += pParamType->stackSize;
+                    paramsSize += (uint)sizeof(byte*);
+                    byRefArgs = true;
+                }
+                else {
+                    paramsSize += pMethodDef->pParams[i].pStackTypeDef->stackSize;
+                }
+            }
+
+            if (pMethodDef->pReturnType != null) {
+                retValSize = pMethodDef->pReturnType->stackSize;
+            }
+
+            if (byRefSize + paramsSize + retValSize > bufSize) {
+                throw new System.InvalidOperationException("Buffer overflow for parameter stack");
+            }
+
+            // Now actually marshal params to the param buffer
+
+            pByRefPtr = pBuf;
+            pStackPtr = pBuf + byRefSize;
+
+            if (!MetaData.METHOD_ISSTATIC(pMethodDef)) {
+                if (MetaData.PARAM_ISBYREF(&pMethodDef->pParams[0])) {
+                    MonoType.MarshalFromObject(pByRefPtr, ref _this);
+                    *(byte**)pStackPtr = pByRefPtr;
+                    pByRefPtr += pMethodDef->pParams[0].pByRefTypeDef->stackSize;
+                    pStackPtr += sizeof(byte*);
+                }
+                else {
+                    MonoType.MarshalFromObject(pStackPtr, ref _this);
+                    pStackPtr += pMethodDef->pParams[0].pStackTypeDef->stackSize;
+                }
+            }
+
+            for (uint i = start; i < args.Length; i++) {
+                if (MetaData.PARAM_ISBYREF(&pMethodDef->pParams[i])) {
+                    MonoType.MarshalFromObject(pByRefPtr, ref args[i - start]);
+                    *(byte**)pStackPtr = pByRefPtr;
+                    pByRefPtr += pMethodDef->pParams[i].pByRefTypeDef->stackSize;
+                    pStackPtr += sizeof(byte*);
+                }
+                else {
+                    MonoType.MarshalFromObject(pStackPtr, ref args[i - start]);
+                    pStackPtr += pMethodDef->pParams[i].pStackTypeDef->stackSize;
+                }
+            }
+
+            // Call the method (usuing reusable call thread)
+
+            int status = Thread.Call(pMethodDef, pBuf + byRefSize, pBuf + byRefSize + paramsSize);
+            if (status != Thread.THREAD_STATUS_EXIT) {
+                throw new System.InvalidOperationException("Thread blocked in call to method");
+            }
+
+            // Marshal back any byref values
+
+            if (byRefArgs || byRefThis) {
+                pByRefPtr = pBuf;
+                if (byRefThis) {
+                    object refThis;
+                    MonoType.MarshalToObject(pByRefPtr, out refThis);
+                    _this = refThis;
+                    pByRefPtr += pMethodDef->pParams[0].pByRefTypeDef->stackSize;
+                }
+                if (byRefArgs) {
+                    for (uint i = start; i < args.Length; i++) {
+                        if (MetaData.PARAM_ISBYREF(&pMethodDef->pParams[i])) {
+                            object refArg;
+                            MonoType.MarshalToObject(pByRefPtr, out refArg);
+                            args[i - start] = refArg;
+                            pByRefPtr += pMethodDef->pParams[i].pByRefTypeDef->stackSize;
+                        }
+                    }
+                }
+            }
+    
+            // Marshal the return value
+
+            if (pMethodDef->pReturnType != null) {
+                MonoType.MarshalToObject(pBuf + byRefSize + paramsSize, out ret);
+            }
+
+            return ret;
+        }
+
+        /// <summary>
+        /// Call to a DNA method given it's method def (with a byref this).
+        /// </summary>
+        /// <param name="methodDef">The method def</param>
+        /// <param name="_this">The this object (or null if method is static)</param>
+        /// <param name="args">The arguments to pass (or null for no arguments)</param>
+        /// <returns>The value returned by the method.</returns>
+        public static object Call(ulong methodDef, object _this = null, object[] args = null)
+        {
+            return CallRefThis(methodDef, ref _this, args);
+        }
+
+
+        /// <summary>
+        /// Call a method on a DNA type with a typedef and method name.
+        /// </summary>
+        /// <param name="typeDef">Pointer to the type def</param>
+        /// <param name="methodName">The name of the method</param>
+        /// <param name="argTypes">The argument types</param>
+        /// <param name="_this">The this object (or null if method is static)</param>
+        /// <param name="args">The arguments to pass (or null for no arguments)</param>
+        /// <returns>The value returned by the method.</returns>
+        public static object Call(ulong typeDef, string methodName, System.Type[] argTypes = null, object _this = null, object[] args = null)
+        {
+            ulong methodDef = FindMethod(typeDef, methodName, argTypes);
+            if (methodDef == 0)
+                throw new System.InvalidOperationException("Unable to find method " + methodName);
+            return Call(methodDef, _this, args);
+        }
+
+        /// <summary>
+        /// Call a method on a DNA type with type name and method name.
+        /// </summary>
+        /// <param name="typeName">The name of the type (including namespace)</param>
+        /// <param name="methodName">The name of the method</param>
+        /// <param name="argTypes">The argument types</param>
+        /// <param name="_this">The this object (or null if method is static)</param>
+        /// <param name="args">The arguments to pass (or null for no arguments)</param>
+        /// <returns>The value returned by the method.</returns>
+        public static object Call(string typeName, string methodName, System.Type[] argTypes = null, object _this = null, object[] args = null)
+        {
+            ulong typeDef = FindType(typeName);
+            if (typeDef == 0)
+                throw new System.InvalidOperationException("Unable to find type " + typeName);
+            ulong methodDef = FindMethod(typeDef, methodName, argTypes);
+            if (methodDef == 0)
+                throw new System.InvalidOperationException("Unable to find method " + typeName + "." + methodName);
+            return Call(methodDef, _this, args);
+        }
     }
 }
 

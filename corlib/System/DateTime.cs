@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Globalization;
 using System.Text;
 namespace System {
-	public struct DateTime : IFormattable, IComparable, IComparable<DateTime>, IEquatable<DateTime> {
+	public struct DateTime : IFormattable, IComparable, IConvertible, IComparable<DateTime>, IEquatable<DateTime> {
 
 		public static readonly DateTime MinValue = new DateTime(0);
 		public static readonly DateTime MaxValue = new DateTime(3155378975999999999L);
@@ -327,7 +327,7 @@ namespace System {
 			return this.ticks.GetHashCode();
 		}
 
-		#region ToString() stuff
+		#region ToString methods
 
 		public override string ToString() {
 			return this.ToString("G", null);
@@ -356,9 +356,11 @@ namespace System {
 			return this.ToString2(format, dtf);
 		}
 
-		#region ToString helper functions
+        #endregion
 
-		private string ToString2(string format, DateTimeFormatInfo dfi) {
+        #region ToString helper functions
+
+        private string ToString2(string format, DateTimeFormatInfo dfi) {
 			// the length of the format is usually a good guess of the number
 			// of chars in the result. Might save us a few bytes sometimes
 			// Add + 10 for cases like mmmm dddd
@@ -706,13 +708,41 @@ namespace System {
 			return pattern;
 		}
 
-		#endregion
+        #endregion
 
-		#endregion
+        #region Parse methods
 
-		#region IComparable Members
+        public static DateTime Parse(string s)
+        {
+            return Parse(s, NumberStyles.Integer, null);
+        }
 
-		public int CompareTo(object obj) {
+        public static DateTime Parse(string s, NumberStyles style)
+        {
+            return Parse(s, style, null);
+        }
+
+        public static DateTime Parse(string s, IFormatProvider formatProvider)
+        {
+            return Parse(s, NumberStyles.Integer, formatProvider);
+        }
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern static DateTime Parse(string s, NumberStyles style, IFormatProvider formatProvider);
+
+        public static bool TryParse(string s, out DateTime result)
+        {
+            return TryParse(s, NumberStyles.Integer, null, out result);
+        }
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern static bool TryParse(string s, NumberStyles style, IFormatProvider format, out DateTime result);
+
+        #endregion
+
+        #region IComparable Members
+
+        public int CompareTo(object obj) {
 			if (obj == null) {
 				return 1;
 			}
@@ -738,8 +768,96 @@ namespace System {
 			return this.ticks.Equals(x.ticks);
 		}
 
-		#endregion
-	}
+        #endregion
+
+        #region IConvertible Members
+
+        public TypeCode GetTypeCode()
+        {
+            return TypeCode.DateTime;
+        }
+
+        bool IConvertible.ToBoolean(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        char IConvertible.ToChar(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        byte IConvertible.ToByte(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        short IConvertible.ToInt16(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        int IConvertible.ToInt32(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        uint IConvertible.ToUInt32(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        long IConvertible.ToInt64(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        float IConvertible.ToSingle(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        double IConvertible.ToDouble(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        decimal IConvertible.ToDecimal(IFormatProvider provider)
+        {
+            throw new InvalidCastException();
+        }
+
+        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        {
+            return this;
+        }
+
+        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        {
+            if (conversionType == typeof(string))
+                return this.ToString(provider);
+            else
+                return Convert.ChangeType(this, conversionType);
+        }
+
+        #endregion
+
+    }
 }
 
 #endif

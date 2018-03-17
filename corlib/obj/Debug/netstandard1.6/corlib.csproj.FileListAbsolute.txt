@@ -1,0 +1,1 @@
+C:\Users\bcool\projects\dnaunity\corlib\obj\Debug\netstandard1.6\corlib.csproj.CoreCompileInputs.cache

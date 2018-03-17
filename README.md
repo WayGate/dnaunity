@@ -10,11 +10,11 @@
 - [X] CLIFile loading works loading a HelloWorld assembly.
 - [X] Basic metadata tests pass.
 - [X] Simple call method test works.
-- [ ] Simple "HelloWorld" prints to Unity console.
-- [ ] Basic mapping of Mono/Unity API's.
+- [X] Simple "HelloWorld" prints to Unity console.
+- [X] Working mapping of Mono/Unity API's.
 - [ ] 32 bit and 64 bit mode tested/works
 - [ ] Basic unit test suite runs
-- [ ] More extensive unit test suite runs
+- [ ] Comprehensive unit test suite runs
 - [ ] Utility to convert existing scenes/prefabs to scenes/prefabs which interface with loadable scripts working.
 - [ ] Full unit test suite runs
 - [ ] Production ready

@@ -4,8 +4,11 @@ using System.Threading;
 using System.Collections.Generic;
 using System.IO;
 
-namespace System.Globalization {
-	public class CultureInfo {
+namespace System.Globalization
+{
+
+	public class CultureInfo : IFormatProvider
+    {
 
 		#region Static methods
 
@@ -267,7 +270,18 @@ namespace System.Globalization {
 			return this.name;
 		}
 
-	}
+        public virtual Object GetFormat(Type formatType)
+        {
+            if (formatType == typeof(NumberFormatInfo)) {
+                return (NumberFormat);
+            }
+            if (formatType == typeof(DateTimeFormatInfo)) {
+                return (DateTimeFormat);
+            }
+            return (null);
+        }
+
+    }
 }
 
 #endif

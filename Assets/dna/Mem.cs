@@ -73,7 +73,7 @@ namespace DnaUnity
             return p + 16;
         }
 
-        [System.Diagnostics.Conditional("CHECK_HEAP")]
+        //[System.Diagnostics.Conditional("CHECK_HEAP")]
         public static void heapcheck()
         {
             if (Sys.isCrashed == 1)
@@ -120,14 +120,19 @@ namespace DnaUnity
 
         public static void memcpy(void* p1, void* p2, SIZE_T size)
         {
-            heapcheck();
-            // For now.. slow but simple - accurate
-            byte* a = (byte*)p1;
-            byte* b = (byte*)p2;
-            int len = (int)size;
-            for (int i = 0; i < len; i++)
-                *a++ = *b++;
-            heapcheck();
+            try {
+                heapcheck();
+                // For now.. slow but simple - accurate
+                byte* a = (byte*)p1;
+                byte* b = (byte*)p2;
+                int len = (int)size;
+                for (int i = 0; i < len; i++)
+                    *a++ = *b++;
+                heapcheck();
+            }
+            catch (System.Exception e) {
+                int i = 1000;
+            }
         }
 
         public static void memmove(void* p1, void* p2, SIZE_T size)

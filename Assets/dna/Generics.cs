@@ -18,6 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace DnaUnity
@@ -93,16 +94,16 @@ namespace DnaUnity
 
             Mem.heapcheck();
 
-            pCoreType = Type.GetTypeFromSig(pMetaData, pSig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
-        	MetaData.Fill_TypeDef(pCoreType, ppCallingClassTypeArgs, ppCallingMethodTypeArgs); //null, null);
+            pCoreType = Type.GetTypeFromSig(pMetaData, pSig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs, null);
+        	MetaData.Fill_TypeDef(pCoreType, ppCallingClassTypeArgs, ppCallingMethodTypeArgs, Type.TYPE_FILL_PARENTS); //null, null);
 
         	numTypeArgs = MetaData.DecodeSigEntry(pSig);
             ppTypeArgs = (tMD_TypeDef**)Mem.malloc((SIZE_T)(numTypeArgs * sizeof(tMD_TypeDef*)));
         	for (i=0; i<numTypeArgs; i++) {
         		ppTypeArgs[i] = Type.GetTypeFromSig(pMetaData, pSig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
         		if (ppTypeArgs[i] != null) {
-        			MetaData.Fill_TypeDef(ppTypeArgs[i], null, null);
-        		}
+        			MetaData.Fill_TypeDef(ppTypeArgs[i], null, null, Type.TYPE_FILL_PARENTS);
+          		}
         	}
 
         	pRet = GetGenericTypeFromCoreType(pCoreType, numTypeArgs, ppTypeArgs);
@@ -132,7 +133,8 @@ namespace DnaUnity
 
         const int NAME_BUF_SIZE = 2048;
 
-        public static tMD_TypeDef* GetGenericTypeFromCoreType(tMD_TypeDef *pCoreType, uint numTypeArgs, tMD_TypeDef **ppTypeArgs) 
+        public static tMD_TypeDef* GetGenericTypeFromCoreType(tMD_TypeDef *pCoreType, uint numTypeArgs, 
+            tMD_TypeDef **ppTypeArgs) 
         {
         	tGenericInstance *pInst;
         	tMD_TypeDef *pTypeDef;
@@ -144,7 +146,7 @@ namespace DnaUnity
             Mem.heapcheck();
 
             pMetaData = pCoreType->pMetaData;
-        	MetaData.Fill_TypeDef(pCoreType, null, null);
+        	MetaData.Fill_TypeDef(pCoreType, null, null, Type.TYPE_FILL_PARENTS);
 
         	// See if we have already built an instantiation of this type with the given type args.
         	pInst = pCoreType->pGenericInstances;
@@ -218,7 +220,7 @@ namespace DnaUnity
         	pTypeDef->pNestedIn = pCoreType->pNestedIn;
         	pTypeDef->isPrimed = 1;
 
-        	MetaData.Fill_TypeDef(pTypeDef, ppTypeArgs, null);
+        	MetaData.Fill_TypeDef(pTypeDef, ppTypeArgs, null, Type.TYPE_FILL_PARENTS);
 
             Mem.heapcheck();
 
@@ -237,7 +239,8 @@ namespace DnaUnity
 
             Mem.heapcheck();
 
-            pCoreMethod = MetaData.GetMethodDefFromDefRefOrSpec(pMethodSpec->pMetaData, pMethodSpec->method, null, null);//ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
+            pCoreMethod = MetaData.GetMethodDefFromDefRefOrSpec(pMethodSpec->pMetaData, pMethodSpec->method, 
+                null, null);//ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
 
         	//ppClassTypeArgs = pCoreMethod->pParentType->ppClassTypeArgs;
         	sig = MetaData.GetBlob(pMethodSpec->instantiation, null);
@@ -248,7 +251,7 @@ namespace DnaUnity
         	for (i=0; i<argCount; i++) {
         		tMD_TypeDef *pArgType;
 
-        		pArgType = Type.GetTypeFromSig(pMethodSpec->pMetaData, &sig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
+        		pArgType = Type.GetTypeFromSig(pMethodSpec->pMetaData, &sig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs, null);
         		ppTypeArgs[i] = pArgType;
         	}
 
@@ -261,10 +264,12 @@ namespace DnaUnity
         }
 
         public static tMD_MethodDef* GetMethodDefFromCoreMethod(tMD_MethodDef *pCoreMethod, 
-            tMD_TypeDef *pParentType, uint numTypeArgs, tMD_TypeDef **ppTypeArgs) 
+            tMD_TypeDef *pParentType, uint numTypeArgs, tMD_TypeDef **ppTypeArgs, 
+            HashSet<PTR> resolveTypes = null) 
         {
         	tGenericMethodInstance *pInst;
         	tMD_MethodDef *pMethod;
+            int i;
 
             Mem.heapcheck();
 

@@ -19,6 +19,7 @@
 // THE SOFTWARE.
 
 using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
 using UnityEngine;
@@ -40,7 +41,15 @@ namespace DnaUnity
         const int PTR_SIZE = 4;
         #else
         const int PTR_SIZE = 8;
-        #endif         
+#endif
+
+        public const int TYPE_FILL_NONE                                 = 0;
+        public const int TYPE_FILL_PARENTS                              = 1;
+        public const int TYPE_FILL_LAYOUT                               = 2;
+        public const int TYPE_FILL_VTABLE                               = 3;
+        public const int TYPE_FILL_MEMBERS                              = 4;
+        public const int TYPE_FILL_INTERFACES                           = 5;
+        public const int TYPE_FILL_ALL                                  = 6;
 
         public const int ELEMENT_TYPE_VOID                              = 0x01;
         public const int ELEMENT_TYPE_BOOLEAN                           = 0x02;
@@ -72,83 +81,86 @@ namespace DnaUnity
         public const int ELEMENT_TYPE_MVAR                              = 0x1e;
 
 
-        public const int TYPE_SYSTEM_OBJECT                             = 0;
-        public const int TYPE_SYSTEM_ARRAY_NO_TYPE                      = 1;
-        public const int TYPE_SYSTEM_VOID                               = 2;
-        public const int TYPE_SYSTEM_BOOLEAN                            = 3;
-        public const int TYPE_SYSTEM_BYTE                               = 4;
-        public const int TYPE_SYSTEM_SBYTE                              = 5;
-        public const int TYPE_SYSTEM_CHAR                               = 6;
-        public const int TYPE_SYSTEM_INT16                              = 7;
-        public const int TYPE_SYSTEM_INT32                              = 8;
-        public const int TYPE_SYSTEM_STRING                             = 9;
-        public const int TYPE_SYSTEM_INTPTR                             = 10;
-        public const int TYPE_SYSTEM_RUNTIMEFIELDHANDLE                 = 11;
-        public const int TYPE_SYSTEM_INVALIDCASTEXCEPTION               = 12;
-        public const int TYPE_SYSTEM_UINT32                             = 13;
-        public const int TYPE_SYSTEM_UINT16                             = 14;
-        public const int TYPE_SYSTEM_ARRAY_CHAR                         = 15;
-        public const int TYPE_SYSTEM_ARRAY_OBJECT                       = 16;
-        public const int TYPE_SYSTEM_COLLECTIONS_GENERIC_IENUMERABLE_T  = 17;
-        public const int TYPE_SYSTEM_COLLECTIONS_GENERIC_ICOLLECTION_T  = 18;
-        public const int TYPE_SYSTEM_COLLECTIONS_GENERIC_ILIST_T        = 19;
-        public const int TYPE_SYSTEM_MULTICASTDELEGATE                  = 20;
-        public const int TYPE_SYSTEM_NULLREFERENCEEXCEPTION             = 21;
-        public const int TYPE_SYSTEM_SINGLE                             = 22;
-        public const int TYPE_SYSTEM_DOUBLE                             = 23;
-        public const int TYPE_SYSTEM_INT64                              = 24;
-        public const int TYPE_SYSTEM_UINT64                             = 25;
-        public const int TYPE_SYSTEM_RUNTIMETYPE                        = 26;
-        public const int TYPE_SYSTEM_TYPE                               = 27;
-        public const int TYPE_SYSTEM_RUNTIMETYPEHANDLE                  = 28;
-        public const int TYPE_SYSTEM_RUNTIMEMETHODHANDLE                = 29;
-        public const int TYPE_SYSTEM_ENUM                               = 30;
-        public const int TYPE_SYSTEM_ARRAY_STRING                       = 31;
-        public const int TYPE_SYSTEM_ARRAY_INT32                        = 32;
-        public const int TYPE_SYSTEM_THREADING_THREAD                   = 33;
-        public const int TYPE_SYSTEM_THREADING_THREADSTART              = 34;
-        public const int TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART = 35;
-        public const int TYPE_SYSTEM_WEAKREFERENCE                      = 36;
-        public const int TYPE_SYSTEM_IO_FILEMODE                        = 37;
-        public const int TYPE_SYSTEM_IO_FILEACCESS                      = 38;
-        public const int TYPE_SYSTEM_IO_FILESHARE                       = 39;
-        public const int TYPE_SYSTEM_ARRAY_BYTE                         = 40;
-        public const int TYPE_SYSTEM_GLOBALIZATION_UNICODECATEGORY      = 41;
-        public const int TYPE_SYSTEM_OVERFLOWEXCEPTION                  = 42;
-        public const int TYPE_SYSTEM_PLATFORMID                         = 43;
-        public const int TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES            = 44;
-        public const int TYPE_SYSTEM_UINTPTR                            = 45;
-        public const int TYPE_SYSTEM_NULLABLE                           = 46;
-        public const int TYPE_SYSTEM_ARRAY_TYPE                         = 47;
-        public const int TYPE_SYSTEM_REFLECTION_PROPERTYINFO            = 48;
-        public const int TYPE_SYSTEM_REFLECTION_METHODINFO              = 49;
-        public const int TYPE_SYSTEM_REFLECTION_METHODBASE              = 50;
+        public const int TYPE_ID_NOT_SET                                = 0; // Not an actual type
+        public const int TYPE_SYSTEM_OBJECT                             = 1;
+        public const int TYPE_SYSTEM_ARRAY_NO_TYPE                      = 2;
+        public const int TYPE_SYSTEM_VOID                               = 3;
+        public const int TYPE_SYSTEM_BOOLEAN                            = 4;
+        public const int TYPE_SYSTEM_BYTE                               = 5;
+        public const int TYPE_SYSTEM_SBYTE                              = 6;
+        public const int TYPE_SYSTEM_CHAR                               = 7;
+        public const int TYPE_SYSTEM_INT16                              = 8;
+        public const int TYPE_SYSTEM_INT32                              = 9;
+        public const int TYPE_SYSTEM_STRING                             = 10;
+        public const int TYPE_SYSTEM_INTPTR                             = 11;
+        public const int TYPE_SYSTEM_RUNTIMEFIELDHANDLE                 = 12;
+        public const int TYPE_SYSTEM_INVALIDCASTEXCEPTION               = 13;
+        public const int TYPE_SYSTEM_UINT32                             = 14;
+        public const int TYPE_SYSTEM_UINT16                             = 15;
+        public const int TYPE_SYSTEM_ARRAY_CHAR                         = 16;
+        public const int TYPE_SYSTEM_ARRAY_OBJECT                       = 17;
+        public const int TYPE_SYSTEM_COLLECTIONS_GENERIC_IENUMERABLE_T  = 18;
+        public const int TYPE_SYSTEM_COLLECTIONS_GENERIC_ICOLLECTION_T  = 19;
+        public const int TYPE_SYSTEM_COLLECTIONS_GENERIC_ILIST_T        = 20;
+        public const int TYPE_SYSTEM_MULTICASTDELEGATE                  = 21;
+        public const int TYPE_SYSTEM_NULLREFERENCEEXCEPTION             = 22;
+        public const int TYPE_SYSTEM_SINGLE                             = 23;
+        public const int TYPE_SYSTEM_DOUBLE                             = 24;
+        public const int TYPE_SYSTEM_INT64                              = 25;
+        public const int TYPE_SYSTEM_UINT64                             = 26;
+        public const int TYPE_SYSTEM_TYPECODE                           = 27;
+        public const int TYPE_SYSTEM_RUNTIMETYPE                        = 28;
+        public const int TYPE_SYSTEM_TYPE                               = 29;
+        public const int TYPE_SYSTEM_RUNTIMETYPEHANDLE                  = 30;
+        public const int TYPE_SYSTEM_RUNTIMEMETHODHANDLE                = 31;
+        public const int TYPE_SYSTEM_ENUM                               = 32;
+        public const int TYPE_SYSTEM_DATETIME                           = 33;
+        public const int TYPE_SYSTEM_ARRAY_STRING                       = 34;
+        public const int TYPE_SYSTEM_ARRAY_INT32                        = 35;
+        public const int TYPE_SYSTEM_THREADING_THREAD                   = 36;
+        public const int TYPE_SYSTEM_THREADING_THREADSTART              = 37;
+        public const int TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART = 38;
+        public const int TYPE_SYSTEM_WEAKREFERENCE                      = 39;
+        public const int TYPE_SYSTEM_IO_FILEMODE                        = 40;
+        public const int TYPE_SYSTEM_IO_FILEACCESS                      = 41;
+        public const int TYPE_SYSTEM_IO_FILESHARE                       = 42;
+        public const int TYPE_SYSTEM_ARRAY_BYTE                         = 43;
+        public const int TYPE_SYSTEM_GLOBALIZATION_UNICODECATEGORY      = 44;
+        public const int TYPE_SYSTEM_OVERFLOWEXCEPTION                  = 45;
+        public const int TYPE_SYSTEM_PLATFORMID                         = 46;
+        public const int TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES            = 47;
+        public const int TYPE_SYSTEM_UINTPTR                            = 48;
+        public const int TYPE_SYSTEM_NULLABLE                           = 49;
+        public const int TYPE_SYSTEM_ARRAY_TYPE                         = 50;
+        public const int TYPE_SYSTEM_REFLECTION_PROPERTYINFO            = 51;
+        public const int TYPE_SYSTEM_REFLECTION_METHODINFO              = 52;
+        public const int TYPE_SYSTEM_REFLECTION_METHODBASE              = 53;
 
 #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
 
-        public const int TYPE_UNITYENGINE_VECTOR2                       = 51;
-        public const int TYPE_UNITYENGINE_VECTOR3                       = 52;
-        public const int TYPE_UNITYENGINE_COLOR                         = 53;
-        public const int TYPE_UNITYENGINE_COLOR32                       = 54;
-        public const int TYPE_UNITYENGINE_VECTOR4                       = 55;
-        public const int TYPE_UNITYENGINE_QUATERNION                    = 56;
-        public const int TYPE_UNITYENGINE_VECTOR2INT                    = 57;
-        public const int TYPE_UNITYENGINE_VECTOR3INT                    = 58;
-        public const int TYPE_UNITYENGINE_RECT                          = 59;
-        public const int TYPE_UNITYENGINE_RECTINT                       = 60;
-        public const int TYPE_UNITYENGINE_RECTOFFSET                    = 61;
-        public const int TYPE_UNITYENGINE_RAY2D                         = 62;
-        public const int TYPE_UNITYENGINE_RAY                           = 63;
-        public const int TYPE_UNITYENGINE_BOUNDS                        = 64;
-        public const int TYPE_UNITYENGINE_PLANE                         = 65;
-        public const int TYPE_UNITYENGINE_RANGEINT                      = 66;
-        public const int TYPE_UNITYENGINE_MATRIX4X4                     = 67;
+        public const int TYPE_UNITYENGINE_VECTOR2                       = 54;
+        public const int TYPE_UNITYENGINE_VECTOR3                       = 55;
+        public const int TYPE_UNITYENGINE_COLOR                         = 56;
+        public const int TYPE_UNITYENGINE_COLOR32                       = 57;
+        public const int TYPE_UNITYENGINE_VECTOR4                       = 58;
+        public const int TYPE_UNITYENGINE_QUATERNION                    = 59;
+        public const int TYPE_UNITYENGINE_VECTOR2INT                    = 60;
+        public const int TYPE_UNITYENGINE_VECTOR3INT                    = 61;
+        public const int TYPE_UNITYENGINE_RECT                          = 62;
+        public const int TYPE_UNITYENGINE_RECTINT                       = 63;
+        public const int TYPE_UNITYENGINE_RECTOFFSET                    = 64;
+        public const int TYPE_UNITYENGINE_RAY2D                         = 65;
+        public const int TYPE_UNITYENGINE_RAY                           = 66;
+        public const int TYPE_UNITYENGINE_BOUNDS                        = 67;
+        public const int TYPE_UNITYENGINE_PLANE                         = 68;
+        public const int TYPE_UNITYENGINE_RANGEINT                      = 69;
+        public const int TYPE_UNITYENGINE_MATRIX4X4                     = 70;
 
-        public const int NUM_INIT_TYPES = 68;
+        public const int NUM_INIT_TYPES = 71;
 
 #else
 
-        public const int NUM_INIT_TYPES = 51;
+        public const int NUM_INIT_TYPES = 54;
 
 #endif
 
@@ -199,7 +211,7 @@ namespace DnaUnity
 
         // String constant statics
         static byte* scMscorlib, scUnityEngine, scSystemCollectionsGeneric, scSystemReflection, scSystemThreading,
-            scSystemIO, scSystemGlobalization, scSystem, scValueType, scObject;
+            scSystemIO, scSystemGlobalization, scSystem;
 
         static tTypeInit[] typeInit = null;
         //static int CorLibDone = 0;
@@ -209,7 +221,7 @@ namespace DnaUnity
             uint i;
 
             scMscorlib = scUnityEngine = scSystemCollectionsGeneric = scSystemReflection = scSystemThreading = 
-                scSystemIO = scSystemGlobalization = scSystem = scValueType = scObject = null;
+                scSystemIO = scSystemGlobalization = scSystem = null;
 
             ppGenericArrayMethods = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(sizeof(tMD_MethodDef*) * GENERICARRAYMETHODS_NUM));
 
@@ -230,21 +242,22 @@ namespace DnaUnity
             );
 
             typeInit = new tTypeInit[] {
+                new tTypeInit {assemblyName = null, nameSpace = null, name = null, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Object"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Array"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Void"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Boolean"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Byte"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 1, instanceMemSize = 4, alignment = 1},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("SByte"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 1, instanceMemSize = 4, alignment = 1},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Char"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4, alignment = 2},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4, alignment = 2},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Boolean"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 1, instanceMemSize = 1, alignment = 1},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Byte"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 1, instanceMemSize = 1, alignment = 1},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("SByte"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 1, instanceMemSize = 1, alignment = 1},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Char"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 2, instanceMemSize = 2, alignment = 2},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 2, instanceMemSize = 2, alignment = 2},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("String"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("IntPtr"), stackType = EvalStack.EVALSTACK_PTR, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeFieldHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("InvalidCastException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 2, instanceMemSize = 4, alignment = 2},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 2, instanceMemSize = 2, alignment = 2},
                 new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_CHAR, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
                 new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_OBJECT, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemCollectionsGeneric, "System.Collections.Generic"), name = new S("IEnumerable`1"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
@@ -252,15 +265,17 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemCollectionsGeneric, "System.Collections.Generic"), name = new S("IList`1"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("MulticastDelegate"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("NullReferenceException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Single"), stackType = EvalStack.EVALSTACK_F32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Single"), stackType = EvalStack.EVALSTACK_F32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Double"), stackType = EvalStack.EVALSTACK_F64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeType"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tRuntimeType), alignment = 8},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("TypeCode"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeType"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tRuntimeType), alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Type"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeTypeHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeMethodHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Enum"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Enum"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("DateTime"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
                 new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_STRING, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
                 new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_INT32, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("Thread"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tThread), alignment = PTR_SIZE},
@@ -271,12 +286,12 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAccess"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileShare"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_BYTE, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemGlobalization, "System.Globalization"), name = new S("UnicodeCategory"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemGlobalization, "System.Globalization"), name = new S("UnicodeCategory"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("OverflowException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("PlatformID"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAttributes"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UIntPtr"), stackType = EvalStack.EVALSTACK_PTR, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Nullable`1"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Nullable`1"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
                 new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_TYPE, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("PropertyInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tPropertyInfo), alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodInfo), alignment = PTR_SIZE},
@@ -329,7 +344,13 @@ namespace DnaUnity
                     MetaData.Fill_TypeDef(types[i], null, null);
                 } else {
                     // Special initialisation for arrays of particular types.
-                    types[i] = Type.GetArrayTypeDef(types[(uint)(typeInit[i].name)], null, null);
+                    uint arrayTypeId = (uint)(typeInit[i].name);
+                    if (arrayTypeId != TYPE_ID_NOT_SET) {
+                        if (types[(uint)(typeInit[i].name)]->fillState < Type.TYPE_FILL_ALL) {
+                            Sys.Crash("Element type not filled");
+                        }
+                        types[i] = Type.GetArrayTypeDef(types[(uint)(typeInit[i].name)], null, null);
+                    }
                 }
             }
             //CorLibDone = 1;
@@ -343,7 +364,7 @@ namespace DnaUnity
             pGenericArrayMethodsInit = null;
             types = null;
             scMscorlib = scSystemCollectionsGeneric = scSystemReflection = scSystemThreading =
-                scSystemIO = scSystemGlobalization = scSystem = scValueType = scObject = null;
+                scSystemIO = scSystemGlobalization = scSystem = null;
             typeInit = null;
         }
 
@@ -373,9 +394,10 @@ namespace DnaUnity
         	genericArrayMethodsInited = 1;
         }
 
-        static void CreateNewArrayType(tMD_TypeDef *pNewArrayType, tMD_TypeDef *pElementType, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
+        static void CreateNewArrayType(tMD_TypeDef *pNewArrayType, tMD_TypeDef *pElementType, 
+            tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs) 
         {
-            if (pNewArrayType->isFilled == 1) {
+            if (pNewArrayType->fillState == 1) {
                 return;
             }
 
@@ -385,11 +407,17 @@ namespace DnaUnity
                 GetMethodDefs();
             }
 
-            MetaData.Fill_TypeDef(types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], null, null);
+            if (types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE]->fillState < Type.TYPE_FILL_ALL) {
+                MetaData.Fill_TypeDef(types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], null, null);
+            }
 
             Mem.memcpy(pNewArrayType, types[Type.TYPE_SYSTEM_ARRAY_NO_TYPE], (SIZE_T)sizeof(tMD_TypeDef));
         	pNewArrayType->pArrayElementType = pElementType;
-        	pNewArrayType->isFilled = 1;
+            pNewArrayType->fillState = Type.TYPE_FILL_ALL;
+
+            if (pElementType->fillState < Type.TYPE_FILL_ALL) {
+                MetaData.Fill_Defer(pElementType, null, null);
+            }
 
         	// Auto-generate the generic interfaces IEnumerable<T>, ICollection<T> and IList<T> for this array
         	{
@@ -408,7 +436,8 @@ namespace DnaUnity
         		// Get the IEnumerable<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 0];
         		pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_IENUMERABLE_T], 1, &pElementType);
-        		pInterfaceMap->pInterface = pInterfaceT;
+                MetaData.Fill_TypeDef(pInterfaceT, null, null, Type.TYPE_FILL_VTABLE);
+                pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
                 pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
                 tMD_MethodDef* pGenericEnumeratorMethod = ppGenericArrayMethods[GENERICARRAYMETHODS_Internal_GetGenericEnumerator];
@@ -418,6 +447,7 @@ namespace DnaUnity
         		// Get the ICollection<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 1];
         		pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ICOLLECTION_T], 1, &pElementType);
+                MetaData.Fill_TypeDef(pInterfaceT, null, null, Type.TYPE_FILL_VTABLE);
                 pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
                 System.Diagnostics.Debug.Assert(pInterfaceT->numVirtualMethods >= 7);
@@ -433,7 +463,8 @@ namespace DnaUnity
         		// Get the IList<T> interface
         		pInterfaceMap = &pAllIMs[orgNumInterfaces + 2];
                 pInterfaceT = Generics.GetGenericTypeFromCoreType(types[Type.TYPE_SYSTEM_COLLECTIONS_GENERIC_ILIST_T], 1, &pElementType); //, ppClassTypeArgs, ppMethodTypeArgs);
-        		pInterfaceMap->pInterface = pInterfaceT;
+                MetaData.Fill_TypeDef(pInterfaceT, null, null, Type.TYPE_FILL_VTABLE);
+                pInterfaceMap->pInterface = pInterfaceT;
         		pInterfaceMap->pVTableLookup = null;
                 System.Diagnostics.Debug.Assert(pInterfaceT->numVirtualMethods >= 5);
                 pInterfaceMap->ppMethodVLookup = (tMD_MethodDef**)Mem.mallocForever((SIZE_T)(pInterfaceT->numVirtualMethods * sizeof(tMD_MethodDef*)));
@@ -478,34 +509,15 @@ namespace DnaUnity
         	return pIterArrays->pArrayType;
         }
 
-        public static uint IsValueType(tMD_TypeDef *pTypeDef) 
-        {
-        	// If this type is an interface, then return 0
-        	if (MetaData.TYPE_ISINTERFACE(pTypeDef)) {
-        		return 0;
-        	}
-        	// If this type is Object or ValueType then return an answer
-            if (S.strcmp(pTypeDef->nameSpace, new S(ref scSystem, "System")) == 0) {
-                if (S.strcmp(pTypeDef->name, new S(ref scValueType, "ValueType")) == 0) {
-        			return 1;
-        		}
-                if (S.strcmp(pTypeDef->name, new S(ref scObject, "Object")) == 0) {
-        			return 0;
-        		}
-        	}
-        	// Return the isValueType determined by parent type
-        	pTypeDef = MetaData.GetTypeDefFromDefRefOrSpec(pTypeDef->pMetaData, pTypeDef->extends, null, null);
-        	MetaData.Fill_TypeDef(pTypeDef, null, null);
-        	return pTypeDef->isValueType;
-        }
-
         // Get the TypeDef from the type signature
         // Also get the size of a field from the signature
         // This is needed to avoid recursive sizing of type like System.Boolean,
         // that has a field of type System.Boolean
-        public static tMD_TypeDef* GetTypeFromSig(tMetaData *pMetaData, /*SIG*/byte* *pSig, tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs, tMD_TypeDef **ppByRefType = null) 
+        public static tMD_TypeDef* GetTypeFromSig(tMetaData *pMetaData, /*SIG*/byte* *pSig, 
+            tMD_TypeDef **ppClassTypeArgs, tMD_TypeDef **ppMethodTypeArgs, tMD_TypeDef** ppByRefType = null) 
         {
         	uint entry;
+            tMD_TypeDef* pType;
 
         	entry = MetaData.DecodeSigEntry(pSig);
         	switch (entry) {
@@ -556,7 +568,7 @@ namespace DnaUnity
 
         		case Type.ELEMENT_TYPE_BYREF:
         			{
-                        tMD_TypeDef *pByRefType = Type.GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
+                        tMD_TypeDef *pByRefType = Type.GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs, null);
                         if (ppByRefType != null) { 
                             *ppByRefType = pByRefType;
                         }
@@ -578,15 +590,20 @@ namespace DnaUnity
         				// The generic instantiation code figures this out later.
         				return null;
         			} else {
+                        pType = ppClassTypeArgs[entry];
+                        if (pType->fillState < Type.TYPE_FILL_ALL) {
+                            MetaData.Fill_Defer(pType, null, null);
+                        }
         				return ppClassTypeArgs[entry];
         			}
 
         		case Type.ELEMENT_TYPE_GENERICINST:
         			{
-        				tMD_TypeDef *pType;
-
         				pType = Generics.GetGenericTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
-        				return pType;
+                        if (pType->fillState < Type.TYPE_FILL_ALL) {
+                            MetaData.Fill_Defer(pType, null, null);
+                        }
+                        return pType;
         			}
 
         		//case Type.ELEMENT_TYPE_INTPTR:
@@ -602,7 +619,7 @@ namespace DnaUnity
         			{
         				tMD_TypeDef *pElementType;
 
-        				pElementType = Type.GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
+        				pElementType = Type.GetTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs, null);
         				return Type.GetArrayTypeDef(pElementType, ppClassTypeArgs, ppMethodTypeArgs);
         			}
 

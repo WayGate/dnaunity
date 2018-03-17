@@ -121,7 +121,8 @@ namespace DnaUnity
                 new tInternalCall {nameSpace = null, type = null, method = new S("GetProperties"), fn = new H(System_Type.GetProperties), returnType = Type.TYPE_SYSTEM_ARRAY_NO_TYPE, numParameters = 0},
                 new tInternalCall {nameSpace = null, type = null, method = new S("GetType"), fn = new H(System_Type.GetTypeFromName), returnType = Type.TYPE_SYSTEM_TYPE, numParameters = 3, parameterTypes = PTypes(Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING, Type.TYPE_SYSTEM_STRING)},
                 new tInternalCall {nameSpace = null, type = null, method = new S("get_IsValueType"), fn = new H(System_Type.get_IsValueType), returnType = Type.TYPE_SYSTEM_BOOLEAN, numParameters = 0},
-    
+                new tInternalCall {nameSpace = null, type = null, method = new S("GetTypeCodeInternal"), fn = new H(System_Type.GetTypeCode), returnType = Type.TYPE_SYSTEM_TYPECODE, numParameters = 0},
+
                 new tInternalCall {nameSpace = null, type = new S("RuntimeType"), method = new S("get_Name"), fn = new H(System_RuntimeType.get_Name), returnType = Type.TYPE_SYSTEM_STRING},
                 new tInternalCall {nameSpace = null, type = null, method = new S("get_Namespace"), fn = new H(System_RuntimeType.get_Namespace), returnType = Type.TYPE_SYSTEM_STRING},
                 new tInternalCall {nameSpace = null, type = null, method = new S("GetNestingParentType"), fn = new H(System_RuntimeType.GetNestingParentType), returnType = Type.TYPE_SYSTEM_RUNTIMETYPE},
@@ -156,6 +157,7 @@ namespace DnaUnity
                 new tInternalCall {nameSpace = null, type = null, method = new S("Tan"), fn = new H(System_Math.Tan), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
                 new tInternalCall {nameSpace = null, type = null, method = new S("Pow"), fn = new H(System_Math.Pow), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE, Type.TYPE_SYSTEM_DOUBLE)},
                 new tInternalCall {nameSpace = null, type = null, method = new S("Sqrt"), fn = new H(System_Math.Sqrt), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Round"), fn = new H(System_Math.Sqrt), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
 
                 new tInternalCall {nameSpace = new S("System.Threading"), type = new S("Thread"), method = new S(".ctor"), fn = new H(System_Threading_Thread.ctor), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_THREADING_THREADSTART)},
                 new tInternalCall {nameSpace = null, type = null, method = new S(".ctor"), fn = new H(System_Threading_Thread.ctorParam), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART)},

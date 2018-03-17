@@ -65,7 +65,7 @@ namespace DnaUnity
             char* pChars;
 
             c = (char)(*((uint*)(pParams + 0)));
-            len = (*((uint*)(pParams + Sys.S_INT)));
+            len = (*((uint*)(pParams + Sys.S_INT32)));
         	pSystemString = CreateStringHeapObj(len);
             pChars = tSystemString.GetChars(pSystemString);
         	for (i=0; i<len; i++) {
@@ -86,7 +86,7 @@ namespace DnaUnity
 
             charArray = (*((byte**)(pParams + 0)));
             startIndex = (*((uint*)(pParams + Sys.S_PTR)));
-            length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT)));
+            length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32)));
 
         	charElements = System_Array.GetElements(charArray);
         	pSystemString = CreateStringHeapObj(length);
@@ -106,7 +106,7 @@ namespace DnaUnity
 
         	//pStr = (*((tSystemString**)(pParams + 0)));
         	startIndex = (*((uint*)(pParams + Sys.S_PTR)));
-        	length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT)));
+        	length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32)));
 
         	pThis = CreateStringHeapObj(length);
             pChars = tSystemString.GetChars(pThis);
@@ -323,9 +323,9 @@ namespace DnaUnity
         {
         	tSystemString* pThis = (tSystemString*)pThis_;
         	ushort value = (*((ushort*)(pParams + 0)));
-        	int startIndex = (*((int*)(pParams + Sys.S_INT)));
-        	int count = (*((int*)(pParams + Sys.S_INT + Sys.S_INT)));
-        	uint forwards = (*((uint*)(pParams + Sys.S_INT + Sys.S_INT + Sys.S_INT)));
+        	int startIndex = (*((int*)(pParams + Sys.S_INT32)));
+        	int count = (*((int*)(pParams + Sys.S_INT32 + Sys.S_INT32)));
+        	uint forwards = (*((uint*)(pParams + Sys.S_INT32 + Sys.S_INT32 + Sys.S_INT32)));
             char* pChars = tSystemString.GetChars(pThis);
 
         	int lastIndex;
@@ -356,8 +356,8 @@ namespace DnaUnity
         	tSystemString *pThis = (tSystemString*)pThis_;
         	/*HEAP_PTR*/byte* valueArray = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
         	int startIndex = (*((int*)(pParams + Sys.S_PTR)));
-        	int count = (*((int*)(pParams + Sys.S_PTR + Sys.S_INT)));
-        	uint forwards = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT + Sys.S_INT)));
+        	int count = (*((int*)(pParams + Sys.S_PTR + Sys.S_INT32)));
+        	uint forwards = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32 + Sys.S_INT32)));
             char* pChars = tSystemString.GetChars(pThis);
 
         	byte* valueChars = System_Array.GetElements(valueArray);

@@ -21,7 +21,7 @@
 #if !LOCALTEST
 
 namespace System {
-	public struct Boolean : IComparable, IComparable<bool>, IEquatable<bool> {
+	public struct Boolean : IComparable, IConvertible, IComparable<bool>, IEquatable<bool> {
 
 		public static readonly string TrueString = "True";
 		public static readonly string FalseString = "False";
@@ -82,9 +82,102 @@ namespace System {
 			return this.m_value == x;
 		}
 
-		#endregion
-	
-	}
+        #endregion
+
+        #region IConvertible Members
+
+        public TypeCode GetTypeCode()
+        {
+            return TypeCode.Boolean;
+        }
+
+        bool IConvertible.ToBoolean(IFormatProvider provider)
+        {
+            return this;
+        }
+
+        char IConvertible.ToChar(IFormatProvider provider)
+        {
+            return Convert.ToChar(this);
+        }
+
+        sbyte IConvertible.ToSByte(IFormatProvider provider)
+        {
+            return Convert.ToSByte(this);
+        }
+
+        byte IConvertible.ToByte(IFormatProvider provider)
+        {
+            return Convert.ToByte(this);
+        }
+
+        short IConvertible.ToInt16(IFormatProvider provider)
+        {
+            return Convert.ToInt16(this);
+        }
+
+        ushort IConvertible.ToUInt16(IFormatProvider provider)
+        {
+            return Convert.ToUInt16(this);
+        }
+
+        int IConvertible.ToInt32(IFormatProvider provider)
+        {
+            return Convert.ToInt32(this);
+        }
+
+        uint IConvertible.ToUInt32(IFormatProvider provider)
+        {
+            return Convert.ToUInt32(this);
+        }
+
+        long IConvertible.ToInt64(IFormatProvider provider)
+        {
+            return Convert.ToInt64(this);
+        }
+
+        ulong IConvertible.ToUInt64(IFormatProvider provider)
+        {
+            return Convert.ToUInt64(this);
+        }
+
+        float IConvertible.ToSingle(IFormatProvider provider)
+        {
+            return Convert.ToSingle(this);
+        }
+
+        double IConvertible.ToDouble(IFormatProvider provider)
+        {
+            return Convert.ToDouble(this);
+        }
+
+        Decimal IConvertible.ToDecimal(IFormatProvider provider)
+        {
+            throw new NotImplementedException();
+        }
+
+        DateTime IConvertible.ToDateTime(IFormatProvider provider)
+        {
+            throw new NotImplementedException();
+        }
+
+        string IConvertible.ToString(IFormatProvider provider)
+        {
+            return this.ToString();
+        }
+
+        object IConvertible.ToType(Type conversionType, IFormatProvider provider)
+        {
+            if (conversionType == typeof(string))
+                return this.ToString();
+            else
+                return Convert.ChangeType(this, conversionType);
+        }
+
+        #endregion
+
+
+    }
 }
 
 #endif

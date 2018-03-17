@@ -56,7 +56,7 @@ namespace DnaUnity
             Debug.Log("Running Test01_Expressions");
             InitDna();
             Dna.Load("Test01_Expressions.dll");
-            Dna.Call("Test01_Expressions.Test");
+            Dna.Call("Test01_Expressions", "Test");
             Debug.Log("## Test01_Expressions Complete!");
         }
     }
