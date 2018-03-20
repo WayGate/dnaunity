@@ -306,7 +306,9 @@ namespace DnaUnity
         {
         	uint i, size;
 
-        	MetaData.Fill_TypeDef(pType, null, null);
+            if (pType->fillState < Type.TYPE_FILL_ALL) {
+                MetaData.Fill_TypeDef(pType, null, null);
+            }
         	tstack.ppTypes[tstack.ofs++] = pType;
         	// Count current stack size in bytes
         	size = 0;
@@ -1332,9 +1334,23 @@ cilCallVirtConstrained:
         						PushOpParam(JitOps.JIT_LOADFIELD_VALUETYPE, pStackType->stackSize);
         						PushPTR(pFieldDef);
         					} else {
-        						if (pFieldDef->memSize <= 4) {
-        							PushOp(JitOps.JIT_LOADFIELD_4);
-        							PushU32(pFieldDef->memOffset);
+                                if (pFieldDef->memSize == 1) {
+                                    if (pFieldDef->pType == Type.types[Type.TYPE_SYSTEM_SBYTE]) {
+                                        PushOp(JitOps.JIT_LOADFIELD_1S);
+                                    } else {
+                                        PushOp(JitOps.JIT_LOADFIELD_1);
+                                    }
+                                    PushU32(pFieldDef->memOffset);
+                                } else if (pFieldDef->memSize <= 2) {
+                                    if (pFieldDef->pType == Type.types[Type.TYPE_SYSTEM_INT16]) {
+                                        PushOp(JitOps.JIT_LOADFIELD_2S);
+                                    } else {
+                                        PushOp(JitOps.JIT_LOADFIELD_2);
+                                    }
+                                    PushU32(pFieldDef->memOffset);
+                                } else if (pFieldDef->memSize <= 4) {
+                                    PushOp(JitOps.JIT_LOADFIELD_4);
+                                    PushU32(pFieldDef->memOffset);
                                 } else if (pFieldDef->memSize == 8) {
                                     PushOp(JitOps.JIT_LOADFIELD_8);
                                     PushU32(pFieldDef->memOffset);
@@ -1467,10 +1483,31 @@ cilCallVirtConstrained:
         				pMem = MetaData.GetTypeMethodField(pMethodDef->pMetaData, u32Value, &u32Value, pMethodDef->pParentType->ppClassTypeArgs, pMethodDef->ppMethodTypeArgs);
         				PushOp(JitOps.JIT_LOADTOKEN_BASE + u32Value);
         				PushPTR(pMem);
-        				PushStackType(Type.types[
-        					(u32Value==0)?Type.TYPE_SYSTEM_RUNTIMETYPEHANDLE:
-        						((u32Value==1)?Type.TYPE_SYSTEM_RUNTIMEFIELDHANDLE:Type.TYPE_SYSTEM_RUNTIMEMETHODHANDLE)
-        				]);
+                        switch (u32Value) {
+                            case 0:
+                                tMD_TypeDef* pTknTypeDef = (tMD_TypeDef*)pMem;
+                                if (pTknTypeDef->fillState < Type.TYPE_FILL_ALL)
+                                    MetaData.Fill_TypeDef(pTknTypeDef, null, null);
+                                PushStackType(Type.types[Type.TYPE_SYSTEM_RUNTIMETYPEHANDLE]);
+                                break;
+                            case 1:
+                                tMD_MethodDef* pTknMethodDef = (tMD_MethodDef*)pMem;
+                                if (pTknMethodDef->isFilled == 0) {
+                                    MetaData.Fill_MethodDef(null, pTknMethodDef, null, null);
+                                }
+                                PushStackType(Type.types[Type.TYPE_SYSTEM_RUNTIMEMETHODHANDLE]);
+                                break;
+                            case 2:
+                                tMD_FieldDef* pTknFieldDef = (tMD_FieldDef*)pMem;
+                                if (pTknFieldDef->isFilled == 0) {
+                                    MetaData.Fill_FieldDef(null, pTknFieldDef, 0, null, null);
+                                }
+                                PushStackType(Type.types[Type.TYPE_SYSTEM_RUNTIMEFIELDHANDLE]);
+                                break;
+                            default:
+                                Sys.Crash("Illegal token type");
+                                break;
+                        }
         				break;
 
         			case OpCodes.THROW:

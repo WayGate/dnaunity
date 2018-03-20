@@ -96,6 +96,27 @@ namespace System {
         [MethodImpl(MethodImplOptions.InternalCall)]
         extern public override Type GetElementType();
 
+        public override string GetEnumName(object value)
+        {
+            return Enum.GetName(this, value);
+        }
+
+        public override string[] GetEnumNames()
+        {
+            return Enum.GetNames(this);
+        }
+
+        public override Type GetEnumUnderlyingType()
+        {
+            // NOTE: We do not support non-integer enum types 
+            return typeof(int);
+        }
+
+        public override Array GetEnumValues()
+        {
+            return Enum.GetValues(this);
+        }
+
     }
 
 }

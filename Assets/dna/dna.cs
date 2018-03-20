@@ -83,6 +83,7 @@ namespace DnaUnity
             JIT_Execute.Init();
             DnaObject.Init();
             MetaData.Init();
+            MonoType.Init();
             Generics.Init();
             Heap.Init();
             Finalizer.Init();
@@ -104,6 +105,7 @@ namespace DnaUnity
             Finalizer.Clear();
             Heap.Clear();
             Generics.Clear();
+            MonoType.Clear();
             MetaData.Clear();
             DnaObject.Clear();
             JIT_Execute.Clear();

@@ -40,13 +40,25 @@ namespace DnaUnity
 {
     public unsafe partial class MonoType
     {
-#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+        #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         const int PTR_SIZE = 4;
         const uint STACK_ALIGNMENT = 4;
-#else
+        #else
         const int PTR_SIZE = 8;
         const uint STACK_ALIGNMENT = 8;
-#endif
+        #endif
+
+        public static Dictionary<System.Type, PTR> monoTypes;
+
+        public static void Init()
+        {
+            monoTypes = new Dictionary<System.Type, PTR>();
+        }
+
+        public static void Clear()
+        {
+            monoTypes = null;
+        }
 
         public static void GetFieldTrampoline(tMD_FieldDef* pFieldInfo, byte* pThis, byte* pOutValue)
         {
@@ -1341,96 +1353,117 @@ namespace DnaUnity
             byte* nameSpace = stackalloc byte[256];
             byte* name = stackalloc byte[256];
 
-            if (monoType == null)
+            if (monoType == null) {
                 return null;
+            }
+
+            PTR typePtr = 0;
+            tMD_TypeDef* pType = null;
+            if (MonoType.monoTypes.TryGetValue(monoType, out typePtr)) {
+                return (tMD_TypeDef*)typePtr;
+            }
 
             System.TypeCode typeCode = System.Type.GetTypeCode(monoType);
 
             switch (typeCode) {
                 case System.TypeCode.Object:
                     if (monoType == typeof(System.Object))
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_OBJECT];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_OBJECT];
                     break;
                 case System.TypeCode.DBNull:
                     break;
                 case System.TypeCode.Boolean:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_BOOLEAN];
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_BOOLEAN];
+                    break;
                 case System.TypeCode.Char:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_CHAR];
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_CHAR];
+                    break;
                 case System.TypeCode.SByte:
                     if (!monoType.IsEnum)
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_SBYTE];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_SBYTE];
                     break;
                 case System.TypeCode.Byte:
                     if (!monoType.IsEnum)
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_BYTE];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_BYTE];
                     break;
                 case System.TypeCode.Int16:
                     if (!monoType.IsEnum)
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT16];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_INT16];
                     break;
                 case System.TypeCode.UInt16:
                     if (!monoType.IsEnum)
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT16];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT16];
                     break;
                 case System.TypeCode.Int32:
                     if (!monoType.IsEnum)
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT32];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_INT32];
                     break;
                 case System.TypeCode.UInt32:
                     if (!monoType.IsEnum)
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT32];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT32];
                     break;
                 case System.TypeCode.Int64:
                     if (!monoType.IsEnum)
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_INT64];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_INT64];
                     break;
                 case System.TypeCode.UInt64:
                     if (!monoType.IsEnum)
-                        return Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT64];
+                        pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_UINT64];
                     break;
                 case System.TypeCode.Single:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_SINGLE];
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_SINGLE];
+                    break;
                 case System.TypeCode.Double:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_DOUBLE];
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_DOUBLE];
+                    break;
                 case System.TypeCode.Decimal:
                     break;
                 case System.TypeCode.DateTime:
                     break;
                 case System.TypeCode.String:
-                    return Type.types[DnaUnity.Type.TYPE_SYSTEM_STRING];
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_STRING];
+                    break;
             }
 
-            if (monoType == typeof(void))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_VOID];
-            else if (monoType == typeof(System.Enum))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ENUM];
-            else if (monoType == typeof(System.Array))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_NO_TYPE];
-            else if (monoType == typeof(object[]))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_OBJECT];
-            else if (monoType == typeof(byte[]))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_BYTE];
-            else if (monoType == typeof(char[]))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_CHAR];
-            else if (monoType == typeof(int[]))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_INT32];
-            else if (monoType == typeof(string[]))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_STRING];
-            else if (monoType == typeof(object[]))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_OBJECT];
-            else if (monoType == typeof(System.Type[]))
-                return Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_TYPE];
+            if (pType == null) {
+                if (monoType == typeof(void))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_VOID];
+                else if (monoType == typeof(System.Enum))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ENUM];
+                else if (monoType == typeof(System.Array))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_NO_TYPE];
+                else if (monoType == typeof(object[]))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_OBJECT];
+                else if (monoType == typeof(byte[]))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_BYTE];
+                else if (monoType == typeof(char[]))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_CHAR];
+                else if (monoType == typeof(int[]))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_INT32];
+                else if (monoType == typeof(string[]))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_STRING];
+                else if (monoType == typeof(object[]))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_OBJECT];
+                else if (monoType == typeof(System.Type[]))
+                    pType = Type.types[DnaUnity.Type.TYPE_SYSTEM_ARRAY_TYPE];
+            }
 
-            if (monoType.IsArray) {
+            if (pType == null && monoType.IsArray) {
                 tMD_TypeDef* pElemType = GetTypeForMonoType(monoType.GetElementType(), ppClassTypeArgs, ppMethodTypeArgs);
-                return Type.GetArrayTypeDef(pElemType, null, null);
+                pType = Type.GetArrayTypeDef(pElemType, null, null);
             }
 
-            S.snprintf(nameSpace, 256, monoType.Namespace);
-            S.snprintf(name, 256, monoType.Name);
+            if (pType == null) {
+                S.snprintf(nameSpace, 256, monoType.Namespace);
+                S.snprintf(name, 256, monoType.Name);
+                pType = CLIFile.FindTypeInAllLoadedAssemblies(nameSpace, name);
+            }
 
-            return CLIFile.FindTypeInAllLoadedAssemblies(nameSpace, name);
+            if (pType != null) {
+                MonoType.monoTypes[monoType] = (PTR)pType;
+            }
+
+            return pType;
         }
 
         public static tMD_TypeDef* GetTypeForMonoObject(object obj,
@@ -1454,6 +1487,11 @@ namespace DnaUnity
             tMetaData* pMetaData;
             uint fieldSize;
             uint fieldAlignment;
+
+            if (pFieldDef->isFilled == 1) {
+                return;
+            }
+            pFieldDef->isFilled = 1;
 
             pFieldDef->pParentType = pParentType;
 
@@ -1593,14 +1631,16 @@ namespace DnaUnity
             List<MethodInfo> interfaceMethods = null;
 
             // Make sure we include non-public methods implementing interfaces
-            System.Type[] interfaceTypes = monoType.GetInterfaces();
-            if (interfaceTypes.Length > 0 && !monoType.IsGenericTypeDefinition) {
-                for (int i = 0; i < interfaceTypes.Length; i++) {
-                    InterfaceMapping interfaceMapping = monoType.GetInterfaceMap(interfaceTypes[i]);
-                    MethodInfo[] targetMethods = interfaceMapping.TargetMethods;
-                    if (interfaceMethods == null)
-                        interfaceMethods = new List<MethodInfo>();
-                    interfaceMethods.AddRange(targetMethods);
+            if (!monoType.IsInterface && !monoType.IsGenericTypeDefinition) {
+                System.Type[] interfaceTypes = monoType.GetInterfaces();
+                if (interfaceTypes.Length > 0) {
+                    for (int i = 0; i < interfaceTypes.Length; i++) {
+                        InterfaceMapping interfaceMapping = monoType.GetInterfaceMap(interfaceTypes[i]);
+                        MethodInfo[] targetMethods = interfaceMapping.TargetMethods;
+                        if (interfaceMethods == null)
+                            interfaceMethods = new List<MethodInfo>();
+                        interfaceMethods.AddRange(targetMethods);
+                    }
                 }
             }
 
@@ -1645,9 +1685,9 @@ namespace DnaUnity
             return finalInfos.ToArray();
         }
 
-        public static tMD_MethodDef* FindInterfaceOverriddenMethod(tMD_TypeDef* pInterfaceTargetType, 
-            tMD_MethodDef* pInterfaceMethod, MethodInfo[] interfaceMethods, MethodInfo[] targetMethods)
+        public static tMD_MethodDef* FindInterfaceOverriddenMethod(tMD_MethodDef* pInterfaceMethod, MethodInfo[] interfaceMethods, MethodInfo[] targetMethods)
         {
+            byte* targetName = stackalloc byte[256];
             MethodInfo interfaceMethodInfo = null;
             for (int i = 0; i < interfaceMethods.Length; i++) {
                 if (S.strcmp(pInterfaceMethod->name, interfaceMethods[i].Name) == 0) {
@@ -1658,13 +1698,20 @@ namespace DnaUnity
             if (interfaceMethodInfo == null) {
                 Sys.Crash("Unable to find mapped method %s", (PTR)(pInterfaceMethod->name));
             }
+            S.strncpy(targetName, interfaceMethodInfo.Name, 256);
             tMD_MethodDef* pOverriddenMethod = null;
+            tMD_TypeDef* pInterfaceTargetType = GetTypeForMonoType(interfaceMethodInfo.DeclaringType, null, null);
             for (int i = 0; i < pInterfaceTargetType->numMethods; i++) {
                 tMD_MethodDef* pMethodDef = pInterfaceTargetType->ppMethods[i];
                 MethodInfo methodInfo = H.ToObj(pMethodDef->monoMethodInfo) as MethodInfo;
                 if (methodInfo == interfaceMethodInfo) {
                     return pInterfaceTargetType->ppMethods[i];
+                } else if (MetaData.CompareNameAndMethodInfo(targetName, interfaceMethodInfo, pInterfaceMethod->pMetaData,
+                                pInterfaceMethod->pParentType->ppClassTypeArgs, pInterfaceMethod->ppMethodTypeArgs, 
+                                pMethodDef, pMethodDef->pParentType->ppClassTypeArgs, null) != 0) {
+                    return pInterfaceTargetType->ppMethods[i];
                 }
+
             }
             return null;
         }
@@ -1697,16 +1744,18 @@ namespace DnaUnity
 
             //Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
 
-            if (resolve < Type.TYPE_FILL_ALL) {
-                MetaData.Fill_Defer(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs);
-            }
-
             if (MetaData.typesToFill == null) {
                 MetaData.Fill_StartDefer();
                 isDeferred = 1;
             } else {
                 isDeferred = 0;
             }
+
+            if (resolve < Type.TYPE_FILL_ALL) {
+                MetaData.Fill_Defer(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs);
+            }
+
+            MetaData.Fill_GetDeferredTypeArgs(pTypeDef, ref ppClassTypeArgs, ref ppMethodTypeArgs);
 
             monoType = H.ToObj(pTypeDef->monoType) as System.Type;
             pMetaData = pTypeDef->pMetaData;
@@ -1747,6 +1796,9 @@ namespace DnaUnity
                 // If this is an enum type, then pretend its stack type is its underlying type
                 if (pTypeDef->pParent == Type.types[Type.TYPE_SYSTEM_ENUM]) {
                     pTypeDef->stackType = EvalStack.EVALSTACK_INT32;
+                    pTypeDef->stackSize = sizeof(PTR);
+                    pTypeDef->instanceMemSize = 4;
+                    pTypeDef->arrayElementSize = 4;
                 }
 
                 if (pTypeDef->fillState >= resolve)
@@ -1865,9 +1917,6 @@ namespace DnaUnity
                             }
                             pTypeDef->ppFields[i] = pFieldDef;
                         }
-                    }
-                    if (staticMemSize > 0) {
-                        pTypeDef->staticFieldSize = staticMemSize;
                     }
                 }
 
@@ -2050,12 +2099,6 @@ namespace DnaUnity
                 // I.e. Fully instantiated generic Type.types
                 if (pTypeDef->isGenericDefinition == 0) {
 
-                    if (pParent != null && pParent->fillState < Type.TYPE_FILL_INTERFACES) {
-                        MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_INTERFACES);
-                    } else if (pParent->fillState < Type.TYPE_FILL_ALL) {
-                        MetaData.Fill_Defer(pParent, null, null);
-                    }
-
                     // Map all interface method calls. This only needs to be done for Classes, not Interfaces
                     // And is not done for generic definitions.
                     if (!monoType.IsInterface) {
@@ -2069,12 +2112,6 @@ namespace DnaUnity
                                 tMD_TypeDef* pInterface = MonoType.GetTypeForMonoType(interfaceTypes[i], ppClassTypeArgs, ppMethodTypeArgs);
                                 Fill_TypeDef(pInterface, ppClassTypeArgs, null, Type.TYPE_FILL_VTABLE);
                                 InterfaceMapping interfaceMapping = monoType.GetInterfaceMap(interfaceTypes[i]);
-                                tMD_TypeDef* pInterfaceTargetType = pTypeDef;
-                                if (interfaceMapping.TargetType != monoType) {
-                                    pInterfaceTargetType = MonoType.GetTypeForMonoType(interfaceMapping.TargetType,
-                                        ppClassTypeArgs, null);
-                                    Fill_TypeDef(pInterfaceTargetType, ppClassTypeArgs, null, Type.TYPE_FILL_VTABLE);
-                                }
                                 MetaData.Fill_TypeDef(pInterface, null, null);
                                 tInterfaceMap* pMap = &pTypeDef->pInterfaceMaps[i];
                                 pMap->pInterface = pInterface;
@@ -2085,9 +2122,11 @@ namespace DnaUnity
                                 // Discover interface mapping for each interface method
                                 for (j = 0; j < pInterface->numVirtualMethods; j++) {
                                     tMD_MethodDef* pInterfaceMethod = pInterface->pVTable[j];
-                                    tMD_MethodDef* pOverriddenMethod = FindInterfaceOverriddenMethod(pInterfaceTargetType, pInterfaceMethod, interfaceMethods, targetMethods);
+                                    tMD_MethodDef* pOverriddenMethod = FindInterfaceOverriddenMethod(pInterfaceMethod, interfaceMethods, targetMethods);
                                     if (pOverriddenMethod == null) {
-                                        Sys.Crash("Unable to find override method %s", (PTR)(pInterfaceMethod->name));
+                                        Sys.Crash("Unable to find override method %s in type %s.%s for interface %s.%s", (PTR)(pInterfaceMethod->name), 
+                                            (PTR)pTypeDef->nameSpace, (PTR)pTypeDef->name, 
+                                            (PTR)pInterface->nameSpace, (PTR)pInterface->name);
                                     }
                                     pMap->pVTableLookup[j] = pOverriddenMethod->vTableOfs;
                                     pMap->ppMethodVLookup[j] = pOverriddenMethod;

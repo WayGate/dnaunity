@@ -65,6 +65,17 @@ namespace DnaUnity
             }
         }
 
+        public static void Fill_GetDeferredTypeArgs(tMD_TypeDef* pTypeDef, ref tMD_TypeDef** ppClassTypeArgs, ref tMD_TypeDef** ppMethodTypeArgs)
+        {
+            FillState state = new FillState();
+            if (typesToFill != null) {
+                if (typesToFill.TryGetValue((PTR)pTypeDef, out state)) {
+                    ppClassTypeArgs = state.ppClassTypeArgs;
+                    ppMethodTypeArgs = state.ppMethodTypeArgs;
+                }
+            }
+        }
+
         public static void Fill_ResolveDeferred()
         {
             if (typesToFill != null) {
@@ -91,9 +102,16 @@ namespace DnaUnity
         	tMetaData *pMetaData;
             uint fieldSize, fieldAlignment;
 
-        	pFieldDef->pParentType = pParentType;
+            if (pFieldDef->isFilled == 1) {
+                return;
+            }
 
-        	sig = MetaData.GetBlob(pFieldDef->signature, &sigLength);
+            // Note: parent type can be null for module level fields (frequently seen with auto-gen RVA init fields)
+        	pFieldDef->pParentType = pParentType;
+            pFieldDef->pFieldDef = pFieldDef;
+            pFieldDef->isFilled = 1;
+
+            sig = MetaData.GetBlob(pFieldDef->signature, &sigLength);
 
         	MetaData.DecodeSigEntry(&sig); // First entry always 0x06
         	pFieldDef->pType = Type.GetTypeFromSig(pFieldDef->pMetaData, &sig, ppClassTypeArgs, null, null);
@@ -159,6 +177,7 @@ namespace DnaUnity
                 return;
             }
 
+            // Note: parent type can be null for module level methods (not typical in C# assemblies)
         	pMethodDef->pParentType = pParentType;
         	pMethodDef->pMethodDef = pMethodDef;
         	pMethodDef->isFilled = 1;
@@ -304,6 +323,10 @@ namespace DnaUnity
                 return;
             }
 
+//            Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
+//            string name = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)pTypeDef->name);
+
+
             if (typesToFill == null) {
                 Fill_StartDefer();
                 isDeferred = 1;
@@ -311,8 +334,11 @@ namespace DnaUnity
                 isDeferred = 0;
             }
 
-//            Sys.printf("FILLING TYPE: %s\n", (PTR)pTypeDef->name);
-//            string name = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)pTypeDef->name);
+            if (resolve < Type.TYPE_FILL_ALL) {
+                MetaData.Fill_Defer(pTypeDef, ppClassTypeArgs, ppMethodTypeArgs);
+            }
+
+            MetaData.Fill_GetDeferredTypeArgs(pTypeDef, ref ppClassTypeArgs, ref ppMethodTypeArgs);
 
             // Fill parent info
             if (pTypeDef->fillState < Type.TYPE_FILL_PARENTS) {
@@ -340,13 +366,18 @@ namespace DnaUnity
                 }
 
                 // If this type is an interface, then return 0
-                if (MetaData.TYPE_ISINTERFACE(pTypeDef)) {
+                if (pTypeDef->stackSize != 0) {
+                    pTypeDef->isValueType = (byte)(pTypeDef->stackType != EvalStack.EVALSTACK_O ? 1 : 0);
+                } else if (MetaData.TYPE_ISINTERFACE(pTypeDef)) {
                     pTypeDef->isValueType = 0;
-                } else if (S.strcmp(pTypeDef->nameSpace, new S(ref scSystem, "System")) == 0) {
-                    if (S.strcmp(pTypeDef->name, new S(ref scValueType, "ValueType")) == 0) {
+                } else if (pTypeDef->nameSpace[0] == 'S' && S.strcmp(pTypeDef->nameSpace, new S(ref scSystem, "System")) == 0) {
+                    if ((pTypeDef->name[0] == 'V' && S.strcmp(pTypeDef->name, new S(ref scValueType, "ValueType")) == 0) ||
+                        (pTypeDef->name[0] == 'E' && S.strcmp(pTypeDef->name, new S(ref scEnum, "Enum")) == 0)) {
                         pTypeDef->isValueType = 1;
-                    } else if (S.strcmp(pTypeDef->name, new S(ref scObject, "Object")) == 0) {
+                    } else if (pTypeDef->name[0] == 'O' && S.strcmp(pTypeDef->name, new S(ref scObject, "Object")) == 0) {
                         pTypeDef->isValueType = 0;
+                    } else if (pParent != null) {
+                        pTypeDef->isValueType = pParent->isValueType;
                     }
                 } else if (pParent != null) {
                     pTypeDef->isValueType = pParent->isValueType;
@@ -378,6 +409,9 @@ namespace DnaUnity
                 // If this is an enum type, then pretend its stack type is its underlying type
                 if (pTypeDef->pParent == Type.types[Type.TYPE_SYSTEM_ENUM]) {
                     pTypeDef->stackType = EvalStack.EVALSTACK_INT32;
+                    pTypeDef->stackSize = sizeof(PTR);
+                    pTypeDef->instanceMemSize = 4;
+                    pTypeDef->arrayElementSize = 4;
                 }
 
                 if (pTypeDef->fillState >= resolve)
@@ -740,6 +774,10 @@ namespace DnaUnity
 
             if (pTypeDef->fillState < Type.TYPE_FILL_ALL) {
                 pTypeDef->fillState = Type.TYPE_FILL_ALL;
+
+                if (pTypeDef->isGenericDefinition == 0 && pTypeDef->stackSize == 0) {
+                    j = 0;
+                }
 
                 if (pParent != null && pParent->fillState < Type.TYPE_FILL_ALL) {
                     MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_ALL);

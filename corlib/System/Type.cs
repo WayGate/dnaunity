@@ -134,6 +134,15 @@ namespace System {
 
         [MethodImpl(MethodImplOptions.InternalCall)]
         extern private static TypeCode GetTypeCode(Type type);
+
+        public abstract string GetEnumName(object o);
+
+        public abstract string[] GetEnumNames();
+
+        public abstract Type GetEnumUnderlyingType();
+
+        public abstract Array GetEnumValues();
+
     }
 }
 

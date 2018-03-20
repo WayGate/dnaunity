@@ -220,7 +220,7 @@ namespace DnaUnity
         	pTypeDef->pNestedIn = pCoreType->pNestedIn;
         	pTypeDef->isPrimed = 1;
 
-        	MetaData.Fill_TypeDef(pTypeDef, ppTypeArgs, null, Type.TYPE_FILL_PARENTS);
+        	MetaData.Fill_TypeDef(pTypeDef, pInst->ppTypeArgs, null, Type.TYPE_FILL_PARENTS);
 
             Mem.heapcheck();
 

@@ -322,11 +322,11 @@ namespace DnaUnity
             return rowSize;
         }
 
-        static byte* scSystem, scValueType, scObject;
+        static byte* scSystem, scValueType, scEnum, scObject;
 
         public static void Init() 
         {
-             scSystem = scValueType = scObject = null;
+             scSystem = scValueType = scEnum = scObject = null;
 
             /*
         Format of definition strings:
@@ -600,7 +600,7 @@ namespace DnaUnity
             codedTags = null;
             tableRowSize = null;
             codedTagBits = null;
-            scSystem = scValueType = scObject = null;
+            scSystem = scValueType = scEnum = scObject = null;
         }
 
         public static uint DecodeSigEntry(/*SIG*/byte* *pSig) {
@@ -1040,6 +1040,7 @@ namespace DnaUnity
                     (monoType.IsInterface ? TYPEATTRIBUTES_INTERFACE : 0);
                 pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
                 pTypeDef->isGenericDefinition = (byte)(types[i].IsGenericTypeDefinition ? 1 : 0);
+                MonoType.monoTypes[monoType] = (PTR)pTypeDef;
             }
 
             pMetaData->tables.data[MetaDataTable.MD_TABLE_TYPEDEF] = (PTR)pTypeDefs;

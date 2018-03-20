@@ -221,8 +221,10 @@ namespace DnaUnity
 
     	// Flags - FieldAttributes
         public /*FLAGS16*/ushort flags;
+        // Field def is filled
+        public byte isFilled;
     	// Padding dummy entry
-        public short padding0;
+        public byte padding0;
         // Padding dummy entry
         public uint padding1;
         // Name of the field

@@ -159,6 +159,7 @@ namespace DnaUnity
             tMD_TypeDef** ppSigClassTypeArgs, tMD_TypeDef** ppSigMethodTypeArgs, tMD_MethodDef* pMethod, tMD_TypeDef** ppMethodClassTypeArgs,
             tMD_TypeDef** ppMethodMethodTypeArgs)
         {
+
             if (S.strcmp(name, pMethod->name) == 0) {
                 uint i;
 

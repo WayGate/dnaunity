@@ -120,19 +120,14 @@ namespace DnaUnity
 
         public static void memcpy(void* p1, void* p2, SIZE_T size)
         {
-            try {
-                heapcheck();
-                // For now.. slow but simple - accurate
-                byte* a = (byte*)p1;
-                byte* b = (byte*)p2;
-                int len = (int)size;
-                for (int i = 0; i < len; i++)
-                    *a++ = *b++;
-                heapcheck();
-            }
-            catch (System.Exception e) {
-                int i = 1000;
-            }
+            heapcheck();
+            // For now.. slow but simple - accurate
+            byte* a = (byte*)p1;
+            byte* b = (byte*)p2;
+            int len = (int)size;
+            for (int i = 0; i < len; i++)
+                *a++ = *b++;
+            heapcheck();
         }
 
         public static void memmove(void* p1, void* p2, SIZE_T size)

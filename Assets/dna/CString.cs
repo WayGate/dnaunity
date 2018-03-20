@@ -301,53 +301,48 @@
             int fmtLen = fmt.Length;
             byte* b = bfr;
             byte* e = end;
-            while (i < fmtLen)
-            {
+            while (i < fmtLen) {
                 char ch = fmt[i];
-                if (ch == '%' && i + 1 < fmtLen)
-                {
+                if (ch == '%' && i + 1 < fmtLen) {
                     i++;
                     ch = fmt[i];
-                    if (ch == 's')
-                    {
+                    if (ch == 's') {
                         object sarg = args[curarg];
                         curarg++;
-                        if (sarg == null)
-                        {
+                        if (sarg == null) {
                             if (b + 4 > e)
                                 throw new System.IndexOutOfRangeException();
                             *b++ = (byte)'n';
                             *b++ = (byte)'u';
                             *b++ = (byte)'l';
                             *b++ = (byte)'l';
-                        }
-                        else if (sarg is string)
-                        {
+                        } else if (sarg is string) {
                             string str = (string)sarg;
-                            for (int j = 0; j < str.Length; j++)
-                            {
+                            for (int j = 0; j < str.Length; j++) {
                                 if (b >= e)
                                     throw new System.IndexOutOfRangeException();
                                 *b++ = (byte)str[j];
-                            }                            
-                        }
-                        else if (sarg is PTR)
-                        {
-                            byte* s = (byte*)((PTR)sarg);
-                            while (*s != 0)
-                            {
-                                if (b >= e)
-                                    throw new System.IndexOutOfRangeException();
-                                *b++ = *s++;
                             }
-                        }
-                        else
-                        {
+                        } else if (sarg is PTR) {
+                            byte* s = (byte*)((PTR)sarg);
+                            if (s == null) {
+                                if (b + 4 >= e)
+                                    throw new System.IndexOutOfRangeException();
+                                *b++ = (byte)'n';
+                                *b++ = (byte)'u';
+                                *b++ = (byte)'l';
+                                *b++ = (byte)'l';
+                            } else {
+                                while (*s != 0) {
+                                    if (b >= e)
+                                        throw new System.IndexOutOfRangeException();
+                                    *b++ = *s++;
+                                }
+                            }
+                        } else {
                             throw new System.ArgumentException();
                         }
-                    } 
-                    else if (ch == 'x' || ch == 'X' || ch == 'd')
-                    {
+                    } else if (ch == 'x' || ch == 'X' || ch == 'd') {
                         int v;
                         object arg = args[curarg];
                         if (arg is int)
@@ -362,29 +357,23 @@
                             throw new System.ArgumentException();
                         curarg++;
                         string vs = (ch == 'x' || ch == 'X' ? v.ToString("X") : v.ToString());
-                        for (int j = 0; j < vs.Length; j++)
-                        {
+                        for (int j = 0; j < vs.Length; j++) {
                             if (b >= e)
                                 throw new System.IndexOutOfRangeException();
                             *b++ = (byte)vs[j];
                         }
-                    }
-                    else if (ch == 'l' && i + 2 < fmtLen && fmt[i + 1] == 'l' && (fmt[i + 2] == 'x' || fmt[i + 2] == 'X' || fmt[i + 2] == 'd'))
-                    {
+                    } else if (ch == 'l' && i + 2 < fmtLen && fmt[i + 1] == 'l' && (fmt[i + 2] == 'x' || fmt[i + 2] == 'X' || fmt[i + 2] == 'd')) {
                         i += 2;
                         ch = fmt[i];
                         long lv = System.Convert.ToInt64(args[curarg]);
                         curarg++;
                         string lvs = (ch == 'x' || ch == 'X' ? lv.ToString("X") : lv.ToString());
-                        for (int j = 0; j < lvs.Length; j++)
-                        {
+                        for (int j = 0; j < lvs.Length; j++) {
                             if (b >= e)
                                 throw new System.IndexOutOfRangeException();
                             *b++ = (byte)lvs[j];
                         }
-                    }
-                    else if (ch == '0' && i + 2 < fmtLen && (fmt[i + 1] >= '0' && fmt[i + 1] <= '9') && (fmt[i + 2] == 'x' || fmt[i + 2] == 'X' || fmt[i + 2] == 'd'))
-                    {
+                    } else if (ch == '0' && i + 2 < fmtLen && (fmt[i + 1] >= '0' && fmt[i + 1] <= '9') && (fmt[i + 2] == 'x' || fmt[i + 2] == 'X' || fmt[i + 2] == 'd')) {
                         char l0 = fmt[i + 1];
                         i += 2;
                         ch = fmt[i];
@@ -402,22 +391,17 @@
                             throw new System.ArgumentException();
                         curarg++;
                         string vs0 = (ch == 'x' || ch == 'X' ? v0.ToString("X" + l0) : v0.ToString("D" + l0));
-                        for (int j = 0; j < vs0.Length; j++)
-                        {
+                        for (int j = 0; j < vs0.Length; j++) {
                             if (b >= e)
                                 throw new System.IndexOutOfRangeException();
                             *b++ = (byte)vs0[j];
-                        }                        
-                    }
-                    else
-                    {
+                        }
+                    } else {
                         if (b >= e)
                             throw new System.IndexOutOfRangeException();
                         *b++ = (byte)ch;
                     }
-                }
-                else
-                {
+                } else {
                     if (b >= e)
                         throw new System.IndexOutOfRangeException();
                     *b++ = (byte)ch;

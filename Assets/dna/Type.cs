@@ -269,7 +269,7 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Double"), stackType = EvalStack.EVALSTACK_F64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UInt64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("TypeCode"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 4, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("TypeCode"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeType"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tRuntimeType), alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Type"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeTypeHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
@@ -282,13 +282,13 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("ThreadStart"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemThreading, "System.Threading"), name = new S("ParameterizedThreadStart"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("WeakReference"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileMode"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAccess"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileShare"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileMode"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAccess"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileShare"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
                 new tTypeInit {assemblyName = null, nameSpace = null, name = (byte*)Type.TYPE_SYSTEM_BYTE, stackType = 0, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemGlobalization, "System.Globalization"), name = new S("UnicodeCategory"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("OverflowException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("PlatformID"), stackType = EvalStack.EVALSTACK_INT32, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("PlatformID"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemIO, "System.IO"), name = new S("FileAttributes"), stackType = EvalStack.EVALSTACK_O, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("UIntPtr"), stackType = EvalStack.EVALSTACK_PTR, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Nullable`1"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = 0, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
@@ -590,10 +590,6 @@ namespace DnaUnity
         				// The generic instantiation code figures this out later.
         				return null;
         			} else {
-                        pType = ppClassTypeArgs[entry];
-                        if (pType->fillState < Type.TYPE_FILL_ALL) {
-                            MetaData.Fill_Defer(pType, null, null);
-                        }
         				return ppClassTypeArgs[entry];
         			}
 
@@ -601,7 +597,7 @@ namespace DnaUnity
         			{
         				pType = Generics.GetGenericTypeFromSig(pMetaData, pSig, ppClassTypeArgs, ppMethodTypeArgs);
                         if (pType->fillState < Type.TYPE_FILL_ALL) {
-                            MetaData.Fill_Defer(pType, null, null);
+                            MetaData.Fill_Defer(pType, ppClassTypeArgs, ppMethodTypeArgs);
                         }
                         return pType;
         			}

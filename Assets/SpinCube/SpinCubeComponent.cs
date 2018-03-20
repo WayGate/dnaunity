@@ -2,20 +2,49 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SpinCubeComponent : MonoBehaviour {
+public class SpinCubeComponent : MonoBehaviour
+{
+    public float rotXSpeed = 0.0f;
+    public float rotYSpeed = 0.0f;
+    public Quaternion rot = Quaternion.identity;
 
-    float speedOffset = 0.0f;
-
-	// Update is called once per frame
-	void Update () {
-        speedOffset.ToString();
-//        Debug.Log("Left " + speedOffset);
-//        if (Input.GetKeyDown(KeyCode.LeftArrow)) {
-//            speedOffset -= 1;
-//        } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
-//            Debug.Log("Right " + speedOffset);
-//            speedOffset += 1;
-//        }
-//        transform.eulerAngles += new Vector3(0f, 30.0f + speedOffset, 0f) * Time.deltaTime;
-	}
+    // Update is called once per frame
+    public void Update()
+    {
+        bool keyDown = false;
+        if (Input.GetKeyDown(KeyCode.UpArrow)) {
+            Debug.Log("Up");
+            rotXSpeed -= 1f;
+            keyDown = true;
+        } else if (Input.GetKeyDown(KeyCode.DownArrow)) {
+            Debug.Log("Down");
+            rotXSpeed += 1f;
+            keyDown = true;
+        } else if (Input.GetKeyDown(KeyCode.LeftArrow)) {
+            Debug.Log("Left");
+            rotYSpeed -= 1f;
+            keyDown = true;
+        } else if (Input.GetKeyDown(KeyCode.RightArrow)) {
+            Debug.Log("Right");
+            rotYSpeed += 1f;
+            keyDown = true;
+        }
+        if (keyDown) {
+            rot = Quaternion.Euler(rotXSpeed, rotYSpeed, 0);
+        }
+        transform.rotation *= Quaternion.Slerp(Quaternion.identity, rot, Time.deltaTime);
+    }
 }
+
+
+/*public static class Testing
+{
+    public static float speedOffset = 1f;
+
+	public static void Test()
+    {
+        speedOffset -= 1f;
+        speedOffset -= 1f;
+        speedOffset -= 1f;
+    }
+}*/

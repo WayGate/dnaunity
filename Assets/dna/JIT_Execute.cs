@@ -60,9 +60,11 @@ namespace DnaUnity
         #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
         const int S_INT32   = 4;
         const int S_FLOAT   = 4;
+        const int S_PTR     = 4;
         #else
         const int S_INT32   = 8;
         const int S_FLOAT   = 8;
+        const int S_PTR     = 8;
         #endif
         const int S_INT64 = 8;
         const int S_DOUBLE = 8;
@@ -438,8 +440,12 @@ namespace DnaUnity
 
 #else
 
-        //[System.Diagnostics.Conditional("TRACE_OPCODES")]
-        static void OPCODE_USE(JitOps op)
+        const int OP_PARAM_FIELDDEF     = 1;
+        const int OP_PARAM_METHODDEF    = 2;
+        const int OP_PARAM_TYPEDEF      = 3;
+
+        [System.Diagnostics.Conditional("TRACE_OPCODES")]
+        static void OPCODE_USE(JitOps op, int paramType = 0, int offset = -10000)
         {
             int stackpos = (int)(pCurEvalStack - pCurrentMethodState->pEvalStack);
             uint a, b;
@@ -451,7 +457,37 @@ namespace DnaUnity
                 p = S.scatprintf(p, stackBuf + 1024, "%08X ", *(uint*)(pCurrentMethodState->pEvalStack + i));
             }
 
-            Sys.printf("%s: %d %s %s \n", (PTR)pCurrentMethodState->pMethod->name, stackpos, (PTR)stackBuf, (PTR)opNames[(int)op]);
+            uint* pPos = (uint*)((byte*)pCurOp + offset);
+
+            if (paramType == OP_PARAM_FIELDDEF) {
+                #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+                tMD_FieldDef* pFieldDef = *(tMD_FieldDef**)((PTR)*(pPos++));
+                #else
+                tMD_FieldDef* pFieldDef = *(tMD_FieldDef**)((PTR)((((ulong)*(pPos++)) | ((ulong)*(pPos++) << 32))));
+                #endif
+                Sys.printf("%s.%s %s.%s: %d %s %s \n", (PTR)pCurrentMethodState->pMethod->pParentType->name, (PTR)pCurrentMethodState->pMethod->name, 
+                    pFieldDef->pParentType != null ? (PTR)pFieldDef->pParentType->name : (PTR)0, (PTR)pFieldDef->name,
+                    stackpos, (PTR)stackBuf, (PTR)opNames[(int)op]);
+            } else if (paramType == OP_PARAM_METHODDEF) {
+                #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+                tMD_MethodDef* pMethodDef = *(tMD_MethodDef**)((PTR)*(pPos++));
+                #else
+                tMD_MethodDef* pMethodDef = *(tMD_MethodDef**)((PTR)((((ulong)*(pPos++)) | ((ulong)*(pPos++) << 32))));
+                #endif
+                Sys.printf("%s.%s %s.%s: %d %s %s \n", (PTR)pCurrentMethodState->pMethod->pParentType->name, (PTR)pCurrentMethodState->pMethod->name, 
+                    pMethodDef->pParentType != null ? (PTR)pMethodDef->pParentType->name : (PTR)0, (PTR)pMethodDef->name,
+                    stackpos, (PTR)stackBuf, (PTR)opNames[(int)op]);
+            } else if (paramType == OP_PARAM_TYPEDEF) {
+                #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+                tMD_TypeDef* pTypeDef = *(tMD_TypeDef**)((PTR)*(pPos++));
+                #else
+                tMD_TypeDef* pTypeDef = *(tMD_TypeDef**)((PTR)((((ulong)*(pPos++)) | ((ulong)*(pPos++) << 32))));
+                #endif
+                Sys.printf("%s.%s %s.%s: %d %s %s \n", (PTR)pCurrentMethodState->pMethod->pParentType->name, (PTR)pCurrentMethodState->pMethod->name, (PTR)pTypeDef->nameSpace, (PTR)pTypeDef->name,
+                    stackpos, (PTR)stackBuf, (PTR)opNames[(int)op]);
+            } else {
+                Sys.printf("%s.%s: %d %s %s \n", (PTR)pCurrentMethodState->pMethod->pParentType->name, (PTR)pCurrentMethodState->pMethod->name, stackpos, (PTR)stackBuf, (PTR)opNames[(int)op]);
+            }
         }
 
 #endif
@@ -570,7 +606,6 @@ namespace DnaUnity
 
                     case JitOps.JIT_LOADPARAMLOCAL_INT32:
                     case JitOps.JIT_LOADPARAMLOCAL_F32:
-                    case JitOps.JIT_LOADPARAMLOCAL_INTNATIVE: // Only on 32-bit
                         OPCODE_USE(JitOps.JIT_LOADPARAMLOCAL_INT32);
                         {
                             uint ofs = GET_OP();
@@ -581,6 +616,7 @@ namespace DnaUnity
 
                     case JitOps.JIT_LOADPARAMLOCAL_O:
                     case JitOps.JIT_LOADPARAMLOCAL_PTR:
+                    case JitOps.JIT_LOADPARAMLOCAL_INTNATIVE:
                         OPCODE_USE(JitOps.JIT_LOADPARAMLOCAL_O);
                         {
 #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
@@ -671,7 +707,6 @@ namespace DnaUnity
 
                     case JitOps.JIT_STOREPARAMLOCAL_INT32:
                     case JitOps.JIT_STOREPARAMLOCAL_F32:
-                    case JitOps.JIT_STOREPARAMLOCAL_INTNATIVE: // Only on 32-bit
                         OPCODE_USE(JitOps.JIT_STOREPARAMLOCAL_INT32);
                         {
                             uint ofs = GET_OP();
@@ -683,6 +718,7 @@ namespace DnaUnity
                         
                     case JitOps.JIT_STOREPARAMLOCAL_O:
                     case JitOps.JIT_STOREPARAMLOCAL_PTR:
+                    case JitOps.JIT_STOREPARAMLOCAL_INTNATIVE:
                         OPCODE_USE(JitOps.JIT_STOREPARAMLOCAL_PTR);
                         {
 #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
@@ -1120,7 +1156,7 @@ namespace DnaUnity
                     case JitOps.JIT_CALL_INTERFACE:
                         op = JitOps.JIT_CALL_INTERFACE;
                     allCallStart:
-                        OPCODE_USE(op);
+                        OPCODE_USE(op, OP_PARAM_METHODDEF, (op == JitOps.JIT_BOX_CALLVIRT ? S_PTR : 0));
                         {
                             tMD_MethodDef *pCallMethod = null;
                             tMethodState *pCallMethodState = null;
@@ -1161,7 +1197,9 @@ namespace DnaUnity
                                     goto throwHeapPtr;
                                 }
                                 pThisType = Heap.GetType(heapPtr);
-                                Sys.log_f(4, "This ptr %lX type ptr %lX\n", (PTR)heapPtr, (PTR)pThisType);
+#if TRACE_OPCODES
+                                Sys.printf("This ptr %lX type ptr %lX\n", (PTR)heapPtr, (PTR)pThisType);
+#endif
                                 if (MetaData.METHOD_ISVIRTUAL(pCallMethod)) {
                                     if (pCallMethod->vTableOfs >= pThisType->numVirtualMethods) {
                                         Sys.Crash("Vtable offset out of range offset: %d type: %s method: %s", pCallMethod->vTableOfs, (PTR)pThisType->name, (PTR)pCallMethod->name);
@@ -1721,8 +1759,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_CGT_I32I32:
                         OPCODE_USE(JitOps.JIT_CGT_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - S_INT32; 
-                        *(uint*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) > *(int*)(pCurEvalStack - S_INT32 + sizeof(int)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) > *(int*)(pCurEvalStack - S_INT32 + S_INT32) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CGT_UN_I32I32: // Handles int and O
@@ -1733,8 +1771,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_CLT_I32I32:
                         OPCODE_USE(JitOps.JIT_CLT_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - S_INT32; 
-                        *(uint*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) < *(int*)(pCurEvalStack - S_INT32 + sizeof(int)) ? 1U : 0U;
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(uint*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) < *(int*)(pCurEvalStack - S_INT32 + S_INT32) ? 1U : 0U;
                         break;
 
                     case JitOps.JIT_CLT_UN_I32I32:
@@ -1907,8 +1945,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_ADD_I32I32:
                         OPCODE_USE(JitOps.JIT_ADD_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - sizeof(int); 
-                        *(int*)(pCurEvalStack - sizeof(int)) = *(int*)(pCurEvalStack - sizeof(int)) + *(int*)(pCurEvalStack - sizeof(int) + sizeof(int));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) + *(int*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_ADD_I64I64:
@@ -1931,8 +1969,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_SUB_I32I32:
                         OPCODE_USE(JitOps.JIT_SUB_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - sizeof(int); 
-                        *(int*)(pCurEvalStack - sizeof(int)) = *(int*)(pCurEvalStack - sizeof(int)) - *(int*)(pCurEvalStack - sizeof(int) + sizeof(int));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) - *(int*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_SUB_I64I64:
@@ -1943,8 +1981,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_SUB_F32F32:
                         OPCODE_USE(JitOps.JIT_SUB_F32F32);
-                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE;
-                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) - *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_FLOAT;
+                        *(float*)(pCurEvalStack - S_FLOAT) = *(float*)(pCurEvalStack - S_FLOAT) - *(float*)(pCurEvalStack - S_FLOAT + S_FLOAT);
                         break;
 
                     case JitOps.JIT_SUB_F64F64:
@@ -1955,8 +1993,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_MUL_I32I32:
                         OPCODE_USE(JitOps.JIT_MUL_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - sizeof(int); 
-                        *(int*)(pCurEvalStack - sizeof(int)) = *(int*)(pCurEvalStack - sizeof(int)) * *(int*)(pCurEvalStack - sizeof(int) + sizeof(int));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) * *(int*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_MUL_I64I64:
@@ -1979,8 +2017,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_DIV_I32I32:
                         OPCODE_USE(JitOps.JIT_DIV_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - sizeof(int); 
-                        *(int*)(pCurEvalStack - sizeof(int)) = *(int*)(pCurEvalStack - sizeof(int)) / *(int*)(pCurEvalStack - sizeof(int) + sizeof(int));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) / *(int*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_DIV_I64I64:
@@ -2015,8 +2053,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_REM_I32I32:
                         OPCODE_USE(JitOps.JIT_REM_I32I32);
-                        pCurEvalStack -= sizeof(int) + sizeof(int) - sizeof(int); 
-                        *(int*)(pCurEvalStack - sizeof(int)) = *(int*)(pCurEvalStack - sizeof(int)) % *(int*)(pCurEvalStack - sizeof(int) + sizeof(int));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) % *(int*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_REM_I64I64:
@@ -2075,7 +2113,7 @@ namespace DnaUnity
 
                     case JitOps.JIT_NEG_I32:
                         OPCODE_USE(JitOps.JIT_NEG_I32);
-                        *(int*)(pCurEvalStack - sizeof(int)) = - *(int*)(pCurEvalStack - sizeof(int));
+                        *(int*)(pCurEvalStack - S_INT32) = - *(int*)(pCurEvalStack - S_INT32);
                         break;
 
                     case JitOps.JIT_NEG_I64:
@@ -2101,8 +2139,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_SHR_I32:
                         OPCODE_USE(JitOps.JIT_SHR_I32);
-                        pCurEvalStack -= sizeof(int) + S_INT32 - sizeof(int); 
-                        *(int*)(pCurEvalStack - sizeof(int)) = *(int*)(pCurEvalStack - sizeof(int)) >> (int)*(uint*)(pCurEvalStack - sizeof(int) + sizeof(int));
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
+                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) >> (int)*(uint*)(pCurEvalStack - S_INT32 + S_INT32);
                         break;
 
                     case JitOps.JIT_SHR_UN_I32:
@@ -2145,7 +2183,7 @@ namespace DnaUnity
                         OPCODE_USE(JitOps.JIT_CONV_I32_I32);
                         {
                             int shift = (int)GET_OP();
-                            *(int*)(pCurEvalStack - sizeof(int)) = (*(int*)(pCurEvalStack - sizeof(int)) << shift) >> shift;
+                            *(int*)(pCurEvalStack - S_INT32) = (*(int*)(pCurEvalStack - S_INT32) << shift) >> shift;
                         }
                         break;
 
@@ -2514,6 +2552,10 @@ namespace DnaUnity
                         OPCODE_USE(JitOps.JIT_LOAD_VECTOR_LEN);
                         {
                             byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             uint value = System_Array.GetLength(heapPtr);
                             PUSH_U32(value);
                         }
@@ -2524,6 +2566,10 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32((uint)(sbyte)value);
                         }
@@ -2534,6 +2580,10 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32((byte)value);
                         }
@@ -2544,6 +2594,10 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32((uint)(short)value);
                         }
@@ -2554,6 +2608,10 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32((ushort)value);
                         }
@@ -2566,6 +2624,10 @@ namespace DnaUnity
                         {
                             uint value, idx = POP_U32(); // Array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U32(value);
                         }
@@ -2577,6 +2639,10 @@ namespace DnaUnity
                         {
                             uint idx = POP_U32(); // array index
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             ulong value;
                             System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
                             PUSH_U64(value);
@@ -2590,6 +2656,10 @@ namespace DnaUnity
                             /*HEAP_PTR*/byte* heapPtr = POP_O(); // array object
                             uint size = GET_OP(); // size of type on stack
                             *(uint*)pCurEvalStack = 0; // This is required to zero out the stack for type that are stored in <4 bytes in arrays
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.LoadElement(null, heapPtr, idx, pCurEvalStack);
                             pCurEvalStack += size;
                         }
@@ -2600,6 +2670,10 @@ namespace DnaUnity
                         {
                             uint idx = POP_U32(); // Array index
                             byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             byte* pMem = System_Array.LoadElementAddress(null, heapPtr, idx);
                             PUSH_PTR(pMem);
                         }
@@ -2611,6 +2685,10 @@ namespace DnaUnity
                             uint value = POP_U32(); // Value
                             uint idx = POP_U32(); // Array index
                             byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.StoreElement(heapPtr, idx, (byte*)&value);
                         }
                         break;
@@ -2621,6 +2699,10 @@ namespace DnaUnity
                             ulong value = POP_U64(); // Value
                             uint idx = POP_U32(); // Array index
                             byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
 #if TRACE_OPCODES
                             Sys.printf("  val 0x%llx idx %d ptr 0x%llx\n", value, idx, (ulong)heapPtr);
 #endif
@@ -2638,14 +2720,17 @@ namespace DnaUnity
                             pMem = pCurEvalStack;
                             idx = POP_U32(); // Array index
                             heapPtr = POP_O(); // Array on heap
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.StoreElement(heapPtr, idx, pMem);
                         }
                         break;
 
                     case JitOps.JIT_STOREFIELD_INT32:
-                    case JitOps.JIT_STOREFIELD_INTNATIVE: // only for 32-bit
                     case JitOps.JIT_STOREFIELD_F32:
-                        OPCODE_USE(JitOps.JIT_STOREFIELD_INT32);
+                        OPCODE_USE(JitOps.JIT_STOREFIELD_INT32, OP_PARAM_FIELDDEF, 0);
                         {
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
@@ -2655,17 +2740,28 @@ namespace DnaUnity
                             pFieldDef = (tMD_FieldDef*)GET_PTR();
                             value = POP_U32();
                             heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             pMem = heapPtr + pFieldDef->memOffset;
 #if TRACE_OPCODES
                             Sys.printf("  val 0x%x off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (ulong)heapPtr);
 #endif
-                            *(uint*)pMem = value;
+                            if (pFieldDef->memSize == 4) {
+                                *(uint*)pMem = value;
+                            } else if (pFieldDef->memSize == 2) {
+                                *(ushort*)pMem = (ushort)value;
+                            } else {
+                                *(byte*)pMem = (byte)value;
+                            }
                         }
                         break;
 
                     case JitOps.JIT_STOREFIELD_O:
                     case JitOps.JIT_STOREFIELD_PTR:
-                        OPCODE_USE(JitOps.JIT_STOREFIELD_PTR);
+                    case JitOps.JIT_STOREFIELD_INTNATIVE:
+                        OPCODE_USE(JitOps.JIT_STOREFIELD_PTR, OP_PARAM_FIELDDEF, 0);
                         {
 #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             tMD_FieldDef *pFieldDef;
@@ -2676,11 +2772,17 @@ namespace DnaUnity
                             pFieldDef = (tMD_FieldDef*)GET_PTR();
                             value = POP_U32();
                             heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             pMem = heapPtr + pFieldDef->memOffset;
-                    //        printf("  val 0x%x off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (ulong)heapPtr);
+#if TRACE_OPCODES
+                            Sys.printf("  val 0x%x off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (ulong)heapPtr);
+#endif
                             *(uint*)pMem = value;
 #else
-                            tMD_FieldDef *pFieldDef;
+                            tMD_FieldDef* pFieldDef;
                             byte* pMem;
                             ulong value;
                             /*HEAP_PTR*/byte* heapPtr;
@@ -2688,6 +2790,10 @@ namespace DnaUnity
                             pFieldDef = (tMD_FieldDef*)GET_PTR();
                             value = POP_U64();
                             heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             pMem = heapPtr + pFieldDef->memOffset;
 #if TRACE_OPCODES
                             Sys.printf("  val 0x%llx off %d ptr 0x%llx\n", value, pFieldDef->memOffset, (ulong)heapPtr);
@@ -2699,7 +2805,7 @@ namespace DnaUnity
                         
                     case JitOps.JIT_STOREFIELD_INT64:
                     case JitOps.JIT_STOREFIELD_F64:
-                        OPCODE_USE(JitOps.JIT_STOREFIELD_F64);
+                        OPCODE_USE(JitOps.JIT_STOREFIELD_F64, OP_PARAM_FIELDDEF, 0);
                         {
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
@@ -2709,13 +2815,17 @@ namespace DnaUnity
                             pFieldDef = (tMD_FieldDef*)GET_PTR();
                             value = POP_U64();
                             heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             pMem = heapPtr + pFieldDef->memOffset;
                             *(ulong*)pMem = value;
                         }
                         break;
 
                     case JitOps.JIT_STOREFIELD_VALUETYPE:
-                        OPCODE_USE(JitOps.JIT_STOREFIELD_VALUETYPE);
+                        OPCODE_USE(JitOps.JIT_STOREFIELD_VALUETYPE, OP_PARAM_FIELDDEF, 0);
                         {
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
@@ -2724,21 +2834,77 @@ namespace DnaUnity
                             pCurEvalStack -= pFieldDef->memSize;
                             pMem = pCurEvalStack;
                             byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             Mem.memcpy(heapPtr + pFieldDef->memOffset, pMem, pFieldDef->memSize);
                         }
                         break;
 
                     case JitOps.JIT_LOADFIELD:
-                        OPCODE_USE(JitOps.JIT_LOADFIELD);
+                        OPCODE_USE(JitOps.JIT_LOADFIELD, OP_PARAM_FIELDDEF, 0);
                         // TODO: Optimize into LOADFIELD of different type O, INT32, INT64, F, etc...)
                         {
                             tMD_FieldDef *pFieldDef;
 
                             pFieldDef = (tMD_FieldDef*)GET_PTR();
                             byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             byte* pMem = heapPtr + pFieldDef->memOffset;
                             // It may not be a value-type, but this'll work anyway
                             PUSH_VALUETYPE(pMem, pFieldDef->memSize, pFieldDef->memSize);
+                        }
+                        break;
+
+                    case JitOps.JIT_LOADFIELD_1:
+                        OPCODE_USE(JitOps.JIT_LOADFIELD_1); {
+                            uint ofs = GET_OP();
+                            byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            PUSH_U32(*(byte*)(heapPtr + ofs));
+                        }
+                        break;
+
+                    case JitOps.JIT_LOADFIELD_1S:
+                        OPCODE_USE(JitOps.JIT_LOADFIELD_1S); {
+                            uint ofs = GET_OP();
+                            byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            PUSH_U32((uint)(int)(*(sbyte*)(heapPtr + ofs))); // Sign extend to 32 bits
+                        }
+                        break;
+
+                    case JitOps.JIT_LOADFIELD_2:
+                        OPCODE_USE(JitOps.JIT_LOADFIELD_2); {
+                            uint ofs = GET_OP();
+                            byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            PUSH_U32(*(ushort*)(heapPtr + ofs));
+                        }
+                        break;
+
+                    case JitOps.JIT_LOADFIELD_2S:
+                        OPCODE_USE(JitOps.JIT_LOADFIELD_2S); {
+                            uint ofs = GET_OP();
+                            byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            PUSH_U32((uint)(int)(*(short*)(heapPtr + ofs))); // Sign extend to 32 bits
                         }
                         break;
 
@@ -2747,7 +2913,10 @@ namespace DnaUnity
                         {
                             uint ofs = GET_OP();
                             byte* heapPtr = POP_O();
-                            Sys.printf("  ofs %d ptr 0x%llx val 0x%x\n", ofs, (ulong)heapPtr, *(uint*)(heapPtr + ofs));
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             PUSH_U32(*(uint*)(heapPtr + ofs));
                         }
                         break;
@@ -2757,13 +2926,16 @@ namespace DnaUnity
                         {
                             uint ofs = GET_OP();
                             byte* heapPtr = POP_O();
-                            Sys.printf("  ofs %d ptr 0x%llx val 0x%llx\n", ofs, (ulong)heapPtr, *(ulong*)(heapPtr + ofs));
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             PUSH_U64(*(ulong*)(heapPtr + ofs));
                         }
                         break;
                         
                     case JitOps.JIT_LOADFIELD_VALUETYPE:
-                        OPCODE_USE(JitOps.JIT_LOADFIELD_VALUETYPE);
+                        OPCODE_USE(JitOps.JIT_LOADFIELD_VALUETYPE, OP_PARAM_FIELDDEF, S_INT32);
                         {
                             tMD_FieldDef *pFieldDef;
 
@@ -2790,6 +2962,10 @@ namespace DnaUnity
                         {
                             uint ofs = GET_OP();
                             /*HEAP_PTR*/byte* heapPtr = POP_O();
+                            if (heapPtr == null) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             byte* pMem = heapPtr + ofs;
                             PUSH_PTR(pMem);
                         }
@@ -2797,8 +2973,7 @@ namespace DnaUnity
 
                     case JitOps.JIT_STORESTATICFIELD_INT32:
                     case JitOps.JIT_STORESTATICFIELD_F32:
-                    case JitOps.JIT_STORESTATICFIELD_INTNATIVE: // only for 32-bit
-                        OPCODE_USE(JitOps.JIT_STORESTATICFIELD_INT32);
+                        OPCODE_USE(JitOps.JIT_STORESTATICFIELD_INT32, OP_PARAM_FIELDDEF, 0);
                         {
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
@@ -2813,7 +2988,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_STORESTATICFIELD_O: // only for 32-bit
                     case JitOps.JIT_STORESTATICFIELD_PTR: // only for 32-bit
-                        OPCODE_USE(JitOps.JIT_STORESTATICFIELD_INT32);
+                    case JitOps.JIT_STORESTATICFIELD_INTNATIVE: // only for 32-bit
+                        OPCODE_USE(JitOps.JIT_STORESTATICFIELD_INT32, OP_PARAM_FIELDDEF, 0);
                         {
 #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
                             tMD_FieldDef *pFieldDef;
@@ -2839,7 +3015,7 @@ namespace DnaUnity
                         
                     case JitOps.JIT_STORESTATICFIELD_F64:
                     case JitOps.JIT_STORESTATICFIELD_INT64:
-                        OPCODE_USE(JitOps.JIT_STORESTATICFIELD_INT64);
+                        OPCODE_USE(JitOps.JIT_STORESTATICFIELD_INT64, OP_PARAM_FIELDDEF, 0);
                         {
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
@@ -2854,7 +3030,7 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_STORESTATICFIELD_VALUETYPE:
-                        OPCODE_USE(JitOps.JIT_STORESTATICFIELD_VALUETYPE);
+                        OPCODE_USE(JitOps.JIT_STORESTATICFIELD_VALUETYPE, OP_PARAM_FIELDDEF, 0);
                         {
                             tMD_FieldDef *pFieldDef;
                             byte* pMem;
@@ -2872,18 +3048,19 @@ namespace DnaUnity
                         op = JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_VALUETYPE;
                         goto loadStaticFieldStart;
                     case JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_F64:
-                        op = JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_F64;
+                    case JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_INT64:
+                        op = JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_INT64;
                         goto loadStaticFieldStart;
                     case JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_O: // Only for 32-bit
                     case JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_PTR: // Only for 32-bit
+                    case JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_INTNATIVE: // Only for 32-bit
                         op = JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_PTR;
                         goto loadStaticFieldStart;
                     case JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_INT32:
                     case JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_F32:
-                    case JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_INTNATIVE: // Only for 32-bit
                         op = 0;
                     loadStaticFieldStart:
-                        OPCODE_USE(JitOps.JIT_LOADSTATICFIELD_CHECKTYPEINIT_INT32);
+                        OPCODE_USE(op, OP_PARAM_FIELDDEF, 0);
                         {
                             tMD_FieldDef *pFieldDef;
                             tMD_TypeDef *pParentType;
@@ -2943,7 +3120,7 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_INIT_VALUETYPE:
-                        OPCODE_USE(JitOps.JIT_INIT_VALUETYPE);
+                        OPCODE_USE(JitOps.JIT_INIT_VALUETYPE, OP_PARAM_TYPEDEF, 0);
                         {
                             tMD_TypeDef *pTypeDef;
 
@@ -2963,7 +3140,6 @@ namespace DnaUnity
 
                     case JitOps.JIT_BOX_INT32:
                     case JitOps.JIT_BOX_F32:
-                    case JitOps.JIT_BOX_INTNATIVE:
                         OPCODE_USE(JitOps.JIT_BOX_INT32);
                         {
                             tMD_TypeDef *pTypeDef;
@@ -2972,6 +3148,20 @@ namespace DnaUnity
                             byte* heapPtr = Heap.AllocType(pTypeDef);
                             u32Value = POP_U32();
                             *(uint*)heapPtr = u32Value;
+                            PUSH_O(heapPtr);
+                        }
+                        break;
+
+                    case JitOps.JIT_BOX_INTNATIVE:
+                        OPCODE_USE(JitOps.JIT_BOX_INTNATIVE); {
+                            tMD_TypeDef* pTypeDef = (tMD_TypeDef*)GET_PTR();
+                            byte* heapPtr = Heap.AllocType(pTypeDef);
+#if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
+                            u32Value = POP_U32();
+                            *(uint*)heapPtr = u32Value;
+#else
+                            *(ulong*)heapPtr = POP_U64();
+#endif
                             PUSH_O(heapPtr);
                         }
                         break;
@@ -2988,7 +3178,7 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_BOX_VALUETYPE:
-                        OPCODE_USE(JitOps.JIT_BOX_VALUETYPE);
+                        OPCODE_USE(JitOps.JIT_BOX_VALUETYPE, OP_PARAM_TYPEDEF, 0);
                         {
                             tMD_TypeDef *pTypeDef;
 
@@ -3009,7 +3199,7 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_BOX_NULLABLE:
-                        OPCODE_USE(JitOps.JIT_BOX_NULLABLE);
+                        OPCODE_USE(JitOps.JIT_BOX_NULLABLE, OP_PARAM_TYPEDEF, 0);
                         {
                             // Get the underlying type of the nullable type
                             tMD_TypeDef *pType = (tMD_TypeDef*)GET_PTR();
@@ -3030,7 +3220,7 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_UNBOX2VALUETYPE:
-                        OPCODE_USE(JitOps.JIT_UNBOX2VALUETYPE);
+                        OPCODE_USE(JitOps.JIT_UNBOX2VALUETYPE, OP_PARAM_TYPEDEF, S_PTR);
                         {
                             tMD_TypeDef *pTypeDef;
                             /*HEAP_PTR*/byte* heapPtr;
@@ -3042,7 +3232,7 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_UNBOX_NULLABLE:
-                        OPCODE_USE(JitOps.JIT_UNBOX_NULLABLE);
+                        OPCODE_USE(JitOps.JIT_UNBOX_NULLABLE, OP_PARAM_TYPEDEF, 0);
                         {
                             tMD_TypeDef *pTypeDef = (tMD_TypeDef*)GET_PTR();
                             /*HEAP_PTR*/byte* heapPtr;
@@ -3063,7 +3253,7 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_LOADTOKEN_TYPE:
-                        OPCODE_USE(JitOps.JIT_LOADTOKEN_TYPE);
+                        OPCODE_USE(JitOps.JIT_LOADTOKEN_TYPE, OP_PARAM_TYPEDEF, 0);
                         {
                             tMD_TypeDef *pTypeDef;
 
@@ -3074,7 +3264,7 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_LOADTOKEN_FIELD:
-                        OPCODE_USE(JitOps.JIT_LOADTOKEN_FIELD);
+                        OPCODE_USE(JitOps.JIT_LOADTOKEN_FIELD, OP_PARAM_FIELDDEF, 0);
                         {
                             tMD_FieldDef *pFieldDef;
 

@@ -400,10 +400,15 @@ namespace DnaUnity
         JIT_LOAD_I4_1 =                       0x139,
         JIT_LOAD_I4_2 =                       0x13a,
 
-        JIT_LOADFIELD_4 =                     0x13b,
-        JIT_LOADFIELD_8 =                     0x13c,
+        JIT_LOADFIELD_1 =                     0x13b,
+        JIT_LOADFIELD_1S =                    0x13c,
+        JIT_LOADFIELD_2 =                     0x13d,
+        JIT_LOADFIELD_2S =                    0x13e,
+        JIT_LOADFIELD_4 =                     0x13f,
+        JIT_LOADFIELD_8 =                     0x140,
 
-        JIT_CONV_FROM_I32 =                   0x140,
+
+        JIT_CONV_FROM_I32 =                   0x141,
         JIT_CONV_I32_I32 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_I32),
         JIT_CONV_I32_U32 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_U32),
         JIT_CONV_I32_I64 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_I64),
@@ -411,7 +416,7 @@ namespace DnaUnity
         JIT_CONV_I32_R32 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_R32),
         JIT_CONV_I32_R64 =                    (JIT_CONV_FROM_I32 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
-        JIT_CONV_FROM_U32 =                   0x146,
+        JIT_CONV_FROM_U32 =                   0x147,
         JIT_CONV_U32_I32 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_I32),
         JIT_CONV_U32_U32 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_U32),
         JIT_CONV_U32_I64 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_I64),
@@ -419,7 +424,7 @@ namespace DnaUnity
         JIT_CONV_U32_R32 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_R32),
         JIT_CONV_U32_R64 =                    (JIT_CONV_FROM_U32 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
-        JIT_CONV_FROM_I64 =                   0x14c,
+        JIT_CONV_FROM_I64 =                   0x14d,
         JIT_CONV_I64_I32 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_I32),
         JIT_CONV_I64_U32 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_U32),
         JIT_CONV_I64_I64 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_I64), // Not used
@@ -427,7 +432,7 @@ namespace DnaUnity
         JIT_CONV_I64_R32 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_R32),
         JIT_CONV_I64_R64 =                    (JIT_CONV_FROM_I64 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
-        JIT_CONV_FROM_U64 =                   0x152,
+        JIT_CONV_FROM_U64 =                   0x153,
         JIT_CONV_U64_I32 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_I32),
         JIT_CONV_U64_U32 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_U32),
         JIT_CONV_U64_I64 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_I64), // Not used
@@ -435,7 +440,7 @@ namespace DnaUnity
         JIT_CONV_U64_R32 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_R32),
         JIT_CONV_U64_R64 =                    (JIT_CONV_FROM_U64 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
-        JIT_CONV_FROM_R32 =                   0x158,
+        JIT_CONV_FROM_R32 =                   0x159,
         JIT_CONV_R32_I32 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_I32),
         JIT_CONV_R32_U32 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_U32),
         JIT_CONV_R32_I64 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_I64),
@@ -443,7 +448,7 @@ namespace DnaUnity
         JIT_CONV_R32_R32 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_R32),
         JIT_CONV_R32_R64 =                    (JIT_CONV_FROM_R32 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
-        JIT_CONV_FROM_R64 =                   0x15e,
+        JIT_CONV_FROM_R64 =                   0x15f,
         JIT_CONV_R64_I32 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_I32),
         JIT_CONV_R64_U32 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_U32),
         JIT_CONV_R64_I64 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_I64),
@@ -451,12 +456,13 @@ namespace DnaUnity
         JIT_CONV_R64_R32 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_R32),
         JIT_CONV_R64_R64 =                    (JIT_CONV_FROM_R64 + JitOpsConsts.JIT_CONV_OFFSET_R64),
 
-        JIT_INVOKE_SYSTEM_REFLECTION_METHODBASE =     0x164,
-        JIT_REFLECTION_DYNAMICALLY_BOX_RETURN_VALUE = 0x165,
+        JIT_INVOKE_SYSTEM_REFLECTION_METHODBASE =     0x165,
+        JIT_REFLECTION_DYNAMICALLY_BOX_RETURN_VALUE = 0x166,
 
-        JIT_BRANCH_FALSE_U32 =                0x166,
-        JIT_BRANCH_TRUE_U32 =                 0x167,
-        JIT_BRANCH_FALSE_U64 =                0x168,
-        JIT_BRANCH_TRUE_U64 =                 0x169,
+        JIT_BRANCH_FALSE_U32 =                0x167,
+        JIT_BRANCH_TRUE_U32 =                 0x168,
+        JIT_BRANCH_FALSE_U64 =                0x169,
+        JIT_BRANCH_TRUE_U64 =                 0x16a,
+
     }
 }
