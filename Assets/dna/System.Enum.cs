@@ -43,7 +43,7 @@ namespace DnaUnity
         	
         	for (i=0, retIndex=0; i<pEnumType->numFields; i++) {
         		tMD_FieldDef *pField = pEnumType->ppFields[i];
-        		/*HEAP_PTR*/byte* name;
+        		tSystemString* name;
         		int value;
 
         		if (!MetaData.FIELD_ISLITERAL(pField)) {

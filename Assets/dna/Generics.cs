@@ -269,7 +269,6 @@ namespace DnaUnity
         {
         	tGenericMethodInstance *pInst;
         	tMD_MethodDef *pMethod;
-            int i;
 
             Mem.heapcheck();
 

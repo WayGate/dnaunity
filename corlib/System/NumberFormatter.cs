@@ -4,12 +4,14 @@ using System.Collections;
 using System.Globalization;
 using System.Text;
 
+#if NO_LONGER_USED
+
 namespace System {
 	class NumberFormatter {
 		static char[] digitLowerTable = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 		static char[] digitUpperTable = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
 
-		#region NumberToString
+#region NumberToString
 		public static string NumberToString(string format, sbyte value, NumberFormatInfo nfi) {
 			char specifier;
 			int precision;
@@ -193,9 +195,9 @@ namespace System {
 				throw new FormatException("The specified format '" + format + "' is invalid");
 			}
 		}
-		#endregion
+#endregion
 
-		#region BasicParser
+#region BasicParser
 		private static void ParseBasicFormat(string format, out char specifier, out int precision, out bool custom) {
 			if (format == null || format.Length == 0) {
 				precision = -1;
@@ -235,9 +237,9 @@ namespace System {
 			return;
 		}
 
-		#endregion
+#endregion
 
-		#region Helpers
+#region Helpers
 		private static void ZeroTrimEnd(StringBuilder sb) {
 			ZeroTrimEnd(sb, false);
 		}
@@ -252,9 +254,9 @@ namespace System {
 			if (len > 0)
 				sb.Remove(sb.Length - len, len);
 		}
-		#endregion
+#endregion
 
-		#region Basic
+#region Basic
 		internal static string FormatCurrency(NumberStore ns, int precision, NumberFormatInfo nfi) {
 			precision = (precision >= 0 ? precision : nfi.CurrencyDecimalDigits);
 			ns.RoundDecimal(precision);
@@ -747,9 +749,9 @@ namespace System {
 
 			return cb.ToString();
 		}
-		#endregion
+#endregion
 
-		#region Custom
+#region Custom
 		internal static string FormatCustom(string format, NumberStore ns, NumberFormatInfo nfi) {
 			bool p = ns.Positive;
 			int offset = 0;
@@ -1262,9 +1264,9 @@ namespace System {
 			}
 		}
 
-		#endregion
+#endregion
 
-		#region Internal structures
+#region Internal structures
 		internal struct NumberStore {
 			bool _NaN;
 			bool _infinity;
@@ -1312,7 +1314,7 @@ namespace System {
 				10000000000000000000,
 			};
 
-			#region Constructors
+#region Constructors
 			public NumberStore(long value) {
 				_infinity = _NaN = false;
 				_defByteSize = 8;
@@ -1817,9 +1819,9 @@ namespace System {
 				a <<= 1;
 				return (a >= factor || (a == factor && (c & 1) == 1)) ? 1 : 0;
 			}
-			#endregion
+#endregion
 
-			#region Public Property
+#region Public Property
 			public bool IsNaN {
 				get { return _NaN; }
 			}
@@ -1872,11 +1874,11 @@ namespace System {
 					return true;
 				}
 			}
-			#endregion
+#endregion
 
-			#region Public Method
+#region Public Method
 
-			#region Round
+#region Round
 			public bool RoundPos(int pos) {
 				return RoundPos(pos, true);
 			}
@@ -2026,9 +2028,9 @@ namespace System {
 				}
 			}
 
-			#endregion
+#endregion
 
-			#region Trim
+#region Trim
 			public void TrimDecimalEndZeros() {
 				int len = 0;
 				for (int i = _digits.Length - 1; i >= 0; i--) {
@@ -2070,9 +2072,9 @@ namespace System {
 				}
 			}
 
-			#endregion
+#endregion
 
-			#region Integer
+#region Integer
 			public void AppendIntegerString(int minLength, StringBuilder cb) {
 				if (IntegerDigits == 0) {
 					cb.Append('0', minLength);
@@ -2153,9 +2155,9 @@ namespace System {
 					}
 				}
 			}
-			#endregion
+#endregion
 
-			#region Decimal
+#region Decimal
 			public string GetDecimalString(int precision) {
 				if (!HasDecimal)
 					return new string('0', precision);
@@ -2192,9 +2194,9 @@ namespace System {
 				if (i < precision)
 					cb.Append('0', precision - i);
 			}
-			#endregion
+#endregion
 
-			#region others
+#region others
 			public bool CheckZeroOnlyInteger() {
 				for (int i = 0; i < _decPointPos && i < _digits.Length; i++) {
 					if (_digits[i] != 0)
@@ -2262,11 +2264,11 @@ namespace System {
 			public void SetDecimalPointPos(int dp) {
 				_decPointPos = dp;
 			}
-			#endregion
+#endregion
 
-			#endregion
+#endregion
 
-			#region Public Static Method
+#region Public Static Method
 			public static bool IsZeroOnly(StringBuilder sb) {
 				for (int i = 0; i < sb.Length; i++)
 					if (char.IsDigit(sb[i]) && sb[i] != '0')
@@ -2305,10 +2307,12 @@ namespace System {
 					v -= IntList[i--] * n;
 				} while (i >= 0);
 			}
-			#endregion
+#endregion
 		}
-		#endregion
+#endregion
 	}
 }
+
+#endif
 
 #endif

@@ -21,6 +21,8 @@
 #if !LOCALTEST
 
 using System.Globalization;
+using System.Runtime.CompilerServices;
+
 namespace System {
 	public struct Int16 : IFormattable, IComparable, IConvertible, IComparable<short>, IEquatable<short> {
 		public const short MaxValue = 0x7fff;
@@ -41,21 +43,19 @@ namespace System {
         #region ToString methods
 
         public override string ToString() {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value));
+            return this.ToString(null, null);
 		}
 
 		public string ToString(IFormatProvider formatProvider) {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value), formatProvider);
+            return this.ToString(null, formatProvider);
 		}
 
 		public string ToString(string format) {
 			return ToString(format, null);
 		}
 
-		public string ToString(string format, IFormatProvider formatProvider) {
-			NumberFormatInfo nfi = NumberFormatInfo.GetInstance(formatProvider);
-			return NumberFormatter.NumberToString(format, m_value, nfi);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern string ToString(string format, IFormatProvider formatProvider);
 
         #endregion
 
@@ -76,70 +76,16 @@ namespace System {
             return Parse(s, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
         }
 
-        public static short Parse(String s, NumberStyles style, IFormatProvider provider)
-        {
-            return Parse(s, style, NumberFormatInfo.GetInstance(provider));
-        }
-
-        private static short Parse(String s, NumberStyles style, NumberFormatInfo info)
-        {
-
-            int i = 0;
-            try {
-                i = Int32.Parse(s, style, info);
-            }
-            catch (OverflowException e) {
-                throw new OverflowException();
-            }
-
-            // We need this check here since we don't allow signs to specified in hex numbers. So we fixup the result
-            // for negative numbers
-            if ((style & NumberStyles.AllowHexSpecifier) != 0) { // We are parsing a hexadecimal number
-                if ((i < 0) || (i > UInt16.MaxValue)) {
-                    throw new OverflowException();
-                }
-                return (short)i;
-            }
-
-            if (i < MinValue || i > MaxValue) throw new OverflowException();
-            return (short)i;
-        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern short Parse(String s, NumberStyles style, IFormatProvider provider);
 
         public static bool TryParse(String s, out Int16 result)
         {
             return TryParse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
         }
 
-        public static bool TryParse(String s, NumberStyles style, IFormatProvider provider, out Int16 result)
-        {
-            return TryParse(s, style, NumberFormatInfo.GetInstance(provider), out result);
-        }
-
-        private static bool TryParse(String s, NumberStyles style, NumberFormatInfo info, out Int16 result)
-        {
-
-            result = 0;
-            int i;
-            if (!Int32.TryParse(s, style, info, out i)) {
-                return false;
-            }
-
-            // We need this check here since we don't allow signs to specified in hex numbers. So we fixup the result
-            // for negative numbers
-            if ((style & NumberStyles.AllowHexSpecifier) != 0) { // We are parsing a hexadecimal number
-                if ((i < 0) || i > UInt16.MaxValue) {
-                    return false;
-                }
-                result = (Int16)i;
-                return true;
-            }
-
-            if (i < MinValue || i > MaxValue) {
-                return false;
-            }
-            result = (Int16)i;
-            return true;
-        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool TryParse(String s, NumberStyles style, IFormatProvider provider, out Int16 result);
 
         #endregion
 

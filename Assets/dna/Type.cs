@@ -135,32 +135,34 @@ namespace DnaUnity
         public const int TYPE_SYSTEM_REFLECTION_PROPERTYINFO            = 51;
         public const int TYPE_SYSTEM_REFLECTION_METHODINFO              = 52;
         public const int TYPE_SYSTEM_REFLECTION_METHODBASE              = 53;
+        public const int TYPE_SYSTEM_IFORMATPROVIDER                    = 54;
+        public const int TYPE_SYSTEM_GLOBALIZATION_NUMBERSTYLES         = 55;
 
 #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
 
-        public const int TYPE_UNITYENGINE_VECTOR2                       = 54;
-        public const int TYPE_UNITYENGINE_VECTOR3                       = 55;
-        public const int TYPE_UNITYENGINE_COLOR                         = 56;
-        public const int TYPE_UNITYENGINE_COLOR32                       = 57;
-        public const int TYPE_UNITYENGINE_VECTOR4                       = 58;
-        public const int TYPE_UNITYENGINE_QUATERNION                    = 59;
-        public const int TYPE_UNITYENGINE_VECTOR2INT                    = 60;
-        public const int TYPE_UNITYENGINE_VECTOR3INT                    = 61;
-        public const int TYPE_UNITYENGINE_RECT                          = 62;
-        public const int TYPE_UNITYENGINE_RECTINT                       = 63;
-        public const int TYPE_UNITYENGINE_RECTOFFSET                    = 64;
-        public const int TYPE_UNITYENGINE_RAY2D                         = 65;
-        public const int TYPE_UNITYENGINE_RAY                           = 66;
-        public const int TYPE_UNITYENGINE_BOUNDS                        = 67;
-        public const int TYPE_UNITYENGINE_PLANE                         = 68;
-        public const int TYPE_UNITYENGINE_RANGEINT                      = 69;
-        public const int TYPE_UNITYENGINE_MATRIX4X4                     = 70;
+        public const int TYPE_UNITYENGINE_VECTOR2                       = 56;
+        public const int TYPE_UNITYENGINE_VECTOR3                       = 57;
+        public const int TYPE_UNITYENGINE_COLOR                         = 58;
+        public const int TYPE_UNITYENGINE_COLOR32                       = 59;
+        public const int TYPE_UNITYENGINE_VECTOR4                       = 60;
+        public const int TYPE_UNITYENGINE_QUATERNION                    = 61;
+        public const int TYPE_UNITYENGINE_VECTOR2INT                    = 62;
+        public const int TYPE_UNITYENGINE_VECTOR3INT                    = 63;
+        public const int TYPE_UNITYENGINE_RECT                          = 64;
+        public const int TYPE_UNITYENGINE_RECTINT                       = 65;
+        public const int TYPE_UNITYENGINE_RECTOFFSET                    = 66;
+        public const int TYPE_UNITYENGINE_RAY2D                         = 67;
+        public const int TYPE_UNITYENGINE_RAY                           = 68;
+        public const int TYPE_UNITYENGINE_BOUNDS                        = 69;
+        public const int TYPE_UNITYENGINE_PLANE                         = 70;
+        public const int TYPE_UNITYENGINE_RANGEINT                      = 71;
+        public const int TYPE_UNITYENGINE_MATRIX4X4                     = 72;
 
-        public const int NUM_INIT_TYPES = 71;
+        public const int NUM_INIT_TYPES = 73;
 
 #else
 
-        public const int NUM_INIT_TYPES = 54;
+        public const int NUM_INIT_TYPES = 56;
 
 #endif
 
@@ -207,6 +209,7 @@ namespace DnaUnity
             public byte arrayElementSize;
             public byte instanceMemSize;
             public byte alignment;
+            public byte hasMonoBase;
         };
 
         // String constant statics
@@ -252,7 +255,7 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Char"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 2, instanceMemSize = 2, alignment = 2},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int16"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 2, instanceMemSize = 2, alignment = 2},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int32"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
-                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("String"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("String"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE, hasMonoBase = 1},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("IntPtr"), stackType = EvalStack.EVALSTACK_PTR, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("RuntimeFieldHandle"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("InvalidCastException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
@@ -296,6 +299,8 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("PropertyInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tPropertyInfo), alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodInfo"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodInfo), alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Reflection"), name = new S("MethodBase"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = (byte)sizeof(tMethodBase), alignment = PTR_SIZE},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System"), name = new S("IFormatProvider"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = 0, instanceMemSize = 0, alignment = 0},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystemReflection, "System.Globalization"), name = new S("NumberStyles"), stackType = EvalStack.EVALSTACK_INT32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
 
 #if UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE
                 new tTypeInit {assemblyName = new S(ref scUnityEngine, "UnityEngine"), nameSpace = new S(ref scUnityEngine, "UnityEngine"), name = new S("Vector2"), stackType = EvalStack.EVALSTACK_VALUETYPE, stackSize = (byte)sizeof(Vector2), arrayElementSize = (byte)sizeof(Vector2), instanceMemSize = (byte)sizeof(Vector2), alignment = 4},
@@ -334,6 +339,7 @@ namespace DnaUnity
                     types[i]->arrayElementSize = typeInit[i].arrayElementSize;
                     types[i]->instanceMemSize = typeInit[i].instanceMemSize;
                     types[i]->alignment = typeInit[i].alignment;
+                    types[i]->hasMonoBase = typeInit[i].hasMonoBase;
                 }
             }
             if (genericArrayMethodsInited == 0) {

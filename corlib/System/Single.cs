@@ -80,10 +80,8 @@ namespace System {
 			return ToString(format, null);
 		}
 
-		public string ToString(string format, IFormatProvider provider) {
-			NumberFormatInfo nfi = NumberFormatInfo.GetInstance(provider);
-			return NumberFormatter.NumberToString(format, this.m_value, nfi);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern string ToString(string format, IFormatProvider provider);
 
         #region Parse methods
 

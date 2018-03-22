@@ -32,22 +32,18 @@ namespace DnaUnity
     {
         public static tAsyncCall* Write(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
-        	byte* /*HEAP_PTR*/ _string;
-            char* wStr;
-        	uint strLen;
+        	tSystemString* /*HEAP_PTR*/ _string;
+            string monoStr;
 
-        	_string = *(byte**)pParams;
+        	_string = *(tSystemString**)pParams;
+            monoStr = System_String.ToMonoString(_string);
         	if (_string != null) {
                 #if VS_TESTING || !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE)
-                wStr = System_String.GetString(pCallNative, _string, &strLen);
-                string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
-                System.Console.Write(netStr);
+                System.Console.Write(s);
                 #else
-                wStr = System_String.GetString(pCallNative, _string, &strLen);
-                if (wStr != null && strLen > 0 && !(strLen == 1 && wStr[0] == '\n') && !(strLen == 2 && wStr[0] == '\r' && wStr[1] == '\n'))
-                {
-                    string netStr = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)wStr, (int)strLen);
-                    UnityEngine.Debug.Log(netStr);
+                int len = monoStr.Length;
+                if (monoStr != null && len > 0 && !(len == 1 && monoStr[0] == '\n') && !(len == 2 && monoStr[0] == '\r' && monoStr[1] == '\n')) {
+                    UnityEngine.Debug.Log(monoStr);
                 }
                 #endif
             }

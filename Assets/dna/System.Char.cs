@@ -23,6 +23,20 @@ namespace DnaUnity
 
     public unsafe static class System_Char
     {
+        public static tAsyncCall* ToString(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
+        {
+            char ch;
+            string s;
+            tSystemString* pResult;
+
+            ch = *(char*)pThis_;
+            s = ch.ToString();
+            pResult = System_String.FromMonoString(s);
+
+            Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pResult);
+
+            return null;
+        }
 
         public static tAsyncCall* GetUnicodeCategory(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {

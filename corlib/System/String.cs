@@ -33,17 +33,16 @@ namespace System {
 		public static readonly string Empty = "";
 
 		public static bool IsNullOrEmpty(string value) {
-			return (value == null) || (value.length == 0);
+			return (value == null) || (value.Length == 0);
 		}
-
-		// This field must be the only field, to tie up with C code
-		private int length;
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		extern public String(char c, int count);
 
-		[MethodImpl(MethodImplOptions.InternalCall)]
-		extern public String(char[] chars);
+		public String(char[] chars)
+            : this(chars, 0, chars.Length)
+        {
+        }
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		extern public String(char[] chars, int startIndex, int length);
@@ -51,12 +50,12 @@ namespace System {
 		#region Private Internal Calls
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
-		extern private String(string str, int startIndex, int length);
+		extern private static string InternalSubstring(string str, int startIndex, int length);
 
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		extern private static string InternalConcat(string str0, string str1);
 
-		[MethodImpl(MethodImplOptions.InternalCall)]
+        [MethodImpl(MethodImplOptions.InternalCall)]
 		extern private string InternalReplace(string oldValue, string newValue);
 
 		// trimType: bit 0 = start; bit 1 = end
@@ -69,12 +68,74 @@ namespace System {
 		[MethodImpl(MethodImplOptions.InternalCall)]
 		extern private int InternalIndexOfAny(char[] anyOf, int startIndex, int count, bool forward);
 
-		#endregion
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static string InternalToString(string format, TypeCode typecode);
 
-		public virtual int Length {
-			get {
-				return this.length;
-			}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static byte InternalParseByte(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static sbyte InternalParseSByte(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static ushort InternalParseUInt16(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static short InternalParseInt16(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static uint InternalParseUInt32(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static int InternalParseInt32(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static ulong InternalParseUInt64(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static long InternalParseInt64(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static float InternalParseSingle(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static double InternalParseDouble(string str, string format, System.Globalization.NumberStyles style);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseByte(string str, string format, System.Globalization.NumberStyles style, out byte value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseSByte(string str, string format, System.Globalization.NumberStyles style, out sbyte value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseUInt16(string str, string format, System.Globalization.NumberStyles style, out ushort value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseInt16(string str, string format, System.Globalization.NumberStyles style, out short value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseUInt32(string str, string format, System.Globalization.NumberStyles style, out uint value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseInt32(string str, string format, System.Globalization.NumberStyles style, out int value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseUInt64(string str, string format, System.Globalization.NumberStyles style, out ulong value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseInt64(string str, string format, System.Globalization.NumberStyles style, out long value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseSingle(string str, string format, System.Globalization.NumberStyles style, out float value);
+
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        extern internal static void InternalTryParseDouble(string str, string format, System.Globalization.NumberStyles style, out double value);
+
+        #endregion
+
+        public virtual int Length {
+            [MethodImpl(MethodImplOptions.InternalCall)]
+            get;
 		}
 
 		[IndexerName("Chars")]
@@ -119,10 +180,10 @@ namespace System {
 			for (; count > 0; count--) {
 				int sepPos = this.IndexOfAny(separator, pos);
 				if (sepPos < 0) {
-					ret.Add(new string(this, pos, this.length - pos));
+					ret.Add(InternalSubstring(this, pos, this.Length - pos));
 					break;
 				}
-				ret.Add(new string(this, pos, sepPos - pos));
+				ret.Add(InternalSubstring(this, pos, sepPos - pos));
 				pos = sepPos + 1;
 			}
 
@@ -130,11 +191,11 @@ namespace System {
 		}
 
 		public bool StartsWith(string str) {
-			return this.Substring(0, str.length) == str;
+			return this.Substring(0, str.Length) == str;
 		}
 
 		public bool EndsWith(string str) {
-			return this.Substring(this.length - str.length, str.length) == str;
+			return this.Substring(this.Length - str.Length, str.Length) == str;
 		}
 
 		#endregion
@@ -239,19 +300,19 @@ namespace System {
 		#region Substring Methods
 
 		public string Substring(int startIndex) {
-			if (startIndex < 0 || startIndex > this.length) {
+			if (startIndex < 0 || startIndex > this.Length) {
 				throw new ArgumentOutOfRangeException();
 			}
 
-			return new string(this, startIndex, this.length - startIndex);
+			return InternalSubstring(this, startIndex, this.Length - startIndex);
 		}
 
 		public string Substring(int startIndex, int length) {
-			if (startIndex < 0 || length < 0 || startIndex + length > this.length) {
+			if (startIndex < 0 || length < 0 || startIndex + length > this.Length) {
 				throw new ArgumentOutOfRangeException();
 			}
 
-			return new string(this, startIndex, length);
+			return InternalSubstring(this, startIndex, length);
 		}
 
 		#endregion
@@ -296,7 +357,7 @@ namespace System {
 			if (oldValue.Length == 0) {
 				throw new ArgumentException("oldValue is an empty string.");
 			}
-			if (this.length == 0) {
+			if (this.Length == 0) {
 				return this;
 			}
 			if (newValue == null) {
@@ -306,18 +367,18 @@ namespace System {
 		}
 
 		public string Remove(int startIndex) {
-			if (startIndex < 0 || startIndex >= this.length) {
+			if (startIndex < 0 || startIndex >= this.Length) {
 				throw new ArgumentOutOfRangeException("startIndex");
 			}
-			return new string(this, 0, startIndex);
+			return InternalSubstring(this, 0, startIndex);
 		}
 
 		public string Remove(int startIndex, int count) {
-			if (startIndex < 0 || count < 0 || startIndex + count >= this.length) {
+			if (startIndex < 0 || count < 0 || startIndex + count >= this.Length) {
 				throw new ArgumentOutOfRangeException();
 			}
 			int pos2 = startIndex+count;
-			return (new string(this, 0, startIndex)) + (new string(this, pos2, this.length - pos2));
+			return (InternalSubstring(this, 0, startIndex)) + (InternalSubstring(this, pos2, this.Length - pos2));
 		}
 
         public void CopyTo(
@@ -369,24 +430,24 @@ namespace System {
 		#region IndexOf... Methods
 
 		public int IndexOf(string value) {
-			return IndexOf(value, 0, this.length);
+			return IndexOf(value, 0, this.Length);
 		}
 
 		public int IndexOf(string value, int startIndex) {
-			return IndexOf(value, startIndex, this.length - startIndex);
+			return IndexOf(value, startIndex, this.Length - startIndex);
 		}
 
 		public int IndexOf(string value, int startIndex, int count) {
 			if (value == null) {
 				throw new ArgumentNullException("value");
 			}
-			if (startIndex < 0 || count < 0 || startIndex + count > this.length) {
+			if (startIndex < 0 || count < 0 || startIndex + count > this.Length) {
 				throw new ArgumentOutOfRangeException();
 			}
-			if (value.length == 0) {
+			if (value.Length == 0) {
 				return startIndex;
 			}
-			int valueLen = value.length;
+			int valueLen = value.Length;
 			int finalIndex = startIndex + count - valueLen + 1;
 			char char0 = value[0];
 			for (int i = startIndex; i < finalIndex; i++) {
@@ -407,11 +468,11 @@ namespace System {
 		}
 
 		public int IndexOf(char value) {
-			return this.IndexOf(value, 0, this.length, true);
+			return this.IndexOf(value, 0, this.Length, true);
 		}
 
 		public int IndexOf(char value, int startIndex) {
-			return this.IndexOf(value, startIndex, this.length - startIndex, true);
+			return this.IndexOf(value, startIndex, this.Length - startIndex, true);
 		}
 
 		public int IndexOf(char value, int startIndex, int count) {
@@ -419,11 +480,11 @@ namespace System {
 		}
 
 		public int LastIndexOf(char value) {
-			return this.IndexOf(value, 0, this.length, false);
+			return this.IndexOf(value, 0, this.Length, false);
 		}
 
 		public int LastIndexOf(char value, int startIndex) {
-			return this.IndexOf(value, startIndex, this.length - startIndex, false);
+			return this.IndexOf(value, startIndex, this.Length - startIndex, false);
 		}
 
 		public int LastIndexOf(char value, int startIndex, int count) {
@@ -431,18 +492,18 @@ namespace System {
 		}
 
 		private int IndexOf(char value, int startIndex, int count, bool forwards) {
-			if (startIndex < 0 || count < 0 || startIndex + count > this.length) {
+			if (startIndex < 0 || count < 0 || startIndex + count > this.Length) {
 				throw new ArgumentOutOfRangeException();
 			}
 			return this.InternalIndexOf(value, startIndex, count, forwards);
 		}
 
 		public int IndexOfAny(char[] anyOf) {
-			return this.IndexOfAny(anyOf, 0, this.length, true);
+			return this.IndexOfAny(anyOf, 0, this.Length, true);
 		}
 
 		public int IndexOfAny(char[] anyOf, int startIndex) {
-			return this.IndexOfAny(anyOf, startIndex, this.length - startIndex, true);
+			return this.IndexOfAny(anyOf, startIndex, this.Length - startIndex, true);
 		}
 
 		public int IndexOfAny(char[] anyOf, int startIndex, int count) {
@@ -450,11 +511,11 @@ namespace System {
 		}
 
 		public int LastIndexOfAny(char[] anyOf) {
-			return this.IndexOfAny(anyOf, 0, this.length, false);
+			return this.IndexOfAny(anyOf, 0, this.Length, false);
 		}
 
 		public int LastIndexOfAny(char[] anyOf, int startIndex) {
-			return this.IndexOfAny(anyOf, startIndex, this.length - startIndex, false);
+			return this.IndexOfAny(anyOf, startIndex, this.Length - startIndex, false);
 		}
 
 		public int LastIndexOfAny(char[] anyOf, int startIndex, int count) {
@@ -462,7 +523,7 @@ namespace System {
 		}
 
 		private int IndexOfAny(char[] anyOf, int startIndex, int count, bool forward) {
-			if (startIndex < 0 || count < 0 || startIndex + count > this.length) {
+			if (startIndex < 0 || count < 0 || startIndex + count > this.Length) {
 				throw new ArgumentOutOfRangeException();
 			}
 			/*int anyOfLen = anyOf.Length;
@@ -499,7 +560,7 @@ namespace System {
 		}
 
 		public string ToLowerInvariant() {
-			int len = this.length;
+			int len = this.Length;
 			StringBuilder sb = new StringBuilder(len);
 			for (int i = 0; i < len; i++) {
 				sb.Append(char.ToLowerInvariant(this[i]));
@@ -522,7 +583,7 @@ namespace System {
 		}
 
 		public string ToUpperInvariant() {
-			int len = this.length;
+			int len = this.Length;
 			StringBuilder sb = new StringBuilder(len);
 			for (int i = 0; i < len; i++) {
 				sb.Append(char.ToUpperInvariant(this[i]));

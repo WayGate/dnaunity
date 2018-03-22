@@ -44,9 +44,8 @@ namespace System {
 
 		internal char m_value;
 
-		public override string ToString() {
-			return new string(m_value, 1);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern override string ToString();
 
 		public override bool Equals(object obj) {
 			return (obj is char && ((char)obj).m_value == this.m_value);

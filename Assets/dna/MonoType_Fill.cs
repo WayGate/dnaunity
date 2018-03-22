@@ -177,7 +177,7 @@ namespace DnaUnity
                         MarshalToObject(pPtr, out o);
                         return o;
                     case Type.TYPE_SYSTEM_STRING:
-                        return System_String.ToMonoString(*(byte**)pPtr);
+                        return System_String.ToMonoString(*(tSystemString**)pPtr);
                     case Type.TYPE_SYSTEM_BOOLEAN:
                         return *(bool*)pPtr;
                     case Type.TYPE_SYSTEM_BYTE:
@@ -477,7 +477,7 @@ namespace DnaUnity
                     MarshalFromObject(pPtr, ref obj);
                     return;
                 case Type.TYPE_SYSTEM_STRING:
-                    *(byte**)pPtr = System_String.FromMonoString(obj as string);
+                    *(tSystemString**)pPtr = System_String.FromMonoString(obj as string);
                     return;
                 case Type.TYPE_SYSTEM_BOOLEAN:
                     if (toStack)
@@ -797,7 +797,7 @@ namespace DnaUnity
                             break;
                         case Type.TYPE_SYSTEM_STRING:
                             Action<T, string> callS = (Action<T, string>)System.Delegate.CreateDelegate(typeof(Action<T, string>), methodInfo);
-                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callS(_this as T, System_String.ToMonoString(*(byte**)_p)); return null; };
+                            func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); callS(_this as T, System_String.ToMonoString(*(tSystemString**)_p)); return null; };
                             break;
                         case Type.TYPE_SYSTEM_BOOLEAN:
                             Action<T, bool> callB = (Action<T, bool>)System.Delegate.CreateDelegate(typeof(Action<T, bool>), methodInfo);
@@ -875,7 +875,7 @@ namespace DnaUnity
                         break;
                     case Type.TYPE_SYSTEM_STRING:
                         Func<T, string> funcS = (Func<T, string>)System.Delegate.CreateDelegate(typeof(Func<string>), methodInfo);
-                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); string s = funcS(_this as T); *(byte**)_r = System_String.FromMonoString(s); return null; };
+                        func = (_c, _t, _p, _r) => { object _this = MarshalToMonoObj(pThisType, _t); string s = funcS(_this as T); *(tSystemString**)_r = System_String.FromMonoString(s); return null; };
                         break;
                     case Type.TYPE_SYSTEM_BOOLEAN:
                         Func<T, bool> funcB = (Func<T, bool>)System.Delegate.CreateDelegate(typeof(Func<bool>), methodInfo);
@@ -971,7 +971,7 @@ namespace DnaUnity
                             break;
                         case Type.TYPE_SYSTEM_STRING:
                             RefAction<T, string> callS = (RefAction<T, string>)System.Delegate.CreateDelegate(typeof(RefAction<T, string>), methodInfo);
-                            func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); callS(ref _this, System_String.ToMonoString(*(byte**)_p)); marshalFrom(_t, ref _this); return null; };
+                            func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); callS(ref _this, System_String.ToMonoString(*(tSystemString**)_p)); marshalFrom(_t, ref _this); return null; };
                             break;
                         case Type.TYPE_SYSTEM_BOOLEAN:
                             RefAction<T, bool> callB = (RefAction<T, bool>)System.Delegate.CreateDelegate(typeof(RefAction<T, bool>), methodInfo);
@@ -1049,7 +1049,7 @@ namespace DnaUnity
                         break;
                     case Type.TYPE_SYSTEM_STRING:
                         RefFunc<T, string> funcS = (RefFunc<T, string>)System.Delegate.CreateDelegate(typeof(RefFunc<T, string>), methodInfo);
-                        func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); string s = funcS(ref _this); *(byte**)_r = System_String.FromMonoString(s); marshalFrom(_t, ref _this); return null; };
+                        func = (_c, _t, _p, _r) => { T _this; marshalTo(_t, out _this); string s = funcS(ref _this); *(tSystemString**)_r = System_String.FromMonoString(s); marshalFrom(_t, ref _this); return null; };
                         break;
                     case Type.TYPE_SYSTEM_BOOLEAN:
                         RefFunc<T, bool> funcB = (RefFunc<T, bool>)System.Delegate.CreateDelegate(typeof(RefFunc<T, bool>), methodInfo);
@@ -1142,7 +1142,7 @@ namespace DnaUnity
                             break;
                         case Type.TYPE_SYSTEM_STRING:
                             Action<string> callS = (Action<string>)System.Delegate.CreateDelegate(typeof(Action<string>), methodInfo);
-                            func = (_c, _t, _p, _r) => { callS(System_String.ToMonoString(*(byte**)_p)); return null; };
+                            func = (_c, _t, _p, _r) => { callS(System_String.ToMonoString(*(tSystemString**)_p)); return null; };
                             break;
                         case Type.TYPE_SYSTEM_BOOLEAN:
                             Action<bool> callB = (Action<bool>)System.Delegate.CreateDelegate(typeof(Action<bool>), methodInfo);
@@ -1219,7 +1219,7 @@ namespace DnaUnity
                         break;
                     case Type.TYPE_SYSTEM_STRING:
                         Func<string> funcS = (Func<string>)System.Delegate.CreateDelegate(typeof(Func<string>), methodInfo);
-                        func = (_c, _t, _p, _r) => { string s = funcS(); *(byte**)_r = System_String.FromMonoString(s); return null; };
+                        func = (_c, _t, _p, _r) => { string s = funcS(); *(tSystemString**)_r = System_String.FromMonoString(s); return null; };
                         break;
                     case Type.TYPE_SYSTEM_BOOLEAN:
                         Func<bool> funcB = (Func<bool>)System.Delegate.CreateDelegate(typeof(Func<bool>), methodInfo);

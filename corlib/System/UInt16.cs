@@ -21,6 +21,7 @@
 #if !LOCALTEST
 
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace System {
 
@@ -43,21 +44,19 @@ namespace System {
 		#region ToString methods
 
 		public override string ToString() {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value));
+            return this.ToString(null, null);
 		}
 
 		public string ToString(IFormatProvider formatProvider) {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value), formatProvider);
+            return this.ToString(null, formatProvider);
 		}
 
 		public string ToString(string format) {
-			return this.ToString(format, null);
+            return this.ToString(format, null);
 		}
 
-		public string ToString(string format, IFormatProvider formatProvider) {
-			NumberFormatInfo nfi = NumberFormatInfo.GetInstance(formatProvider);
-			return NumberFormatter.NumberToString(format, this.m_value, nfi);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern string ToString(string format, IFormatProvider formatProvider);
 
         #endregion
 
@@ -78,50 +77,16 @@ namespace System {
             return Parse(s, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
         }
 
-        public static ushort Parse(String s, NumberStyles style, IFormatProvider provider)
-        {
-            return Parse(s, style, NumberFormatInfo.GetInstance(provider));
-        }
-
-        private static ushort Parse(String s, NumberStyles style, NumberFormatInfo info)
-        {
-            uint i = 0;
-            try {
-                i = UInt32.Parse(s, style, info);
-            }
-            catch (OverflowException e) {
-                throw new OverflowException();
-            }
-
-            if (i > MaxValue)
-                throw new OverflowException();
-            return (ushort)i;
-        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern ushort Parse(String s, NumberStyles style, IFormatProvider provider);
 
         public static bool TryParse(String s, out UInt16 result)
         {
             return TryParse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
         }
 
-        public static bool TryParse(String s, NumberStyles style, IFormatProvider provider, out UInt16 result)
-        {
-            return TryParse(s, style, NumberFormatInfo.GetInstance(provider), out result);
-        }
-
-        private static bool TryParse(String s, NumberStyles style, NumberFormatInfo info, out UInt16 result)
-        {
-
-            result = 0;
-            UInt32 i;
-            if (!UInt32.TryParse(s, style, info, out i)) {
-                return false;
-            }
-            if (i > MaxValue) {
-                return false;
-            }
-            result = (UInt16)i;
-            return true;
-        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool TryParse(String s, NumberStyles style, IFormatProvider provider, out UInt16 result);
 
         #endregion
 

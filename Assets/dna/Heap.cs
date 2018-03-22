@@ -159,15 +159,11 @@ namespace DnaUnity
         static uint GetSize(tHeapEntry *pHeapEntry) 
         {
         	tMD_TypeDef *pType = pHeapEntry->pTypeDef;
-        	if (pType == Type.types[Type.TYPE_SYSTEM_STRING]) {
-        		// If it's a string, return the string length in bytes
-        		return System_String.GetNumBytes((/*HEAP_PTR*/byte*)(pHeapEntry + 1));
-        	}
         	if (MetaData.TYPE_ISARRAY(pType)) {
         		// If it's an array, return the array length * array element size
         		return System_Array.GetNumBytes(null /* This is ok */, (/*HEAP_PTR*/byte*)(pHeapEntry + 1), pType->pArrayElementType);
         	}
-        	// If it's not string or array, just return the instance memory size
+        	// If it's not array, just return the instance memory size
         	return pType->instanceMemSize;
         }
 

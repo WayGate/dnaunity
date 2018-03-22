@@ -27,7 +27,7 @@ namespace DnaUnity
     {
         // Keep in sync with MethodBase class in .NET corlib code
         public /*HEAP_PTR*/byte* ownerType;
-        public /*HEAP_PTR*/byte* name;
+        public tSystemString* name;
         public tMD_MethodDef *methodDef; // Not accessed from .NET code
     }
 
@@ -42,7 +42,7 @@ namespace DnaUnity
     {
         // Keep in sync with System.Reflection.PropertyInfo.cs
         public /*HEAP_PTR*/byte* ownerType;
-        public /*HEAP_PTR*/byte* name;
+        public tSystemString* name;
         public /*HEAP_PTR*/byte* propertyType;
     }
 

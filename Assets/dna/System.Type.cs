@@ -42,18 +42,16 @@ namespace DnaUnity
             return null;
         }
 
-        public static void DotNetStringToCString(byte* buf, uint bufLength, /*STRING*/byte* dotnetString)
+        public static void DotNetStringToCString(byte* buf, uint bufLength, tSystemString* dotnetString)
         {
             uint stringLen;
-            /*STRING2*/
-            char* dotnetString2 = System_String.GetString(null /* This is ok */, dotnetString, &stringLen);
-            if (stringLen > bufLength) {
-                Sys.Crash("String of length %i was too long for buffer of length %i\n", stringLen, bufLength);
-            }
-
+            string monoStr;
             int i;
+
+            monoStr = System_String.ToMonoString(dotnetString);
+            stringLen = bufLength - 1 < (uint)monoStr.Length ? bufLength - 1 : (uint)monoStr.Length;
             for (i = 0; i < stringLen; i++) {
-                buf[i] = (byte)dotnetString2[i];
+                buf[i] = (byte)monoStr[i];
             }
             buf[i] = 0;
         }
@@ -61,7 +59,7 @@ namespace DnaUnity
         public static tAsyncCall* EnsureAssemblyLoaded(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
             byte* assemblyName = stackalloc byte[256];
-            DotNetStringToCString(assemblyName, 256, ((/*HEAP_PTR*/byte**)pParams)[0]);
+            DotNetStringToCString(assemblyName, 256, ((tSystemString**)pParams)[0]);
             CLIFile.GetMetaDataForAssembly(assemblyName);
 
             *(/*HEAP_PTR*/byte**)pReturnValue = null;
@@ -74,8 +72,8 @@ namespace DnaUnity
             byte* className = stackalloc byte[256];
             tMD_TypeDef* pTypeDef;
 
-            DotNetStringToCString(namespaceName, 256, ((/*HEAP_PTR*/byte**)pParams)[1]);
-            DotNetStringToCString(className, 256, ((/*HEAP_PTR*/byte**)pParams)[2]);
+            DotNetStringToCString(namespaceName, 256, ((tSystemString**)pParams)[1]);
+            DotNetStringToCString(className, 256, ((tSystemString**)pParams)[2]);
 
             if (((/*HEAP_PTR*/byte**)pParams)[0] == null) {
                 // assemblyName is null, so search all loaded assemblies
@@ -84,7 +82,7 @@ namespace DnaUnity
             else {
                 // assemblyName is specified
                 byte* assemblyName = stackalloc byte[256];
-                DotNetStringToCString(assemblyName, 256, ((/*HEAP_PTR*/byte**)pParams)[0]);
+                DotNetStringToCString(assemblyName, 256, ((tSystemString**)pParams)[0]);
                 tMetaData* pAssemblyMetadata = CLIFile.GetMetaDataForAssembly(assemblyName);
                 pTypeDef = MetaData.GetTypeDefFromName(pAssemblyMetadata, namespaceName, className, null, /* assertExists */ 1);
             }
@@ -160,7 +158,7 @@ namespace DnaUnity
         {
             // Read param
             byte* methodName = stackalloc byte[256];
-            DotNetStringToCString(methodName, (uint)256, ((/*HEAP_PTR*/byte**)pParams)[0]);
+            DotNetStringToCString(methodName, (uint)256, ((tSystemString**)pParams)[0]);
 
             // Get metadata for the 'this' type
             tRuntimeType* pRuntimeType = (tRuntimeType*)pThis_;

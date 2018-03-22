@@ -38,7 +38,7 @@ namespace DnaUnity
         const uint STACK_ALIGNMENT = 4;
         #else
         const uint STACK_ALIGNMENT = 8;
-#endif
+        #endif
 
         public struct FillState
         {
@@ -455,7 +455,13 @@ namespace DnaUnity
                     if (pTypeDef->numFields > 0) {
                         pTypeDef->ppFields = (tMD_FieldDef**)Mem.mallocForever((SIZE_T)(pTypeDef->numFields * sizeof(tMD_FieldDef*)));
                     }
-                    instanceMemSize = (pTypeDef->pParent == null) ? 0 : pTypeDef->pParent->instanceMemSize;
+                    instanceMemSize = (pParent == null ? 0 : pTypeDef->pParent->instanceMemSize);
+                    if (pTypeDef->hasMonoBase != 0 && pParent->hasMonoBase == 0) {
+                        // Some DNA types like String are actually wrappers around mono objects.  In those cases, we need to allocate the
+                        // space in the instance memory for the GCHandle to the mono object.  We distinguish this case from the case
+                        // where we're just extending a Mono Type object by checking if the parent also has the hasMonoBase flag set.
+                        instanceMemSize += (uint)sizeof(void*);
+                    }
                     for (token = firstIdx, i = 0; token <= lastIdx; token++, i++) {
                         tMD_FieldDef* pFieldDef;
 

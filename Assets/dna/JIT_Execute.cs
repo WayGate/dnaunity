@@ -448,7 +448,6 @@ namespace DnaUnity
         static void OPCODE_USE(JitOps op, int paramType = 0, int offset = -10000)
         {
             int stackpos = (int)(pCurEvalStack - pCurrentMethodState->pEvalStack);
-            uint a, b;
 
             byte* stackBuf = stackalloc byte[1024];
 

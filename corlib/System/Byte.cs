@@ -1,6 +1,8 @@
 #if !LOCALTEST
 
 using System.Globalization;
+using System.Runtime.CompilerServices;
+
 namespace System {
 	public struct Byte : IFormattable, IComparable, IConvertible, IComparable<byte>, IEquatable<byte> {
 		public const byte MinValue = 0;
@@ -21,21 +23,19 @@ namespace System {
 		#region ToString methods
 
 		public override string ToString() {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value));
+            return this.ToString(null, null);
 		}
 
 		public string ToString(IFormatProvider formatProvider) {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value), formatProvider);
+            return this.ToString(null, formatProvider);
 		}
 
 		public string ToString(string format) {
 			return this.ToString(format, null);
 		}
 
-		public string ToString(string format, IFormatProvider formatProvider) {
-			NumberFormatInfo nfi = NumberFormatInfo.GetInstance(formatProvider);
-			return NumberFormatter.NumberToString(format, this.m_value, nfi);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern string ToString(string format, IFormatProvider formatProvider);
 
         #endregion
 
@@ -56,49 +56,16 @@ namespace System {
             return Parse(s, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
         }
 
-        public static byte Parse(String s, NumberStyles style, IFormatProvider provider)
-        {
-            return Parse(s, style, NumberFormatInfo.GetInstance(provider));
-        }
-
-        private static byte Parse(String s, NumberStyles style, NumberFormatInfo info)
-        {
-            int i = 0;
-            try {
-                i = Int32.Parse(s, style, info);
-            }
-            catch (OverflowException e) {
-                throw new OverflowException();
-            }
-
-            if (i < MinValue || i > MaxValue)
-                throw new OverflowException();
-            return (byte)i;
-        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern byte Parse(String s, NumberStyles style, IFormatProvider provider);
 
         public static bool TryParse(String s, out Byte result)
         {
             return TryParse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
         }
 
-        public static bool TryParse(String s, NumberStyles style, IFormatProvider provider, out Byte result)
-        {
-            return TryParse(s, style, NumberFormatInfo.GetInstance(provider), out result);
-        }
-
-        private static bool TryParse(String s, NumberStyles style, NumberFormatInfo info, out Byte result)
-        {
-            result = 0;
-            int i;
-            if (!Int32.TryParse(s, style, info, out i)) {
-                return false;
-            }
-            if (i < MinValue || i > MaxValue) {
-                return false;
-            }
-            result = (byte)i;
-            return true;
-        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool TryParse(String s, NumberStyles style, IFormatProvider provider, out Byte result);
 
         #endregion
 

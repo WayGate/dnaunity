@@ -31,46 +31,22 @@ namespace DnaUnity
     // This structure must tie up with string.cs
     public unsafe struct tSystemString
     {
-    	// Length in characters (not bytes)
-    	public uint length;
-    	// The characters
-    	// ushort chars[0];
-
-        public static char* GetChars(tSystemString* str)
-        {
-            return (char*)((byte*)str + sizeof(uint));
-        }
+        public void* monoStr;
     };
 
 
     public unsafe static class System_String
     {
-        // length in characters, not bytes
-        static tSystemString* CreateStringHeapObj(uint len)
-        {
-        	tSystemString* pSystemString;
-        	uint totalSize;
-        	
-            totalSize = (uint)(sizeof(uint) + (len << 1));
-        	pSystemString = (tSystemString*)Heap.Alloc(Type.types[Type.TYPE_SYSTEM_STRING], totalSize);
-        	pSystemString->length = len;
-        	return pSystemString;
-        }
 
         public static tAsyncCall* ctor_CharInt32(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* pSystemString;
         	char c;
-        	uint i, len;
-            char* pChars;
+        	int len;
 
             c = (char)(*((uint*)(pParams + 0)));
-            len = (*((uint*)(pParams + Sys.S_INT32)));
-        	pSystemString = CreateStringHeapObj(len);
-            pChars = tSystemString.GetChars(pSystemString);
-        	for (i=0; i<len; i++) {
-                pChars[i] = c;
-        	}
+            len = (*((int*)(pParams + Sys.S_INT32)));
+        	pSystemString = FromMonoString(new System.String(c, len));
             Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pSystemString);
 
         	return null;
@@ -80,51 +56,36 @@ namespace DnaUnity
         {
         	tSystemString* pSystemString;
         	/*HEAP_PTR*/byte* charArray;
-        	byte* charElements;
-        	uint startIndex, length;
-            char* pChars;
+        	char* charElements;
+        	int startIndex, length;
 
             charArray = (*((byte**)(pParams + 0)));
-            startIndex = (*((uint*)(pParams + Sys.S_PTR)));
-            length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32)));
+            startIndex = (*((int*)(pParams + Sys.S_PTR)));
+            length = (*((int*)(pParams + Sys.S_PTR + Sys.S_INT32)));
 
-        	charElements = System_Array.GetElements(charArray);
-        	pSystemString = CreateStringHeapObj(length);
-            pChars = tSystemString.GetChars(pSystemString);
-            Mem.memcpy(pChars, charElements + (startIndex << 1), (SIZE_T)(length << 1));
+        	charElements = (char*)System_Array.GetElements(charArray);
+            pSystemString = FromMonoString(new System.String(charElements, startIndex, length));
         	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pSystemString);
 
         	return null;
         }
 
-        public static tAsyncCall* ctor_StringIntInt(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* get_Length(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
         {
-            tSystemString* pThis;
-            //tSystemString* pStr;
-        	uint startIndex, length;
-            char* pChars;
+            string s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            Sys.INTERNALCALL_RESULT_U32(pReturnValue, (uint)s.Length);
 
-        	//pStr = (*((tSystemString**)(pParams + 0)));
-        	startIndex = (*((uint*)(pParams + Sys.S_PTR)));
-        	length = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32)));
-
-        	pThis = CreateStringHeapObj(length);
-            pChars = tSystemString.GetChars(pThis);
-            Mem.memcpy(pChars, &pChars[startIndex], (SIZE_T)(length << 1));
-        	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pThis);
-
-        	return null;
+            return null;
         }
 
-        public static tAsyncCall* get_Chars(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* get_Chars(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue) 
         {
-        	tSystemString* pThis = (tSystemString*)pThis_;
-        	uint index;
-            char* pChars;
+        	int index;
+            string s;
 
-        	index = (*((uint*)(pParams + 0)));
-            pChars = tSystemString.GetChars(pThis);
-            Sys.INTERNALCALL_RESULT_U32(pReturnValue, (uint)(pChars[index]));
+        	index = (*((int*)(pParams + 0)));
+            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            Sys.INTERNALCALL_RESULT_U32(pReturnValue, (uint)(s[index]));
 
         	return null;
         }
@@ -132,235 +93,160 @@ namespace DnaUnity
         public static tAsyncCall* InternalConcat(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* s0, s1, ret;
-            char* pS0Chars, pS1Chars, pRetChars;
+            string str0, str1;
 
         	s0 = (*((tSystemString**)(pParams + 0)));
-            pS0Chars = tSystemString.GetChars(s0);
+            str0 = s0 != null ? H.ToObj(s0->monoStr) as string : null;
         	s1 = (*((tSystemString**)(pParams + Sys.S_PTR)));
-            pS1Chars = tSystemString.GetChars(s1);
-        	ret = CreateStringHeapObj(s0->length + s1->length);
-            pRetChars = tSystemString.GetChars(ret);
-            Mem.memcpy(pRetChars, pS0Chars, (SIZE_T)(s0->length << 1));
-            Mem.memcpy(&pRetChars[s0->length], pS1Chars, (SIZE_T)(s1->length << 1));
+            str1 = s1 != null ? H.ToObj(s1->monoStr) as string : null;
+        	ret = FromMonoString(str0 + str1);
         	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, ret);
 
         	return null;
         }
 
-        public static tAsyncCall* InternalTrim(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalTrim(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue) 
         {
-        	tSystemString* pThis = (tSystemString*)pThis_;
         	/*HEAP_PTR*/byte* pWhiteChars;
-        	uint trimType, i, j, checkCharsLen;
-        	uint ofsStart, ofsEnd;
-        	ushort* pCheckChars;
-        	uint isWhiteSpace;
+        	uint trimType, i, checkCharsLen;
+            string s, ret;
+        	char* pCheckChars;
         	tSystemString* pRet;
-        	ushort c;
-            char* pChars, pRetChars;
 
         	pWhiteChars = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
-        	trimType = (*((uint*)(pParams + Sys.S_PTR)));
-        	pCheckChars = (ushort*)System_Array.GetElements(pWhiteChars);
-        	checkCharsLen = System_Array.GetLength(pWhiteChars);
+            char[] whiteChars = null;
+            if (pWhiteChars != null) {
+                pCheckChars = (char*)System_Array.GetElements(pWhiteChars);
+                checkCharsLen = System_Array.GetLength(pWhiteChars);
+                whiteChars = new char[checkCharsLen];
+                for (i = 0; i < checkCharsLen; i++) {
+                    whiteChars[i] = pCheckChars[i];
+                }
+            }
+            trimType = (*((uint*)(pParams + Sys.S_PTR)));
 
-        	ofsStart = 0;
-        	ofsEnd = pThis->length;
-            pChars = tSystemString.GetChars(pThis);
-            if ((trimType & 1) != 0) {
-        		// Trim start
-        		for (i=ofsStart; i<ofsEnd; i++) {
-        			// Check if each char is in the array
-        			isWhiteSpace = 0;
-        			c = pChars[i];
-        			for (j=0; j<checkCharsLen; j++) {
-        				if (c == pCheckChars[j]) {
-        					isWhiteSpace = 1;
-        					break;
-        				}
-        			}
-        			if (isWhiteSpace == 0) {
-        				ofsStart = i;
-        				break;
-        			}
-        		}
-        	}
-            if ((trimType & 2) != 0) {
-        		// Trim end
-        		for (i=ofsEnd-1; i>=ofsStart; i--) {
-        			// Check if each char is in the array
-        			isWhiteSpace = 0;
-        			c = pChars[i];
-        			for (j=0; j<checkCharsLen; j++) {
-        				if (c == pCheckChars[j]) {
-        					isWhiteSpace = 1;
-        					break;
-        				}
-        			}
-        			if (isWhiteSpace == 0) {
-        				ofsEnd = i + 1;
-        				break;
-        			}
-        		}
-        	}
+            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            ret = null;
 
-        	pRet = CreateStringHeapObj(ofsEnd - ofsStart);
-            pRetChars = tSystemString.GetChars(pRet);
-            Mem.memcpy(pRetChars, &pChars[ofsStart], (SIZE_T)((ofsEnd - ofsStart) << 1));
+            if (trimType == 1)
+                ret = s.TrimStart(whiteChars);
+            else if (trimType == 2)
+                ret = s.TrimEnd(whiteChars);
+            else if (trimType == 3)
+                ret = s.Trim(whiteChars);
+
+            pRet = FromMonoString(ret);
+
         	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pRet);
 
         	return null;
         }
 
-        public static tAsyncCall* Equals(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* Equals(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* a, b;
+            string aStr, bStr;
         	uint ret;
-            char* pAChars, pBChars;
 
             a = (*((tSystemString**)(pParams + 0)));
+            aStr = a != null ? H.ToObj(a->monoStr) as string : null;
             b = (*((tSystemString**)(pParams + Sys.S_PTR)));
+            bStr = b != null ? H.ToObj(b->monoStr) as string : null;
 
-        	if (a == b) {
-        		ret = 1;
-        	} else if (a == null || b == null || a->length != b->length) {
-        		ret = 0;
-        	} else {
-                pAChars = tSystemString.GetChars(a);
-                pBChars = tSystemString.GetChars(b);
-                ret = (uint)((Mem.memcmp(pAChars, pBChars, (SIZE_T)(a->length<<1)) == 0)?1:0);
-        	}
+            ret = (a == b ? 1U : 0U);
+
         	Sys.INTERNALCALL_RESULT_U32(pReturnValue, ret);
 
         	return null;
         }
 
-        public static tAsyncCall* GetHashCode(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* GetHashCode(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue) 
         {
-        	tSystemString* pThis = (tSystemString*)pThis_;
-        	char* pChar, pEnd;
         	int hash;
-        	
-        	hash = 0;
-            pChar = tSystemString.GetChars(pThis);
-        	pEnd = pChar + pThis->length - 1;
-        	for (; pChar < pEnd; pChar += 2) {
-        		hash = (hash << 5) - hash + pChar[0];
-        		hash = (hash << 5) - hash + pChar[1];
-        	}
-        	if (pChar <= pEnd) {
-        		hash = (hash << 5) - hash + pChar[0];
-        	}
+            string s;
+
+            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            hash = s.GetHashCode();
+
             Sys.INTERNALCALL_RESULT_U32(pReturnValue, (uint)hash);
 
         	return null;
         }
 
-        public static tAsyncCall* InternalReplace(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalSubstring(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
-        	tSystemString* pThis = (tSystemString*)pThis_;
-        	tSystemString* pOld = (*((tSystemString**)(pParams + 0)));
-        	tSystemString* pNew = (*((tSystemString**)(pParams + Sys.S_PTR)));
-        	tSystemString* pResult;
-        	uint thisLen, oldLen, newLen;
-        	char* pThisChar0, pOldChar0, pNewChar0, pResultChar0;
-        	uint i, j, replacements, dstIndex;
-        	uint resultLen;
+            tSystemString* pStr, pResult;
+            int startIndex, length;
+            string str;
 
-        	// This function (correctly) assumes that the old string is not empty
-        	thisLen = pThis->length;
-        	oldLen = pOld->length;
-        	newLen = pNew->length;
-            pThisChar0 = tSystemString.GetChars(pThis);
-            pOldChar0 = tSystemString.GetChars(pOld);
-            pNewChar0 = tSystemString.GetChars(pNew);
+            pStr = (*((tSystemString**)(pParams + 0)));
+            str = pStr != null ? H.ToObj(((tSystemString*)pStr)->monoStr) as string : null;
+            startIndex = (*((int*)(pParams + Sys.S_PTR)));
+            length = (*((int*)(pParams + Sys.S_PTR + Sys.S_INT32)));
 
-        	replacements = 0;
-        	for (i=0; i<thisLen-oldLen+1; i++) {
-        		uint match = 1;
-        		for (j=0; j<oldLen; j++) {
-        			if (pThisChar0[i+j] != pOldChar0[j]) {
-        				match = 0;
-        				break;
-        			}
-        		}
-        		if (match != 0) {
-        			i += oldLen - 1;
-        			replacements++;
-        		}
-        	}
-        	resultLen = thisLen - (oldLen - newLen) * replacements;
-        	pResult = CreateStringHeapObj(resultLen);
-            pResultChar0 = tSystemString.GetChars(pResult);
-        	dstIndex = 0;
-        	for (i=0; i<thisLen; i++) {
-        		uint match = 1;
-        		if (i<thisLen-oldLen+1) {
-        			for (j=0; j<oldLen; j++) {
-        				match = 1;
-        				if (pThisChar0[i+j] != pOldChar0[j]) {
-        					match = 0;
-        					break;
-        				}
-        			}
-        		} else {
-        			match = 0;
-        		}
-        		if (match != 0) {
-        			Mem.memcpy(&pResultChar0[dstIndex], pNewChar0, newLen << 1);
-        			dstIndex += newLen;
-        			i += oldLen - 1;
-        		} else {
-        			pResultChar0[dstIndex++] = pThisChar0[i];
-        		}
-        	}
-        	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pResult);
+            pResult = FromMonoString(str.Substring(startIndex, length));
+
+            Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pResult);
+
+            return null;
+        }
+
+        public static tAsyncCall* InternalReplace(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue) 
+        {
+        	tSystemString* pOld, pNew, pResult;
+            string s, oldStr, newStr;
+
+            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            pOld = (*((tSystemString**)(pParams + 0)));
+            oldStr = pOld != null ? H.ToObj(((tSystemString*)pOld)->monoStr) as string : null;
+            pNew = (*((tSystemString**)(pParams + Sys.S_PTR)));
+            newStr = pNew != null ? H.ToObj(((tSystemString*)pNew)->monoStr) as string : null;
+
+            pResult = FromMonoString(s.Replace(oldStr, newStr));
+
+            Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pResult);
 
         	return null;
         }
 
-        public static tAsyncCall* InternalIndexOf(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalIndexOf(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue) 
         {
-        	tSystemString* pThis = (tSystemString*)pThis_;
-        	ushort value = (*((ushort*)(pParams + 0)));
-        	int startIndex = (*((int*)(pParams + Sys.S_INT32)));
-        	int count = (*((int*)(pParams + Sys.S_INT32 + Sys.S_INT32)));
-        	uint forwards = (*((uint*)(pParams + Sys.S_INT32 + Sys.S_INT32 + Sys.S_INT32)));
-            char* pChars = tSystemString.GetChars(pThis);
+            char value;
+            uint forwards;
+        	int startIndex, count, i;
+            string s;
 
-        	int lastIndex;
-        	int inc;
-        	int i;
+            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            value = (*((char*)(pParams + 0)));
+            startIndex = (*((int*)(pParams + Sys.S_INT32)));
+            count = (*((int*)(pParams + Sys.S_INT32 + Sys.S_INT32)));
+            forwards = (*((uint*)(pParams + Sys.S_INT32 + Sys.S_INT32 + Sys.S_INT32)));
 
-        	if (forwards != 0) {
-        		lastIndex = startIndex + count;
-        		inc = 1;
-        		i = startIndex;
-        	} else {
-        		lastIndex = startIndex - 1;
-        		inc = -1;
-        		i = startIndex + count - 1;
-        	}
-        	for (; i != lastIndex; i += inc) {
-        		if (pChars[i] == value) {
-        			Sys.INTERNALCALL_RESULT_I32(pReturnValue, i);
-        			return null;
-        		}
-        	}
-            Sys.INTERNALCALL_RESULT_I32(pReturnValue, -1);
+            if (forwards != 0) {
+                i = s.IndexOf(value, startIndex, count);
+            } else {
+                i = s.LastIndexOf(value, startIndex, count);
+            }
+
+            Sys.INTERNALCALL_RESULT_I32(pReturnValue, i);
+
         	return null;
         }
 
-        public static tAsyncCall* InternalIndexOfAny(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalIndexOfAny(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue) 
         {
-        	tSystemString *pThis = (tSystemString*)pThis_;
-        	/*HEAP_PTR*/byte* valueArray = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
-        	int startIndex = (*((int*)(pParams + Sys.S_PTR)));
-        	int count = (*((int*)(pParams + Sys.S_PTR + Sys.S_INT32)));
-        	uint forwards = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32 + Sys.S_INT32)));
-            char* pChars = tSystemString.GetChars(pThis);
+        	/*HEAP_PTR*/byte* valueArray;
+        	int startIndex, count;
+        	uint forwards;
+            string s;
 
-        	byte* valueChars = System_Array.GetElements(valueArray);
+            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            valueArray = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
+            startIndex = (*((int*)(pParams + Sys.S_PTR)));
+            count = (*((int*)(pParams + Sys.S_PTR + Sys.S_INT32)));
+            forwards = (*((uint*)(pParams + Sys.S_PTR + Sys.S_INT32 + Sys.S_INT32)));
+
+            byte* valueChars = System_Array.GetElements(valueArray);
         	uint numValueChars = System_Array.GetLength(valueArray);
 
         	int lastIndex;
@@ -377,7 +263,7 @@ namespace DnaUnity
         		i = startIndex + count - 1;
         	}
         	for (; i != lastIndex; i += inc) {
-        		char thisChar = pChars[i];
+        		char thisChar = s[i];
                 for (j=(int)numValueChars - 1; j>=0; j--) {
         			if (thisChar == ((ushort*)valueChars)[j]) {
         				Sys.INTERNALCALL_RESULT_I32(pReturnValue, i);
@@ -389,30 +275,14 @@ namespace DnaUnity
         	return null;
         }
 
-        public static /*HEAP_PTR*/byte* FromMonoString(string s)
+        public static tSystemString* FromMonoString(string s)
         {
-            tSystemString *pSystemString;
-            if (s != null) {
-                int strLen = s.Length;
-                char* pSystemStringChars;
-
-                pSystemString = CreateStringHeapObj((uint)strLen);
-                pSystemStringChars = tSystemString.GetChars(pSystemString);
-                for (int i=0; i<strLen; i++) {
-                    pSystemStringChars[i] = s[i];
-                }
-            } else {
-                pSystemString = null;
-            }
-            return (/*HEAP_PTR*/byte*)pSystemString;
+            return (tSystemString*)Heap.AllocMonoObject(Type.types[Type.TYPE_SYSTEM_STRING], s);
         }
 
-        public static string ToMonoString(byte* pStr)
+        public static string ToMonoString(tSystemString* pStr)
         {
-            if (pStr == null)
-                return null;
-            string s = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)(pStr + 4), *(int*)pStr);
-            return s;
+            return (pStr != null ? H.ToObj(((tSystemString*)pStr)->monoStr) as string : null);
         }
 
         public static /*HEAP_PTR*/byte* FromUserStrings(tMetaData *pMetaData, /*IDX_USERSTRINGS*/uint index) 
@@ -420,59 +290,359 @@ namespace DnaUnity
         	uint stringLen;
         	/*STRING2*/ushort* str;
         	tSystemString *pSystemString;
-            char* pSystemStringChars;
+            string s;
         	
         	str = MetaData.GetUserString(pMetaData, index, &stringLen);
-        	// Note: stringLen is in bytes
-        	pSystemString = (tSystemString*)CreateStringHeapObj(stringLen >> 1);
-            pSystemStringChars = tSystemString.GetChars(pSystemString);
-            Mem.memcpy(pSystemStringChars, str, (SIZE_T)stringLen);
+            s = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)str, (int)stringLen);
+        	pSystemString = (tSystemString*)FromMonoString(s);
         	return (/*HEAP_PTR*/byte*)pSystemString;
         }
 
-        public static /*HEAP_PTR*/byte* FromCharPtrASCII(byte *pStr) 
+        public static tSystemString* FromCharPtrASCII(byte *pStr) 
         {
-        	int stringLen, i;
-        	tSystemString *pSystemString;
-            char* pSystemStringChars;
+            string s;
 
-        	stringLen = (int)S.strlen(pStr);
-            pSystemString = CreateStringHeapObj((uint)stringLen);
-            pSystemStringChars = tSystemString.GetChars(pSystemString);
-        	for (i=0; i<stringLen; i++) {
-                pSystemStringChars[i] = (char)pStr[i];
-        	}
-        	return (/*HEAP_PTR*/byte*)pSystemString;
+            if (pStr == null) {
+                return null;
+            } else {
+                s = System.Runtime.InteropServices.Marshal.PtrToStringAnsi((System.IntPtr)pStr);
+                return FromMonoString(s);
+            }
         }
 
-        public static /*HEAP_PTR*/byte* FromCharPtrUTF16(ushort *pStr) 
+        public static tSystemString*  FromCharPtrUTF16(ushort *pStr) 
         {
-        	tSystemString *pSystemString;
-        	int strLen = 0;
-            char* pSystemStringChars;
+            string s;
 
-        	while (pStr[strLen] != 0) {
-        		strLen++;
-        	}
-            pSystemString = CreateStringHeapObj((uint)strLen);
-            pSystemStringChars = tSystemString.GetChars(pSystemString);
-            Mem.memcpy(pSystemStringChars, pStr, (SIZE_T)(strLen << 1));
-        	return (/*HEAP_PTR*/byte*)pSystemString;
+            if (pStr == null) {
+                return null;
+            } else {
+                s = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)pStr);
+                return FromMonoString(s);
+            }
         }
 
-        public static /*STRING2*/char* GetString(tJITCallNative* pCallNative, /*HEAP_PTR*/byte* pThis_, uint *pLength) 
+        public static tAsyncCall* ToString_Internal_Byte(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
         {
-        	tSystemString *pThis = (tSystemString*)pThis_;
-
-        	if (pLength != null) {
-        		*pLength = pThis->length;
-        	}
-            return tSystemString.GetChars(pThis);
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.Byte);
         }
 
-        public static uint GetNumBytes(/*HEAP_PTR*/byte* pThis_) 
+        public static tAsyncCall* ToString_Internal_SByte(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
         {
-            return (uint)((((tSystemString*)pThis_)->length << 1) + sizeof(uint));
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.SByte);
         }
+
+        public static tAsyncCall* ToString_Internal_UInt16(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt16);
+        }
+
+        public static tAsyncCall* ToString_Internal_Int16(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int16);
+        }
+
+        public static tAsyncCall* ToString_Internal_UInt32(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt32);
+        }
+
+        public static tAsyncCall* ToString_Internal_Int32(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int32);
+        }
+
+        public static tAsyncCall* ToString_Internal_UInt64(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt64);
+        }
+
+        public static tAsyncCall* ToString_Internal_Int64(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int64);
+        }
+
+        public static tAsyncCall* ToString_Internal_Single(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.Single);
+        }
+
+        public static tAsyncCall* ToString_Internal_Double(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return ToString_Internal(pThis, pParams, pReturnValue, System.TypeCode.Double);
+        }
+
+        private static tAsyncCall* ToString_Internal(byte* pThis, byte* pParams, byte* pReturnValue, System.TypeCode typecode)
+        {
+            tSystemString* pFormat;
+//            byte* pFormatProvider;
+            string format, s;
+            tSystemString* pResult;
+
+            pFormat = (*((tSystemString**)(pParams + 0)));
+            format = pFormat != null ? H.ToObj(pFormat->monoStr) as string : null;
+
+            // Ignore IFormatProvider for now!
+            //pFormatProvider = (*((tSystemString**)(pParams + Sys.S_PTR)));
+
+            switch (typecode) {
+                case System.TypeCode.Byte:
+                    s = (*(byte*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.SByte:
+                    s = (*(sbyte*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.UInt16:
+                    s = (*(ushort*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.Int16:
+                    s = (*(short*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.UInt32:
+                    s = (*(uint*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.Int32:
+                    s = (*(int*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.UInt64:
+                    s = (*(ulong*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.Int64:
+                    s = (*(long*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.Single:
+                    s = (*(float*)pThis).ToString(format);
+                    break;
+                case System.TypeCode.Double:
+                    s = (*(double*)pThis).ToString(format);
+                    break;
+                default:
+                    throw new System.NotImplementedException();
+            }
+
+            pResult = System_String.FromMonoString(s);
+
+            Sys.INTERNALCALL_RESULT_PTR(pReturnValue, pResult);
+
+            return null;
+        }
+
+        public static tAsyncCall* Parse_Internal_Byte(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Byte);
+        }
+
+        public static tAsyncCall* Parse_Internal_SByte(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.SByte);
+        }
+
+        public static tAsyncCall* Parse_Internal_UInt16(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt16);
+        }
+
+        public static tAsyncCall* Parse_Internal_Int16(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int16);
+        }
+
+        public static tAsyncCall* Parse_Internal_UInt32(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt32);
+        }
+
+        public static tAsyncCall* Parse_Internal_Int32(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int32);
+        }
+
+        public static tAsyncCall* Parse_Internal_UInt64(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt64);
+        }
+
+        public static tAsyncCall* Parse_Internal_Int64(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int64);
+        }
+
+        public static tAsyncCall* Parse_Internal_Single(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Single);
+        }
+
+        public static tAsyncCall* Parse_Internal_Double(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return Parse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Double);
+        }
+
+        private static tAsyncCall* Parse_Internal(byte* pThis, byte* pParams, byte* pReturnValue, System.TypeCode typecode)
+        {
+            System.Globalization.NumberStyles numberStyle;
+            ;
+            tSystemString* pStr;
+//            byte* pFormatProvider;
+            string s;
+
+            pStr = (*((tSystemString**)(pParams + 0)));
+            s = pStr != null ? H.ToObj(pStr->monoStr) as string : null;
+            numberStyle = (System.Globalization.NumberStyles)(*((int*)(pParams + Sys.S_PTR)));
+
+            // Ignore IFormatProvider (for now)
+            //pFormatProvider = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_INT32)));
+
+            switch (typecode) {
+                case System.TypeCode.Byte:
+                    (*(uint*)pReturnValue) = byte.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.SByte:
+                    (*(uint*)pReturnValue) = (uint)sbyte.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.UInt16:
+                    (*(uint*)pReturnValue) = ushort.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.Int16:
+                    (*(uint*)pReturnValue) = (uint)short.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.UInt32:
+                    (*(uint*)pReturnValue) = uint.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.Int32:
+                    (*(uint*)pReturnValue) = (uint)int.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.UInt64:
+                    (*(ulong*)pReturnValue) = ulong.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.Int64:
+                    (*(long*)pReturnValue) = long.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.Single:
+                    (*(float*)pReturnValue) = float.Parse(s, numberStyle);
+                    break;
+                case System.TypeCode.Double:
+                    (*(double*)pReturnValue) = double.Parse(s, numberStyle);
+                    break;
+                default:
+                    throw new System.NotImplementedException();
+            }
+
+            return null;
+        }
+
+        public static tAsyncCall* TryParse_Internal_Byte(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Byte);
+        }
+
+        public static tAsyncCall* TryParse_Internal_SByte(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.SByte);
+        }
+
+        public static tAsyncCall* TryParse_Internal_UInt16(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt16);
+        }
+
+        public static tAsyncCall* TryParse_Internal_Int16(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int16);
+        }
+
+        public static tAsyncCall* TryParse_Internal_UInt32(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt32);
+        }
+
+        public static tAsyncCall* TryParse_Internal_Int32(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int32);
+        }
+
+        public static tAsyncCall* TryParse_Internal_UInt64(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.UInt64);
+        }
+
+        public static tAsyncCall* TryParse_Internal_Int64(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Int64);
+        }
+
+        public static tAsyncCall* TryParse_Internal_Single(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Single);
+        }
+
+        public static tAsyncCall* TryParse_Internal_Double(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
+        {
+            return TryParse_Internal(pThis, pParams, pReturnValue, System.TypeCode.Double);
+        }
+
+        public static tAsyncCall* TryParse_Internal(byte* pThis, byte* pParams, byte* pReturnValue, System.TypeCode typecode)
+        {
+            System.Globalization.NumberStyles numberStyle;
+            tSystemString* pStr;
+//            byte* pFormatProvider;
+            string s;
+            byte* pResult;
+
+            pStr = (*((tSystemString**)(pParams + 0)));
+            s = pStr != null ? H.ToObj(pStr->monoStr) as string : null;
+            numberStyle = (System.Globalization.NumberStyles)(*((int*)(pParams + Sys.S_PTR)));
+            //pFormatProvider = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_INT32)));
+            pResult = (*((byte**)(pParams + Sys.S_PTR + Sys.S_INT32)));
+
+            // Ignore IFormatProvider
+
+            switch (typecode) {
+                case System.TypeCode.Byte:
+                    byte b;
+                    (*(uint*)pReturnValue) = byte.TryParse(s, numberStyle, null, out b) ? 1U : 0U;
+                    break;
+                case System.TypeCode.SByte:
+                    sbyte sb;
+                    (*(uint*)pReturnValue) = sbyte.TryParse(s, numberStyle, null, out sb) ? 1U : 0U;
+                    break;
+                case System.TypeCode.UInt16:
+                    ushort us;
+                    (*(uint*)pReturnValue) = ushort.TryParse(s, numberStyle, null, out us) ? 1U : 0U;
+                    break;
+                case System.TypeCode.Int16:
+                    short ss;
+                    (*(uint*)pReturnValue) = short.TryParse(s, numberStyle, null, out ss) ? 1U : 0U;
+                    break;
+                case System.TypeCode.UInt32:
+                    uint ui;
+                    (*(uint*)pReturnValue) = uint.TryParse(s, numberStyle, null, out ui) ? 1U : 0U;
+                    break;
+                case System.TypeCode.Int32:
+                    int si;
+                    (*(uint*)pReturnValue) = int.TryParse(s, numberStyle, null, out si) ? 1U : 0U;
+                    break;
+                case System.TypeCode.UInt64:
+                    ulong ul;
+                    (*(uint*)pReturnValue) = ulong.TryParse(s, numberStyle, null, out ul) ? 1U : 0U;
+                    break;
+                case System.TypeCode.Int64:
+                    long sl;
+                    (*(uint*)pReturnValue) = long.TryParse(s, numberStyle, null, out sl) ? 1U : 0U;
+                    break;
+                case System.TypeCode.Single:
+                    float f;
+                    (*(uint*)pReturnValue) = float.TryParse(s, numberStyle, null, out f) ? 1U : 0U;
+                    break;
+                case System.TypeCode.Double:
+                    double d;
+                    (*(uint*)pReturnValue) = double.TryParse(s, numberStyle, null, out d) ? 1U : 0U;
+                    break;
+                default:
+                    throw new System.NotImplementedException();
+            }
+
+            return null;
+        }
+
     }
 }

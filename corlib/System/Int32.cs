@@ -22,21 +22,19 @@ namespace System {
 		#region ToString methods
 
 		public override string ToString() {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value));
+            return this.ToString(null, null);
 		}
 
 		public string ToString(IFormatProvider formatProvider) {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value), formatProvider);
+            return this.ToString(null, formatProvider);
 		}
 
 		public string ToString(string format) {
 			return this.ToString(format, null);
 		}
 
-		public string ToString(string format, IFormatProvider formatProvider) {
-			NumberFormatInfo nfi = NumberFormatInfo.GetInstance(formatProvider);
-			return NumberFormatter.NumberToString(format, this.m_value, nfi);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern string ToString(string format, IFormatProvider formatProvider);
 
         #endregion
 

@@ -32,7 +32,7 @@ namespace DnaUnity
 
         public static tAsyncCall* GetOSVersionString(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
-            *(byte**)pReturnValue = System_String.FromMonoString(System.Environment.OSVersion.Version.ToString());
+            *(tSystemString**)pReturnValue = System_String.FromMonoString(System.Environment.OSVersion.Version.ToString());
         	return null;
         }
 

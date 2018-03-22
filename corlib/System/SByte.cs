@@ -21,6 +21,8 @@
 #if !LOCALTEST
 
 using System.Globalization;
+using System.Runtime.CompilerServices;
+
 namespace System {
 	public struct SByte : IFormattable, IComparable, IConvertible, IComparable<sbyte>, IEquatable<sbyte> {
 		public const sbyte MinValue = -128;
@@ -41,21 +43,19 @@ namespace System {
 		#region ToString methods
 
 		public override string ToString() {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value));
+            return this.ToString(null, null);
 		}
 
 		public string ToString(IFormatProvider formatProvider) {
-			return NumberFormatter.FormatGeneral(new NumberFormatter.NumberStore(this.m_value), formatProvider);
+            return this.ToString(null, formatProvider);
 		}
 
 		public string ToString(string format) {
-			return this.ToString(format, null);
+            return this.ToString(format, null);
 		}
 
-		public string ToString(string format, IFormatProvider formatProvider) {
-			NumberFormatInfo nfi = NumberFormatInfo.GetInstance(formatProvider);
-			return NumberFormatter.NumberToString(format, this.m_value, nfi);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern string ToString(string format, IFormatProvider formatProvider);
 
         #endregion
 
@@ -76,66 +76,16 @@ namespace System {
             return Parse(s, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
         }
 
-        public static sbyte Parse(String s, NumberStyles style, IFormatProvider provider)
-        {
-            return Parse(s, style, NumberFormatInfo.GetInstance(provider));
-        }
-
-        private static sbyte Parse(String s, NumberStyles style, NumberFormatInfo info)
-        {
-            int i = 0;
-            try {
-                i = Int32.Parse(s, style, info);
-            }
-            catch (OverflowException e) {
-                throw new OverflowException();
-            }
-
-            if ((style & NumberStyles.AllowHexSpecifier) != 0) { // We are parsing a hexadecimal number
-                if ((i < 0) || i > Byte.MaxValue) {
-                    throw new OverflowException();
-                }
-                return (sbyte)i;
-            }
-
-            if (i < MinValue || i > MaxValue)
-                throw new OverflowException();
-            return (sbyte)i;
-        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern sbyte Parse(String s, NumberStyles style, IFormatProvider provider);
 
         public static bool TryParse(String s, out SByte result)
         {
             return TryParse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
         }
 
-        public static bool TryParse(String s, NumberStyles style, IFormatProvider provider, out SByte result)
-        {
-            return TryParse(s, style, NumberFormatInfo.GetInstance(provider), out result);
-        }
-
-        private static bool TryParse(String s, NumberStyles style, NumberFormatInfo info, out SByte result)
-        {
-
-            result = 0;
-            int i;
-            if (!Int32.TryParse(s, style, info, out i)) {
-                return false;
-            }
-
-            if ((style & NumberStyles.AllowHexSpecifier) != 0) { // We are parsing a hexadecimal number
-                if ((i < 0) || i > Byte.MaxValue) {
-                    return false;
-                }
-                result = (sbyte)i;
-                return true;
-            }
-
-            if (i < MinValue || i > MaxValue) {
-                return false;
-            }
-            result = (sbyte)i;
-            return true;
-        }
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public static extern bool TryParse(String s, NumberStyles style, IFormatProvider provider, out SByte result);
 
         #endregion
 

@@ -1,5 +1,7 @@
 #if !LOCALTEST
 
+#if NO_LONGER_USED
+
 using System.Globalization;
 using System.Threading;
 namespace System {
@@ -360,5 +362,7 @@ namespace System {
 
 	}
 }
+
+#endif
 
 #endif

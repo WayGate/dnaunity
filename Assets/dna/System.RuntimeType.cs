@@ -44,10 +44,10 @@ namespace DnaUnity
         public static tAsyncCall* get_Name(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
-        	/*HEAP_PTR*/byte* strResult;
+        	tSystemString* strResult;
 
         	strResult = System_String.FromCharPtrASCII(pRuntimeType->pTypeDef->name);
-        	*(/*HEAP_PTR*/byte**)pReturnValue = strResult;
+        	*(tSystemString**)pReturnValue = strResult;
 
         	return null;
         }
@@ -55,10 +55,10 @@ namespace DnaUnity
         public static tAsyncCall* get_Namespace(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
         {
         	tRuntimeType *pRuntimeType = (tRuntimeType*)pThis_;
-        	/*HEAP_PTR*/byte* strResult;
+        	tSystemString* strResult;
 
         	strResult = System_String.FromCharPtrASCII(pRuntimeType->pTypeDef->nameSpace);
-        	*(/*HEAP_PTR*/byte**)pReturnValue = strResult;
+        	*(tSystemString**)pReturnValue = strResult;
 
         	return null;
         }

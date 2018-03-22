@@ -69,21 +69,19 @@ namespace System {
 		}
 
 		public override string ToString() {
-			return ToString(null, null);
+			return this.ToString(null, null);
 		}
 
 		public string ToString(IFormatProvider fp) {
-			return ToString(null, fp);
+			return this.ToString(null, fp);
 		}
 
 		public string ToString(string format) {
-			return ToString(format, null);
+			return this.ToString(format, null);
 		}
 
-		public string ToString(string format, IFormatProvider fp) {
-			NumberFormatInfo nfi = NumberFormatInfo.GetInstance(fp);
-			return NumberFormatter.NumberToString(format, this.m_value, nfi);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern string ToString(string format, IFormatProvider fp);
 
         #region Parse methods
 
