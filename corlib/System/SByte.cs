@@ -63,17 +63,17 @@ namespace System {
 
         public static sbyte Parse(String s)
         {
-            return Parse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo);
+            return Parse(s, NumberStyles.Integer, null);
         }
 
         public static sbyte Parse(String s, NumberStyles style)
         {
-            return Parse(s, style, NumberFormatInfo.CurrentInfo);
+            return Parse(s, style, null);
         }
 
         public static sbyte Parse(String s, IFormatProvider provider)
         {
-            return Parse(s, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
+            return Parse(s, NumberStyles.Integer, null);
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -81,7 +81,7 @@ namespace System {
 
         public static bool TryParse(String s, out SByte result)
         {
-            return TryParse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
+            return TryParse(s, NumberStyles.Integer, null, out result);
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]

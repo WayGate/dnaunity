@@ -45,9 +45,10 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE;UNITY_STANDALONE,TEST_CONSOLE</DefineConstants>
+    <DefineConstants>UNITY_STANDALONE,VS_TESTING</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -87,7 +88,61 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <Compile Include="Assets\dna\**\*.cs" />
+    <Compile Include="Assets\dna\CIL_OpCodes.cs" />
+    <Compile Include="Assets\dna\CLIFile.cs" />
+    <Compile Include="Assets\dna\CString.cs" />
+    <Compile Include="Assets\dna\Delegate.cs" />
+    <Compile Include="Assets\dna\dna.cs" />
+    <Compile Include="Assets\dna\DnaMonoBehaviour.cs" />
+    <Compile Include="Assets\dna\DnaObject.cs" />
+    <Compile Include="Assets\dna\DnaScript.cs" />
+    <Compile Include="Assets\dna\EvalStack.cs" />
+    <Compile Include="Assets\dna\Finalizer.cs" />
+    <Compile Include="Assets\dna\GCHandle.cs" />
+    <Compile Include="Assets\dna\Generics.cs" />
+    <Compile Include="Assets\dna\Heap.cs" />
+    <Compile Include="Assets\dna\InternalCall.cs" />
+    <Compile Include="Assets\dna\JIT.cs" />
+    <Compile Include="Assets\dna\JIT_Execute.cs" />
+    <Compile Include="Assets\dna\JIT_OpCodes.cs" />
+    <Compile Include="Assets\dna\Mem.cs" />
+    <Compile Include="Assets\dna\MetaData.cs" />
+    <Compile Include="Assets\dna\MetaDataTable.cs" />
+    <Compile Include="Assets\dna\MetaData_Fill.cs" />
+    <Compile Include="Assets\dna\MetaData_Search.cs" />
+    <Compile Include="Assets\dna\MethodState.cs" />
+    <Compile Include="Assets\dna\MonoType.cs" />
+    <Compile Include="Assets\dna\MonoType_Fill.cs" />
+    <Compile Include="Assets\dna\Number.cs" />
+    <Compile Include="Assets\dna\PInvoke.cs" />
+    <Compile Include="Assets\dna\RVA.cs" />
+    <Compile Include="Assets\dna\Sys.cs" />
+    <Compile Include="Assets\dna\System.Array.cs" />
+    <Compile Include="Assets\dna\System.Char.CaseConversion.cs" />
+    <Compile Include="Assets\dna\System.Char.cs" />
+    <Compile Include="Assets\dna\System.Char.UC_IndexRuns.cs" />
+    <Compile Include="Assets\dna\System.Console.cs" />
+    <Compile Include="Assets\dna\System.DateTime.cs" />
+    <Compile Include="Assets\dna\System.Diagnostics.Debugger.cs" />
+    <Compile Include="Assets\dna\System.Enum.cs" />
+    <Compile Include="Assets\dna\System.Environment.cs" />
+    <Compile Include="Assets\dna\System.GC.cs" />
+    <Compile Include="Assets\dna\System.Math.cs" />
+    <Compile Include="Assets\dna\System.Object.cs" />
+    <Compile Include="Assets\dna\System.Reflection.cs" />
+    <Compile Include="Assets\dna\System.Runtime.CompilerServices.RuntimeHelpers.cs" />
+    <Compile Include="Assets\dna\System.RuntimeType.cs" />
+    <Compile Include="Assets\dna\System.String.cs" />
+    <Compile Include="Assets\dna\System.Threading.Interlocked.cs" />
+    <Compile Include="Assets\dna\System.Threading.Monitor.cs" />
+    <Compile Include="Assets\dna\System.Threading.Thread.cs" />
+    <Compile Include="Assets\dna\System.Type.cs" />
+    <Compile Include="Assets\dna\System.ValueType.cs" />
+    <Compile Include="Assets\dna\System.WeakReference.cs" />
+    <Compile Include="Assets\dna\Thread.cs" />
+    <Compile Include="Assets\dna\Type.cs" />
+    <Compile Include="Assets\dna\Types.cs" />
+    <Compile Include="Assets\dna\_main.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">

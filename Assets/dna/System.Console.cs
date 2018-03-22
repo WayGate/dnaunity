@@ -35,11 +35,11 @@ namespace DnaUnity
         	tSystemString* /*HEAP_PTR*/ _string;
             string monoStr;
 
-        	_string = *(tSystemString**)pParams;
+        	_string = *(tSystemString**)(pParams + 0);
             monoStr = System_String.ToMonoString(_string);
         	if (_string != null) {
                 #if VS_TESTING || !(UNITY_EDITOR || UNITY_IOS || UNITY_ANDROID || UNITY_WEBGL || UNITY_STANDALONE)
-                System.Console.Write(s);
+                System.Console.Write(monoStr);
                 #else
                 int len = monoStr.Length;
                 if (monoStr != null && len > 0 && !(len == 1 && monoStr[0] == '\n') && !(len == 2 && monoStr[0] == '\r' && monoStr[1] == '\n')) {

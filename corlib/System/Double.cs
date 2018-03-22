@@ -87,7 +87,7 @@ namespace System {
 
         public static double Parse(string s)
         {
-            return Parse(s, NumberStyles.Integer, null);
+            return Parse(s, NumberStyles.Float | NumberStyles.AllowThousands, null);
         }
 
         public static double Parse(string s, NumberStyles style)
@@ -97,7 +97,7 @@ namespace System {
 
         public static double Parse(string s, IFormatProvider formatProvider)
         {
-            return Parse(s, NumberStyles.Integer, formatProvider);
+            return Parse(s, NumberStyles.Float | NumberStyles.AllowThousands, formatProvider);
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -105,7 +105,7 @@ namespace System {
 
         public static bool TryParse(string s, out double result)
         {
-            return TryParse(s, NumberStyles.Integer, null, out result);
+            return TryParse(s, NumberStyles.Float | NumberStyles.AllowThousands, null, out result);
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]

@@ -90,19 +90,64 @@ namespace DnaUnity
         	return null;
         }
 
-        public static tAsyncCall* InternalConcat(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
+        public static tAsyncCall* InternalConcat2(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue) 
         {
         	tSystemString* s0, s1, ret;
             string str0, str1;
 
         	s0 = (*((tSystemString**)(pParams + 0)));
+            s1 = (*((tSystemString**)(pParams + Sys.S_PTR)));
+
             str0 = s0 != null ? H.ToObj(s0->monoStr) as string : null;
-        	s1 = (*((tSystemString**)(pParams + Sys.S_PTR)));
             str1 = s1 != null ? H.ToObj(s1->monoStr) as string : null;
-        	ret = FromMonoString(str0 + str1);
-        	Sys.INTERNALCALL_RESULT_PTR(pReturnValue, ret);
+
+            ret = FromMonoString(str0 + str1);
+
+            Sys.INTERNALCALL_RESULT_PTR(pReturnValue, ret);
 
         	return null;
+        }
+
+        public static tAsyncCall* InternalConcat3(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
+        {
+            tSystemString* s0, s1, s2, ret;
+            string str0, str1, str2;
+
+            s0 = (*((tSystemString**)(pParams + 0)));
+            s1 = (*((tSystemString**)(pParams + Sys.S_PTR)));
+            s2 = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_PTR)));
+
+            str0 = s0 != null ? H.ToObj(s0->monoStr) as string : null;
+            str1 = s1 != null ? H.ToObj(s1->monoStr) as string : null;
+            str2 = s2 != null ? H.ToObj(s2->monoStr) as string : null;
+
+            ret = FromMonoString(str0 + str1 + str2);
+
+            Sys.INTERNALCALL_RESULT_PTR(pReturnValue, ret);
+
+            return null;
+        }
+
+        public static tAsyncCall* InternalConcat4(tJITCallNative* pCallNative, byte* pThis_, byte* pParams, byte* pReturnValue)
+        {
+            tSystemString* s0, s1, s2, s3, ret;
+            string str0, str1, str2, str3;
+
+            s0 = (*((tSystemString**)(pParams + 0)));
+            s1 = (*((tSystemString**)(pParams + Sys.S_PTR)));
+            s2 = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_PTR)));
+            s3 = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_PTR + Sys.S_PTR)));
+
+            str0 = s0 != null ? H.ToObj(s0->monoStr) as string : null;
+            str1 = s1 != null ? H.ToObj(s1->monoStr) as string : null;
+            str2 = s2 != null ? H.ToObj(s2->monoStr) as string : null;
+            str3 = s3 != null ? H.ToObj(s3->monoStr) as string : null;
+
+            ret = FromMonoString(str0 + str1 + str2 + str3);
+
+            Sys.INTERNALCALL_RESULT_PTR(pReturnValue, ret);
+
+            return null;
         }
 
         public static tAsyncCall* InternalTrim(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue) 
@@ -282,7 +327,7 @@ namespace DnaUnity
 
         public static string ToMonoString(tSystemString* pStr)
         {
-            return (pStr != null ? H.ToObj(((tSystemString*)pStr)->monoStr) as string : null);
+            return (pStr != null ? System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)((tSystemString*)pStr)->monoStr).Target as string : null);
         }
 
         public static /*HEAP_PTR*/byte* FromUserStrings(tMetaData *pMetaData, /*IDX_USERSTRINGS*/uint index) 
@@ -293,7 +338,7 @@ namespace DnaUnity
             string s;
         	
         	str = MetaData.GetUserString(pMetaData, index, &stringLen);
-            s = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)str, (int)stringLen);
+            s = System.Runtime.InteropServices.Marshal.PtrToStringUni((System.IntPtr)str, (int)(stringLen >> 1));
         	pSystemString = (tSystemString*)FromMonoString(s);
         	return (/*HEAP_PTR*/byte*)pSystemString;
         }
@@ -480,7 +525,6 @@ namespace DnaUnity
         private static tAsyncCall* Parse_Internal(byte* pThis, byte* pParams, byte* pReturnValue, System.TypeCode typecode)
         {
             System.Globalization.NumberStyles numberStyle;
-            ;
             tSystemString* pStr;
 //            byte* pFormatProvider;
             string s;
@@ -592,7 +636,7 @@ namespace DnaUnity
             s = pStr != null ? H.ToObj(pStr->monoStr) as string : null;
             numberStyle = (System.Globalization.NumberStyles)(*((int*)(pParams + Sys.S_PTR)));
             //pFormatProvider = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_INT32)));
-            pResult = (*((byte**)(pParams + Sys.S_PTR + Sys.S_INT32)));
+            pResult = (*((byte**)(pParams + Sys.S_PTR + Sys.S_INT32 + Sys.S_PTR)));
 
             // Ignore IFormatProvider
 
@@ -600,42 +644,52 @@ namespace DnaUnity
                 case System.TypeCode.Byte:
                     byte b;
                     (*(uint*)pReturnValue) = byte.TryParse(s, numberStyle, null, out b) ? 1U : 0U;
+                    (*(uint*)pResult) = (uint)b;
                     break;
                 case System.TypeCode.SByte:
                     sbyte sb;
                     (*(uint*)pReturnValue) = sbyte.TryParse(s, numberStyle, null, out sb) ? 1U : 0U;
+                    (*(int*)pResult) = (int)sb;
                     break;
                 case System.TypeCode.UInt16:
                     ushort us;
                     (*(uint*)pReturnValue) = ushort.TryParse(s, numberStyle, null, out us) ? 1U : 0U;
+                    (*(uint*)pResult) = (uint)us;
                     break;
                 case System.TypeCode.Int16:
                     short ss;
                     (*(uint*)pReturnValue) = short.TryParse(s, numberStyle, null, out ss) ? 1U : 0U;
+                    (*(int*)pResult) = (int)ss;
                     break;
                 case System.TypeCode.UInt32:
                     uint ui;
                     (*(uint*)pReturnValue) = uint.TryParse(s, numberStyle, null, out ui) ? 1U : 0U;
+                    (*(uint*)pResult) = ui;
                     break;
                 case System.TypeCode.Int32:
                     int si;
                     (*(uint*)pReturnValue) = int.TryParse(s, numberStyle, null, out si) ? 1U : 0U;
+                    (*(int*)pResult) = si;
                     break;
                 case System.TypeCode.UInt64:
                     ulong ul;
                     (*(uint*)pReturnValue) = ulong.TryParse(s, numberStyle, null, out ul) ? 1U : 0U;
+                    (*(ulong*)pResult) = ul;
                     break;
                 case System.TypeCode.Int64:
                     long sl;
                     (*(uint*)pReturnValue) = long.TryParse(s, numberStyle, null, out sl) ? 1U : 0U;
+                    (*(long*)pResult) = sl;
                     break;
                 case System.TypeCode.Single:
                     float f;
                     (*(uint*)pReturnValue) = float.TryParse(s, numberStyle, null, out f) ? 1U : 0U;
+                    (*(float*)pResult) = f;
                     break;
                 case System.TypeCode.Double:
                     double d;
                     (*(uint*)pReturnValue) = double.TryParse(s, numberStyle, null, out d) ? 1U : 0U;
+                    (*(double*)pResult) = d;
                     break;
                 default:
                     throw new System.NotImplementedException();

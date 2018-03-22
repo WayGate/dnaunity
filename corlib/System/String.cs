@@ -133,13 +133,13 @@ namespace System {
 
         #endregion
 
-        public virtual int Length {
+        public extern virtual int Length {
             [MethodImpl(MethodImplOptions.InternalCall)]
             get;
 		}
 
 		[IndexerName("Chars")]
-		extern virtual public char this[int index] {
+		public extern virtual char this[int index] {
 			[MethodImpl(MethodImplOptions.InternalCall)]
 			get;
 		}
@@ -198,27 +198,18 @@ namespace System {
 			return this.Substring(this.Length - str.Length, str.Length) == str;
 		}
 
-		#endregion
+        #endregion
 
-		#region Concat Methods
+        #region Concat Methods
 
-		public static string Concat(string str0, string str1) {
-			if (str0 == null) {
-				return str1 ?? string.Empty;
-			}
-			if (str1 == null) {
-				return str0;
-			}
-			return InternalConcat(str0, str1);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern static string Concat(string str0, string str1);
 
-		public static string Concat(string str0, string str1, string str2) {
-			return Concat(Concat(str0, str1), str2);
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern static string Concat(string str0, string str1, string str2);
 
-		public static string Concat(string str0, string str1, string str2, string str3) {
-			return Concat(Concat(str0, str1), Concat(str2, str3));
-		}
+        [MethodImpl(MethodImplOptions.InternalCall)]
+        public extern static string Concat(string str0, string str1, string str2, string str3);
 
 		public static string Concat(params string[] values) {
 			if (values == null) {

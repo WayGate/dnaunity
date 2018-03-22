@@ -43,17 +43,17 @@ namespace System {
 
         public static byte Parse(String s)
         {
-            return Parse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo);
+            return Parse(s, NumberStyles.Integer, null);
         }
 
         public static byte Parse(String s, NumberStyles style)
         {
-            return Parse(s, style, NumberFormatInfo.CurrentInfo);
+            return Parse(s, style, null);
         }
 
         public static byte Parse(String s, IFormatProvider provider)
         {
-            return Parse(s, NumberStyles.Integer, NumberFormatInfo.GetInstance(provider));
+            return Parse(s, NumberStyles.Integer, provider);
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
@@ -61,7 +61,7 @@ namespace System {
 
         public static bool TryParse(String s, out Byte result)
         {
-            return TryParse(s, NumberStyles.Integer, NumberFormatInfo.CurrentInfo, out result);
+            return TryParse(s, NumberStyles.Integer, null, out result);
         }
 
         [MethodImpl(MethodImplOptions.InternalCall)]
