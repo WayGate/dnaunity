@@ -202,8 +202,8 @@ namespace DnaUnity
     	// Pointer to the heap object which is the Type class object for this type.
     	// This is only allocated as needed, so defaults to null
         public /*HEAP_PTR*/byte* typeObject;
-        // The GCHandle to a MonoType object if this is a wrapper around a mono type, null if a native type
-        public /*GCHandle*/ void* monoType;
+        // The Mono Handle to a MonoType object if this is a wrapper around a mono type, null if a native type
+        public /*Handle*/ void* monoType;
 
         #if DEBUG
         public string nameS { get { return S.str(name); } }
@@ -248,12 +248,12 @@ namespace DnaUnity
     	// If this field has an RVA, then the pointer to the memory location is stored here.
     	// If this is a literal field, then this is a pointer to the tMD_Constant literal definition.
         public byte* pMemory;
-        // The GCHandle to the mono Reflection.FieldInfo for field if this is mono type, null if not
-        public /*GCHandle*/ void* monoFieldInfo;
-        // The GCHandle to field getter method if this is mono type, null if not
-        public /*GCHandle*/ void* monoGetter;
-        // The GCHandle to field setter method if this is mono type, null if not
-        public /*GCHandle*/ void* monoSetter;
+        // The Mono Handle to the mono Reflection.FieldInfo for field if this is mono type, null if not
+        public /*Handle*/ void* monoFieldInfo;
+        // The Mono Handle to field getter method if this is mono type, null if not
+        public /*Handle*/ void* monoGetter;
+        // The Mono Handle to field setter method if this is mono type, null if not
+        public /*Handle*/ void* monoSetter;
 
 #if DEBUG
         public string nameS { get { return S.str(name); } }
@@ -313,10 +313,10 @@ namespace DnaUnity
         public tMD_TypeDef **ppMethodTypeArgs;
     	// If this is a generic core method, then store type instances here.
         public tGenericMethodInstance *pGenericMethodInstances;
-        // The GCHandle to the mono Reflection.MethodInfo for method if this is mono type, null if not
-        public /*GCHandle*/ void* monoMethodInfo;
-        // The GCHandle to the mono call delegate for method if this is mono type, null if not
-        public /*GCHandle*/ void* monoMethodCall;
+        // The Mono Handle to the mono Reflection.MethodInfo for method if this is mono type, null if not
+        public /* Handle*/ void* monoMethodInfo;
+        // The Mono Handle to the mono call delegate for method if this is mono type, null if not
+        public /* Handle*/ void* monoMethodCall;
 
 #if DIAG_METHOD_CALLS
     	// Number of times this method has been called

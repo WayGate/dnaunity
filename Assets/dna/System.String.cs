@@ -72,7 +72,7 @@ namespace DnaUnity
 
         public static tAsyncCall* get_Length(tJITCallNative* pCallNative, byte* pThis, byte* pParams, byte* pReturnValue)
         {
-            string s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            string s = ToMonoString((tSystemString*)pThis);
             Sys.INTERNALCALL_RESULT_U32(pReturnValue, (uint)s.Length);
 
             return null;
@@ -84,7 +84,7 @@ namespace DnaUnity
             string s;
 
         	index = (*((int*)(pParams + 0)));
-            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            s = ToMonoString((tSystemString*)pThis);
             Sys.INTERNALCALL_RESULT_U32(pReturnValue, (uint)(s[index]));
 
         	return null;
@@ -98,8 +98,8 @@ namespace DnaUnity
         	s0 = (*((tSystemString**)(pParams + 0)));
             s1 = (*((tSystemString**)(pParams + Sys.S_PTR)));
 
-            str0 = s0 != null ? H.ToObj(s0->monoStr) as string : null;
-            str1 = s1 != null ? H.ToObj(s1->monoStr) as string : null;
+            str0 = ToMonoString(s0);
+            str1 = ToMonoString(s1);
 
             ret = FromMonoString(str0 + str1);
 
@@ -117,9 +117,9 @@ namespace DnaUnity
             s1 = (*((tSystemString**)(pParams + Sys.S_PTR)));
             s2 = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_PTR)));
 
-            str0 = s0 != null ? H.ToObj(s0->monoStr) as string : null;
-            str1 = s1 != null ? H.ToObj(s1->monoStr) as string : null;
-            str2 = s2 != null ? H.ToObj(s2->monoStr) as string : null;
+            str0 = ToMonoString(s0);
+            str1 = ToMonoString(s1);
+            str2 = ToMonoString(s2);
 
             ret = FromMonoString(str0 + str1 + str2);
 
@@ -138,10 +138,10 @@ namespace DnaUnity
             s2 = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_PTR)));
             s3 = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_PTR + Sys.S_PTR)));
 
-            str0 = s0 != null ? H.ToObj(s0->monoStr) as string : null;
-            str1 = s1 != null ? H.ToObj(s1->monoStr) as string : null;
-            str2 = s2 != null ? H.ToObj(s2->monoStr) as string : null;
-            str3 = s3 != null ? H.ToObj(s3->monoStr) as string : null;
+            str0 = ToMonoString(s0);
+            str1 = ToMonoString(s1);
+            str2 = ToMonoString(s2);
+            str3 = ToMonoString(s3);
 
             ret = FromMonoString(str0 + str1 + str2 + str3);
 
@@ -170,7 +170,7 @@ namespace DnaUnity
             }
             trimType = (*((uint*)(pParams + Sys.S_PTR)));
 
-            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            s = ToMonoString((tSystemString*)pThis);
             ret = null;
 
             if (trimType == 1)
@@ -194,9 +194,9 @@ namespace DnaUnity
         	uint ret;
 
             a = (*((tSystemString**)(pParams + 0)));
-            aStr = a != null ? H.ToObj(a->monoStr) as string : null;
+            aStr = ToMonoString(a);
             b = (*((tSystemString**)(pParams + Sys.S_PTR)));
-            bStr = b != null ? H.ToObj(b->monoStr) as string : null;
+            bStr = ToMonoString(b);
 
             ret = (a == b ? 1U : 0U);
 
@@ -210,7 +210,7 @@ namespace DnaUnity
         	int hash;
             string s;
 
-            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            s = ToMonoString((tSystemString*)pThis);
             hash = s.GetHashCode();
 
             Sys.INTERNALCALL_RESULT_U32(pReturnValue, (uint)hash);
@@ -225,7 +225,7 @@ namespace DnaUnity
             string str;
 
             pStr = (*((tSystemString**)(pParams + 0)));
-            str = pStr != null ? H.ToObj(((tSystemString*)pStr)->monoStr) as string : null;
+            str = ToMonoString(pStr);
             startIndex = (*((int*)(pParams + Sys.S_PTR)));
             length = (*((int*)(pParams + Sys.S_PTR + Sys.S_INT32)));
 
@@ -241,11 +241,11 @@ namespace DnaUnity
         	tSystemString* pOld, pNew, pResult;
             string s, oldStr, newStr;
 
-            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            s = ToMonoString((tSystemString*)pThis);
             pOld = (*((tSystemString**)(pParams + 0)));
-            oldStr = pOld != null ? H.ToObj(((tSystemString*)pOld)->monoStr) as string : null;
+            oldStr =ToMonoString(pOld);
             pNew = (*((tSystemString**)(pParams + Sys.S_PTR)));
-            newStr = pNew != null ? H.ToObj(((tSystemString*)pNew)->monoStr) as string : null;
+            newStr = ToMonoString(pNew);
 
             pResult = FromMonoString(s.Replace(oldStr, newStr));
 
@@ -261,7 +261,7 @@ namespace DnaUnity
         	int startIndex, count, i;
             string s;
 
-            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            s = ToMonoString((tSystemString*)pThis);
             value = (*((char*)(pParams + 0)));
             startIndex = (*((int*)(pParams + Sys.S_INT32)));
             count = (*((int*)(pParams + Sys.S_INT32 + Sys.S_INT32)));
@@ -285,7 +285,7 @@ namespace DnaUnity
         	uint forwards;
             string s;
 
-            s = pThis != null ? H.ToObj(((tSystemString*)pThis)->monoStr) as string : null;
+            s = ToMonoString((tSystemString*)pThis);
             valueArray = (*((/*HEAP_PTR*/byte**)(pParams + 0)));
             startIndex = (*((int*)(pParams + Sys.S_PTR)));
             count = (*((int*)(pParams + Sys.S_PTR + Sys.S_INT32)));
@@ -327,7 +327,7 @@ namespace DnaUnity
 
         public static string ToMonoString(tSystemString* pStr)
         {
-            return (pStr != null ? System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)((tSystemString*)pStr)->monoStr).Target as string : null);
+            return (pStr != null ? H.objects[(int)((tSystemString*)pStr)->monoStr] as string : null);
         }
 
         public static /*HEAP_PTR*/byte* FromUserStrings(tMetaData *pMetaData, /*IDX_USERSTRINGS*/uint index) 
@@ -425,7 +425,7 @@ namespace DnaUnity
             tSystemString* pResult;
 
             pFormat = (*((tSystemString**)(pParams + 0)));
-            format = pFormat != null ? H.ToObj(pFormat->monoStr) as string : null;
+            format = ToMonoString(pFormat);
 
             // Ignore IFormatProvider for now!
             //pFormatProvider = (*((tSystemString**)(pParams + Sys.S_PTR)));
@@ -530,7 +530,7 @@ namespace DnaUnity
             string s;
 
             pStr = (*((tSystemString**)(pParams + 0)));
-            s = pStr != null ? H.ToObj(pStr->monoStr) as string : null;
+            s = ToMonoString(pStr);
             numberStyle = (System.Globalization.NumberStyles)(*((int*)(pParams + Sys.S_PTR)));
 
             // Ignore IFormatProvider (for now)
@@ -633,7 +633,7 @@ namespace DnaUnity
             byte* pResult;
 
             pStr = (*((tSystemString**)(pParams + 0)));
-            s = pStr != null ? H.ToObj(pStr->monoStr) as string : null;
+            s = ToMonoString(pStr);
             numberStyle = (System.Globalization.NumberStyles)(*((int*)(pParams + Sys.S_PTR)));
             //pFormatProvider = (*((tSystemString**)(pParams + Sys.S_PTR + Sys.S_INT32)));
             pResult = (*((byte**)(pParams + Sys.S_PTR + Sys.S_INT32 + Sys.S_PTR)));

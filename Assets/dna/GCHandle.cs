@@ -30,47 +30,84 @@ namespace DnaUnity
     using PTR = System.UInt64;
     #endif
 
+    // Handles to mono objects (essentially what GCHandle does, but compatible with Unity)
     public unsafe struct H
     {
         public PTR _p;
 
-        private static List<PTR> gcHandles = null;
+        public static List<object> objects = null;
+        public static List<int> freeList = null;
+
+        public static void Init()
+        {
+            objects = new List<object>(1024);
+            objects.Add(0);  // Add first item at 0 for "null"
+            freeList = new List<int>(256);
+        }
+
+        public static void Clear()
+        {
+            objects = null;
+            freeList = null;
+        }
+
+        public static void* Alloc(object o)
+        {
+            if (o != null) {
+                int idx;
+                int freeCount = freeList.Count;
+                if (freeCount > 0) {
+                    idx = freeList[freeCount - 1];
+                    freeList.RemoveAt(freeCount - 1);
+                    objects[idx] = o;
+                } else {
+                    idx = objects.Count;
+                    objects.Add(o);
+                }
+                return (void*)idx;
+            } else {
+                return null;
+            }
+        }
+
+        public static void Free(void* p)
+        {
+            if (p != null) {
+                int idx = (int)p;
+                objects[idx] = null;
+                freeList.Add(idx);
+            }
+        }
 
         public H(object o)
         {
-            _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
-            gcHandles.Add(_p);
+            _p = (PTR)Alloc(o);
         }
 
         public H(fnInternalCall o)
         {
-            _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
-            gcHandles.Add(_p);
+            _p = (PTR)Alloc(o);
         }
 
         public H(fnInternalCallCheck o)
         {
-            _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
-            gcHandles.Add(_p);
+            _p = (PTR)Alloc(o);
         }
 
         public H(fnFieldGetterSetter o)
         {
-            _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
-            gcHandles.Add(_p);
+            _p = (PTR)Alloc(o);
         }
 
         public H(ref void* p, object o)
         {
-            if (p != null)
-            {
+            if (p != null) {
                 _p = (PTR)p;
-            }
-            else
-            {
-                _p = (PTR)(System.IntPtr)System.Runtime.InteropServices.GCHandle.Alloc(o, System.Runtime.InteropServices.GCHandleType.Normal);
-                gcHandles.Add(_p);
-                p = (void*)_p;
+            } else if (o != null) {
+                p = Alloc(o);
+                _p = (PTR)p;
+            } else {
+                _p = 0;
             }
         }
 
@@ -86,26 +123,7 @@ namespace DnaUnity
 
         public static object ToObj(void* p) 
         {
-            if (p != null)
-                return System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)p).Target;
-            else
-                return null;
-        }
-
-        public static void Init()
-        {
-            gcHandles = new List<PTR>();
-        }
-
-        public static void Clear()
-        {
-            if (gcHandles != null) { 
-                foreach (PTR p in gcHandles) {
-                    System.Runtime.InteropServices.GCHandle h = System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)p);
-                    h.Free();
-                }
-            }
-            gcHandles = null;
+            return objects[(int)p];
         }
 
     }

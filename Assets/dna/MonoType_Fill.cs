@@ -167,9 +167,10 @@ namespace DnaUnity
         public static object MarshalToMonoObj(tMD_TypeDef* pTypeDef, byte* pPtr)
         {
             if (pTypeDef->hasMonoBase != 0) {
+                string typeNameSpace = pTypeDef->nameSpaceS;
+                string typeName = pTypeDef->nameS;
                 void* hPtr = *(void**)pPtr;
-                GCHandle h = (GCHandle)(System.IntPtr)hPtr;
-                return h.Target;
+                return hPtr != null ? H.objects[(int)hPtr] : null;
             } else {
                 switch (pTypeDef->typeInitId) {
                     case Type.TYPE_SYSTEM_OBJECT:
@@ -289,9 +290,9 @@ namespace DnaUnity
                 return;
             tMD_TypeDef* pTypeDef = Heap.GetType(pMem);
             if (pTypeDef->isValueType != 0) {
-                o = MarshalToMonoObj(pTypeDef, *(byte**)pPtr);
+                o = MarshalToMonoObj(pTypeDef, *(byte**)pMem);
             } else {
-                o = MarshalToMonoObj(pTypeDef, pPtr);
+                o = MarshalToMonoObj(pTypeDef, pMem);
             }
         }
 
@@ -1781,8 +1782,8 @@ namespace DnaUnity
                 pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
                 pTypeDef->alignment = 1;
 
-                // Mark all ref types as having a base GCHandle pointer as the first slot in their instance data.  This allows
-                // the Heap system to call FREE on this GCHandle whenever we garbage collect mono wrapped or derived heap objects.
+                // Mark all ref types as having a base Mono Handle pointer as the first slot in their instance data.  This allows
+                // the Heap system to call FREE on this Handle whenever we garbage collect mono wrapped or derived heap objects.
                 pTypeDef->hasMonoBase = (byte)(monoType.IsValueType ? 0 : 1);
 
                 // If not primed, then work out how many methods & fields there are.
