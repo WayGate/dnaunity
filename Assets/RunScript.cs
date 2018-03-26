@@ -10,9 +10,9 @@ namespace DnaUnity
     {
         public int heapSize = 10000000;
         public string[] assemblySearchPaths = new string[] {
-//            "${UNITY_DIR}/Mono/Lib/mono/unity",
-//            "${UNITY_DIR}/Managed",
-            "${PROJECT_DIR}/lib",
+            "${UNITY_DIR}/Mono/Lib/mono/unity",
+            "${UNITY_DIR}/Managed",
+            "${RESOURCES}/dnalib",
             "${PROJECT_DIR}/Library/ScriptAssemblies"
         };
 

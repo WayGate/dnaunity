@@ -142,7 +142,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heapSize: 10000000
   assemblySearchPaths:
-  - ${PROJECT_DIR}/lib
+  - ${RESOURCES}/dnalib
   - ${PROJECT_DIR}/Library/ScriptAssemblies
   filename: Library/ScriptAssemblies/Test1.dll
   arguments: 
@@ -285,7 +285,7 @@ MonoBehaviour:
   - SpinCube.dll
   heapSize: 10000000
   assemblySearchPaths:
-  - ${PROJECT_DIR}/lib
+  - ${RESOURCES}/dnalib
   - ${PROJECT_DIR}/Library/ScriptAssemblies
 --- !u!1 &1422094092
 GameObject:
@@ -330,6 +330,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cff1dc5eeb23a3a43a49d1007cb4bbd6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  rotXSpeed: 0
+  rotYSpeed: 0
+  rot: {x: 0, y: 0, z: 0, w: 1}
 --- !u!23 &1422094095
 MeshRenderer:
   m_ObjectHideFlags: 0
