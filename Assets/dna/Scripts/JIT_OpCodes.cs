@@ -464,5 +464,8 @@ namespace DnaUnity
         JIT_BRANCH_FALSE_U64 =                0x169,
         JIT_BRANCH_TRUE_U64 =                 0x16a,
 
+        JIT_NEG_F32 =                         0x16b,
+        JIT_NEG_F64 =                         0x16c,
+
     }
 }

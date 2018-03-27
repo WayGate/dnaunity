@@ -880,11 +880,21 @@ namespace DnaUnity
                         break;
 
                     case JitOps.JIT_STOREINDIRECT_U32:
+                    case JitOps.JIT_STOREINDIRECT_R32:
                         OPCODE_USE(JitOps.JIT_STOREINDIRECT_U32);
                         {
                             uint value = POP_U32(); // The value to store
                             byte* pMem = POP_PTR(); // The address to store to
                             *(uint*)pMem = value;
+                        }
+                        break;
+
+                    case JitOps.JIT_STOREINDIRECT_U64:
+                    case JitOps.JIT_STOREINDIRECT_R64:
+                        OPCODE_USE(JitOps.JIT_STOREINDIRECT_U32); {
+                            ulong value = POP_U32(); // The value to store
+                            byte* pMem = POP_PTR(); // The address to store to
+                            *(ulong*)pMem = value;
                         }
                         break;
 
@@ -3451,9 +3461,20 @@ namespace DnaUnity
                             goto done;
                         break;
 
-                    }
+                    case JitOps.JIT_NEG_F32:
+                        OPCODE_USE(JitOps.JIT_NEG_F32);
+                        *(float*)(pCurEvalStack - S_FLOAT) = -*(float*)(pCurEvalStack - S_FLOAT);
+                        break;
+
+                    case JitOps.JIT_NEG_F64:
+                        OPCODE_USE(JitOps.JIT_NEG_F64);
+                        *(double*)(pCurEvalStack - S_DOUBLE) = -*(double*)(pCurEvalStack - S_DOUBLE);
+                        break;
+
 
                 }
+
+            }
 
             done:
                 SAVE_METHOD_STATE();

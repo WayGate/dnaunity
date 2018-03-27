@@ -108,7 +108,9 @@ namespace DnaUnity
         STIND_I1      = 0x52,
         STIND_I2      = 0x53,
         STIND_I4      = 0x54,
-
+        STIND_I8      = 0x55,
+        STIND_R4      = 0x56,
+        STIND_R8      = 0x57,
         ADD           = 0x58,
         SUB           = 0x59,
         MUL           = 0x5a,

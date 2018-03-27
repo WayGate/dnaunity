@@ -655,7 +655,10 @@ namespace DnaUnity
         			case OpCodes.STIND_I1:
         			case OpCodes.STIND_I2:
         			case OpCodes.STIND_I4:
-        				PopStackTypeMulti(2); // Don't care what they are
+                    case OpCodes.STIND_I8:
+                    case OpCodes.STIND_R4:
+                    case OpCodes.STIND_R8:
+                        PopStackTypeMulti(2); // Don't care what they are
                         PushOp((JitOps)(JitOps.JIT_STOREINDIRECT_REF + (op - OpCodes.STIND_REF)));
         				break;
 
@@ -939,17 +942,23 @@ cilCallVirtConstrained:
         				}
         				break;
 
-        			case OpCodes.NEG:
-        			case OpCodes.NOT:
+                    case OpCodes.NEG:
+                    case OpCodes.NOT:
         				pTypeA = PopStackType();
-        				if (pTypeA->stackType == EvalStack.EVALSTACK_INT32) {
+                        if (pTypeA->stackType == EvalStack.EVALSTACK_INT32) {
                             PushOp((JitOps)(JitOps.JIT_NEG_I32 + (op - OpCodes.NEG)));
-        					PushStackType(Type.types[Type.TYPE_SYSTEM_INT32]);
-        				} else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64) {
+                            PushStackType(Type.types[Type.TYPE_SYSTEM_INT32]);
+                        } else if (pTypeA->stackType == EvalStack.EVALSTACK_INT64) {
                             PushOp((JitOps)(JitOps.JIT_NEG_I64 + (op - OpCodes.NEG)));
-        					PushStackType(Type.types[Type.TYPE_SYSTEM_INT64]);
-        				} else {
-        					Sys.Crash("JITit(): Cannot perform unary operand on stack Type.types: %d", pTypeA->stackType);
+                            PushStackType(Type.types[Type.TYPE_SYSTEM_INT64]);
+                        } else if (pTypeA->stackType == EvalStack.EVALSTACK_F32 && op != OpCodes.NOT) {
+                            PushOp((JitOps)(JitOps.JIT_NEG_F32));
+                            PushStackType(Type.types[Type.TYPE_SYSTEM_SINGLE]);
+                        } else if (pTypeA->stackType == EvalStack.EVALSTACK_F64 && op != OpCodes.NOT) {
+                            PushOp((JitOps)(JitOps.JIT_NEG_F64));
+                            PushStackType(Type.types[Type.TYPE_SYSTEM_DOUBLE]);
+                        } else { 
+                            Sys.Crash("JITit(): Cannot perform unary operand on stack Type.types: %d", pTypeA->stackType);
         				}
         				break;
 

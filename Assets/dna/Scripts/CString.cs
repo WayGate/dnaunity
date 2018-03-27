@@ -354,7 +354,7 @@
                         else if (arg is ulong)
                             v = (int)(ulong)arg;
                         else
-                            throw new System.ArgumentException();
+                            v = System.Convert.ToInt32(arg);
                         curarg++;
                         string vs = (ch == 'x' || ch == 'X' ? v.ToString("X") : v.ToString());
                         for (int j = 0; j < vs.Length; j++) {
@@ -388,7 +388,7 @@
                         else if (arg is ulong)
                             v0 = (int)(ulong)arg;
                         else
-                            throw new System.ArgumentException();
+                            v0 = System.Convert.ToInt32(arg);
                         curarg++;
                         string vs0 = (ch == 'x' || ch == 'X' ? v0.ToString("X" + l0) : v0.ToString("D" + l0));
                         for (int j = 0; j < vs0.Length; j++) {

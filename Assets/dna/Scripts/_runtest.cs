@@ -25,7 +25,7 @@ namespace DnaUnity
             try {
                 return Dna.Run(args);
             } catch (Exception e) {
-                Console.WriteLine(e.Message, e.StackTrace);
+                Console.WriteLine(e.Message + "\n" + e.StackTrace.ToString());
                 return 1;
             }
         }
