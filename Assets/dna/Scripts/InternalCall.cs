@@ -203,7 +203,7 @@ namespace DnaUnity
                 new tInternalCall {nameSpace = null, type = null, method = new S("Tan"), fn = new H(System_Math.Tan), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
                 new tInternalCall {nameSpace = null, type = null, method = new S("Pow"), fn = new H(System_Math.Pow), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 2, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE, Type.TYPE_SYSTEM_DOUBLE)},
                 new tInternalCall {nameSpace = null, type = null, method = new S("Sqrt"), fn = new H(System_Math.Sqrt), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
-                new tInternalCall {nameSpace = null, type = null, method = new S("Round"), fn = new H(System_Math.Sqrt), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
+                new tInternalCall {nameSpace = null, type = null, method = new S("Round"), fn = new H(System_Math.Round), returnType = Type.TYPE_SYSTEM_DOUBLE, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_DOUBLE)},
 
                 new tInternalCall {nameSpace = new S("System.Threading"), type = new S("Thread"), method = new S(".ctor"), fn = new H(System_Threading_Thread.ctor), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_THREADING_THREADSTART)},
                 new tInternalCall {nameSpace = null, type = null, method = new S(".ctor"), fn = new H(System_Threading_Thread.ctorParam), returnType = Type.TYPE_SYSTEM_VOID, numParameters = 1, parameterTypes = PTypes(Type.TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART)},

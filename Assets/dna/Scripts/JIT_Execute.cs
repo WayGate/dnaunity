@@ -460,7 +460,7 @@ namespace DnaUnity
 
             if (paramType == OP_PARAM_FIELDDEF) {
                 #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
-                tMD_FieldDef* pFieldDef = *(tMD_FieldDef**)((PTR)*(pPos++));
+                tMD_FieldDef* pFieldDef = *(tMD_FieldDef**)((uint)*(pPos++));
                 #else
                 tMD_FieldDef* pFieldDef = *(tMD_FieldDef**)((PTR)((((ulong)*(pPos++)) | ((ulong)*(pPos++) << 32))));
                 #endif
@@ -469,7 +469,7 @@ namespace DnaUnity
                     stackpos, (PTR)stackBuf, (PTR)opNames[(int)op]);
             } else if (paramType == OP_PARAM_METHODDEF) {
                 #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
-                tMD_MethodDef* pMethodDef = *(tMD_MethodDef**)((PTR)*(pPos++));
+                tMD_MethodDef* pMethodDef = *(tMD_MethodDef**)((uint)*(pPos++));
                 #else
                 tMD_MethodDef* pMethodDef = *(tMD_MethodDef**)((PTR)((((ulong)*(pPos++)) | ((ulong)*(pPos++) << 32))));
                 #endif
@@ -478,7 +478,7 @@ namespace DnaUnity
                     stackpos, (PTR)stackBuf, (PTR)opNames[(int)op]);
             } else if (paramType == OP_PARAM_TYPEDEF) {
                 #if (UNITY_WEBGL && !UNITY_EDITOR) || DNA_32BIT
-                tMD_TypeDef* pTypeDef = *(tMD_TypeDef**)((PTR)*(pPos++));
+                tMD_TypeDef* pTypeDef = *(tMD_TypeDef**)((uint)*(pPos++));
                 #else
                 tMD_TypeDef* pTypeDef = *(tMD_TypeDef**)((PTR)((((ulong)*(pPos++)) | ((ulong)*(pPos++) << 32))));
                 #endif
@@ -506,8 +506,10 @@ namespace DnaUnity
             uint u32Value = 0;
             uint u32 = 0;
             int i32 = 0;
+            int i32_2 = 0;
             ulong u64 = 0;
             long i64 = 0;
+            long i64_2 = 0;
             float f32 = 0;
             double f64 = 0;
 
@@ -897,8 +899,8 @@ namespace DnaUnity
 
                     case JitOps.JIT_STOREINDIRECT_U64:
                     case JitOps.JIT_STOREINDIRECT_R64:
-                        OPCODE_USE(JitOps.JIT_STOREINDIRECT_U32); {
-                            ulong value = POP_U32(); // The value to store
+                        OPCODE_USE(JitOps.JIT_STOREINDIRECT_U64); {
+                            ulong value = POP_U64(); // The value to store
                             byte* pMem = POP_PTR(); // The address to store to
                             *(ulong*)pMem = value;
                         }
@@ -2033,23 +2035,33 @@ namespace DnaUnity
                     case JitOps.JIT_DIV_I32I32:
                         OPCODE_USE(JitOps.JIT_DIV_I32I32);
                         pCurEvalStack -= S_INT32 + S_INT32 - S_INT32;
-                        i32 = *(int*)(pCurEvalStack - S_INT32 + S_INT32);
-                        if (i32 == 0) {
+                        i32 = *(int*)(pCurEvalStack - S_INT32);
+                        i32_2 = *(int*)(pCurEvalStack - S_INT32 + S_INT32);
+                        if (i32 == int.MinValue && i32_2 == -1) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_ARITHMETICEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        if (i32_2 == 0) {
                             pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
                             goto throwHeapPtr;
                         }
-                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) / i32;
+                        *(int*)(pCurEvalStack - S_INT32) = i32 / i32_2;
                         break;
 
                     case JitOps.JIT_DIV_I64I64:
                         OPCODE_USE(JitOps.JIT_DIV_I64I64);
                         pCurEvalStack -= S_INT64 + S_INT64 - S_INT64;
-                        i64 = *(long*)(pCurEvalStack - S_INT64 + S_INT64);
-                        if (i64 == 0) {
+                        i64 = *(long*)(pCurEvalStack - S_INT64);
+                        i64_2 = *(long*)(pCurEvalStack - S_INT64 + S_INT64);
+                        if (i64 == long.MinValue && i64_2 == -1) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_ARITHMETICEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        if (i64_2 == 0) {
                             pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
                             goto throwHeapPtr;
                         }
-                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) / i64;
+                        *(long*)(pCurEvalStack - S_INT64) = i64 / i64_2;
                         break;
 
                     case JitOps.JIT_DIV_UN_I32I32:
@@ -2099,23 +2111,33 @@ namespace DnaUnity
                     case JitOps.JIT_REM_I32I32:
                         OPCODE_USE(JitOps.JIT_REM_I32I32);
                         pCurEvalStack -= S_INT32 + S_INT32 - S_INT32;
-                        i32 = *(int*)(pCurEvalStack - S_INT32 + S_INT32);
-                        if (i32 == 0) {
+                        i32 = *(int*)(pCurEvalStack - S_INT32);
+                        i32_2 = *(int*)(pCurEvalStack - S_INT32 + S_INT32);
+                        if (i32 == int.MinValue && i32_2 == -1) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_ARITHMETICEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        if (i32_2 == 0) {
                             pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
                             goto throwHeapPtr;
                         }
-                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) % i32;
+                        *(int*)(pCurEvalStack - S_INT32) = i32 % i32_2;
                         break;
 
                     case JitOps.JIT_REM_I64I64:
                         OPCODE_USE(JitOps.JIT_REM_I64I64);
                         pCurEvalStack -= S_INT64 + S_INT64 - S_INT64;
-                        i64 = *(long*)(pCurEvalStack - S_INT64 + S_INT64);
-                        if (i64 == 0) {
+                        i64 = *(long*)(pCurEvalStack - S_INT64);
+                        i64_2 = *(long*)(pCurEvalStack - S_INT64 + S_INT64);
+                        if (i64 == long.MinValue && i64_2 == -1) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_OVERFLOWEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        if (i64_2 == 0) {
                             pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
                             goto throwHeapPtr;
                         }
-                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) % i64;
+                        *(long*)(pCurEvalStack - S_INT64) = i64 % i64_2;
                         break;
 
                     case JitOps.JIT_REM_UN_I32I32:

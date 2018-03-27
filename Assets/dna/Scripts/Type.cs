@@ -70,6 +70,7 @@ namespace DnaUnity
         public const int ELEMENT_TYPE_VALUETYPE                         = 0x11;
         public const int ELEMENT_TYPE_CLASS                             = 0x12;
         public const int ELEMENT_TYPE_VAR                               = 0x13; // Generic argument type
+        public const int ELEMENT_TYPE_ARRAY                             = 0x14; // Multi dimensional arrays
 
         public const int ELEMENT_TYPE_GENERICINST                       = 0x15;
 
@@ -106,65 +107,66 @@ namespace DnaUnity
         public const int TYPE_SYSTEM_NULLREFERENCEEXCEPTION             = 22;
         public const int TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION           = 23;
         public const int TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION              = 24;
-        public const int TYPE_SYSTEM_SINGLE                             = 25;
-        public const int TYPE_SYSTEM_DOUBLE                             = 26;
-        public const int TYPE_SYSTEM_INT64                              = 27;
-        public const int TYPE_SYSTEM_UINT64                             = 28;
-        public const int TYPE_SYSTEM_TYPECODE                           = 29;
-        public const int TYPE_SYSTEM_RUNTIMETYPE                        = 30;
-        public const int TYPE_SYSTEM_TYPE                               = 31;
-        public const int TYPE_SYSTEM_RUNTIMETYPEHANDLE                  = 32;
-        public const int TYPE_SYSTEM_RUNTIMEMETHODHANDLE                = 33;
-        public const int TYPE_SYSTEM_ENUM                               = 34;
-        public const int TYPE_SYSTEM_DATETIME                           = 35;
-        public const int TYPE_SYSTEM_ARRAY_STRING                       = 36;
-        public const int TYPE_SYSTEM_ARRAY_INT32                        = 37;
-        public const int TYPE_SYSTEM_THREADING_THREAD                   = 38;
-        public const int TYPE_SYSTEM_THREADING_THREADSTART              = 39;
-        public const int TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART = 40;
-        public const int TYPE_SYSTEM_WEAKREFERENCE                      = 41;
-        public const int TYPE_SYSTEM_IO_FILEMODE                        = 42;
-        public const int TYPE_SYSTEM_IO_FILEACCESS                      = 43;
-        public const int TYPE_SYSTEM_IO_FILESHARE                       = 44;
-        public const int TYPE_SYSTEM_ARRAY_BYTE                         = 45;
-        public const int TYPE_SYSTEM_GLOBALIZATION_UNICODECATEGORY      = 46;
-        public const int TYPE_SYSTEM_OVERFLOWEXCEPTION                  = 47;
-        public const int TYPE_SYSTEM_PLATFORMID                         = 48;
-        public const int TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES            = 49;
-        public const int TYPE_SYSTEM_UINTPTR                            = 50;
-        public const int TYPE_SYSTEM_NULLABLE                           = 51;
-        public const int TYPE_SYSTEM_ARRAY_TYPE                         = 52;
-        public const int TYPE_SYSTEM_REFLECTION_PROPERTYINFO            = 53;
-        public const int TYPE_SYSTEM_REFLECTION_METHODINFO              = 54;
-        public const int TYPE_SYSTEM_REFLECTION_METHODBASE              = 55;
-        public const int TYPE_SYSTEM_IFORMATPROVIDER                    = 56;
-        public const int TYPE_SYSTEM_GLOBALIZATION_NUMBERSTYLES         = 57;
+        public const int TYPE_SYSTEM_ARITHMETICEXCEPTION                = 25;
+        public const int TYPE_SYSTEM_SINGLE                             = 26;
+        public const int TYPE_SYSTEM_DOUBLE                             = 27;
+        public const int TYPE_SYSTEM_INT64                              = 28;
+        public const int TYPE_SYSTEM_UINT64                             = 29;
+        public const int TYPE_SYSTEM_TYPECODE                           = 30;
+        public const int TYPE_SYSTEM_RUNTIMETYPE                        = 31;
+        public const int TYPE_SYSTEM_TYPE                               = 32;
+        public const int TYPE_SYSTEM_RUNTIMETYPEHANDLE                  = 33;
+        public const int TYPE_SYSTEM_RUNTIMEMETHODHANDLE                = 34;
+        public const int TYPE_SYSTEM_ENUM                               = 35;
+        public const int TYPE_SYSTEM_DATETIME                           = 36;
+        public const int TYPE_SYSTEM_ARRAY_STRING                       = 37;
+        public const int TYPE_SYSTEM_ARRAY_INT32                        = 38;
+        public const int TYPE_SYSTEM_THREADING_THREAD                   = 39;
+        public const int TYPE_SYSTEM_THREADING_THREADSTART              = 40;
+        public const int TYPE_SYSTEM_THREADING_PARAMETERIZEDTHREADSTART = 41;
+        public const int TYPE_SYSTEM_WEAKREFERENCE                      = 42;
+        public const int TYPE_SYSTEM_IO_FILEMODE                        = 43;
+        public const int TYPE_SYSTEM_IO_FILEACCESS                      = 44;
+        public const int TYPE_SYSTEM_IO_FILESHARE                       = 45;
+        public const int TYPE_SYSTEM_ARRAY_BYTE                         = 46;
+        public const int TYPE_SYSTEM_GLOBALIZATION_UNICODECATEGORY      = 47;
+        public const int TYPE_SYSTEM_OVERFLOWEXCEPTION                  = 48;
+        public const int TYPE_SYSTEM_PLATFORMID                         = 49;
+        public const int TYPE_SYSTEM_IO_FILESYSTEMATTRIBUTES            = 50;
+        public const int TYPE_SYSTEM_UINTPTR                            = 51;
+        public const int TYPE_SYSTEM_NULLABLE                           = 52;
+        public const int TYPE_SYSTEM_ARRAY_TYPE                         = 53;
+        public const int TYPE_SYSTEM_REFLECTION_PROPERTYINFO            = 54;
+        public const int TYPE_SYSTEM_REFLECTION_METHODINFO              = 55;
+        public const int TYPE_SYSTEM_REFLECTION_METHODBASE              = 56;
+        public const int TYPE_SYSTEM_IFORMATPROVIDER                    = 57;
+        public const int TYPE_SYSTEM_GLOBALIZATION_NUMBERSTYLES         = 58;
 
 #if UNITY_5 || UNITY_2017 || UNITY_2018
 
-        public const int TYPE_UNITYENGINE_VECTOR2                       = 58;
-        public const int TYPE_UNITYENGINE_VECTOR3                       = 59;
-        public const int TYPE_UNITYENGINE_COLOR                         = 60;
-        public const int TYPE_UNITYENGINE_COLOR32                       = 61;
-        public const int TYPE_UNITYENGINE_VECTOR4                       = 62;
-        public const int TYPE_UNITYENGINE_QUATERNION                    = 63;
-        public const int TYPE_UNITYENGINE_VECTOR2INT                    = 64;
-        public const int TYPE_UNITYENGINE_VECTOR3INT                    = 65;
-        public const int TYPE_UNITYENGINE_RECT                          = 66;
-        public const int TYPE_UNITYENGINE_RECTINT                       = 67;
-        public const int TYPE_UNITYENGINE_RECTOFFSET                    = 68;
-        public const int TYPE_UNITYENGINE_RAY2D                         = 69;
-        public const int TYPE_UNITYENGINE_RAY                           = 70;
-        public const int TYPE_UNITYENGINE_BOUNDS                        = 71;
-        public const int TYPE_UNITYENGINE_PLANE                         = 72;
-        public const int TYPE_UNITYENGINE_RANGEINT                      = 73;
-        public const int TYPE_UNITYENGINE_MATRIX4X4                     = 74;
+        public const int TYPE_UNITYENGINE_VECTOR2                       = 59;
+        public const int TYPE_UNITYENGINE_VECTOR3                       = 60;
+        public const int TYPE_UNITYENGINE_COLOR                         = 61;
+        public const int TYPE_UNITYENGINE_COLOR32                       = 62;
+        public const int TYPE_UNITYENGINE_VECTOR4                       = 63;
+        public const int TYPE_UNITYENGINE_QUATERNION                    = 64;
+        public const int TYPE_UNITYENGINE_VECTOR2INT                    = 65;
+        public const int TYPE_UNITYENGINE_VECTOR3INT                    = 66;
+        public const int TYPE_UNITYENGINE_RECT                          = 67;
+        public const int TYPE_UNITYENGINE_RECTINT                       = 68;
+        public const int TYPE_UNITYENGINE_RECTOFFSET                    = 69;
+        public const int TYPE_UNITYENGINE_RAY2D                         = 70;
+        public const int TYPE_UNITYENGINE_RAY                           = 71;
+        public const int TYPE_UNITYENGINE_BOUNDS                        = 72;
+        public const int TYPE_UNITYENGINE_PLANE                         = 73;
+        public const int TYPE_UNITYENGINE_RANGEINT                      = 74;
+        public const int TYPE_UNITYENGINE_MATRIX4X4                     = 75;
 
-        public const int NUM_INIT_TYPES = 75;
+        public const int NUM_INIT_TYPES = 76;
 
 #else
 
-        public const int NUM_INIT_TYPES = 58;
+        public const int NUM_INIT_TYPES = 59;
 
 #endif
 
@@ -272,6 +274,7 @@ namespace DnaUnity
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("NullReferenceException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("IndexOutOfRangeException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("DivideByZeroException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
+                new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("ArithmeticException"), stackType = EvalStack.EVALSTACK_O, stackSize = PTR_SIZE, arrayElementSize = PTR_SIZE, instanceMemSize = 0, alignment = PTR_SIZE},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Single"), stackType = EvalStack.EVALSTACK_F32, stackSize = PTR_SIZE, arrayElementSize = 4, instanceMemSize = 4, alignment = 4},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Double"), stackType = EvalStack.EVALSTACK_F64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
                 new tTypeInit {assemblyName = new S(ref scMscorlib, "mscorlib"), nameSpace = new S(ref scSystem, "System"), name = new S("Int64"), stackType = EvalStack.EVALSTACK_INT64, stackSize = 8, arrayElementSize = 8, instanceMemSize = 8, alignment = 8},
@@ -602,6 +605,9 @@ namespace DnaUnity
         			} else {
         				return ppClassTypeArgs[entry];
         			}
+
+                case Type.ELEMENT_TYPE_ARRAY:
+                    throw new System.NotSupportedException("Multi dimensional arrays are not supported");
 
         		case Type.ELEMENT_TYPE_GENERICINST:
         			{
