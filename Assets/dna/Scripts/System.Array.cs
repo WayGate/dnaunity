@@ -332,7 +332,7 @@ namespace DnaUnity
         	}
         }
 
-        public static void LoadElement(tJITCallNative* pCallNative, /*HEAP_PTR*/byte* pThis_, uint index, byte* value) 
+        public static void LoadElement(/*HEAP_PTR*/byte* pThis_, uint index, byte* value) 
         {
         	tSystemArray *pArray = (tSystemArray*)pThis_;
         	tMD_TypeDef *pArrayTypeDef;

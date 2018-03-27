@@ -504,6 +504,12 @@ namespace DnaUnity
             JIT_Execute.pThread = pThread;
             JitOps op = 0;
             uint u32Value = 0;
+            uint u32 = 0;
+            int i32 = 0;
+            ulong u64 = 0;
+            long i64 = 0;
+            float f32 = 0;
+            double f64 = 0;
 
             if (pThread == null) {
                 return 0;
@@ -2026,62 +2032,134 @@ namespace DnaUnity
 
                     case JitOps.JIT_DIV_I32I32:
                         OPCODE_USE(JitOps.JIT_DIV_I32I32);
-                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
-                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) / *(int*)(pCurEvalStack - S_INT32 + S_INT32);
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32;
+                        i32 = *(int*)(pCurEvalStack - S_INT32 + S_INT32);
+                        if (i32 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) / i32;
                         break;
 
                     case JitOps.JIT_DIV_I64I64:
                         OPCODE_USE(JitOps.JIT_DIV_I64I64);
-                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
-                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) / *(long*)(pCurEvalStack - S_INT64 + S_INT64);
-                        break;
-
-                    case JitOps.JIT_DIV_F32F32:
-                        OPCODE_USE(JitOps.JIT_DIV_F32F32);
-                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_FLOAT; 
-                        *(float*)(pCurEvalStack - S_FLOAT) = *(float*)(pCurEvalStack - S_FLOAT) / *(float*)(pCurEvalStack - S_FLOAT + S_FLOAT);
-                        break;
-
-                    case JitOps.JIT_DIV_F64F64:
-                        OPCODE_USE(JitOps.JIT_DIV_F64F64);
-                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE; 
-                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) / *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64;
+                        i64 = *(long*)(pCurEvalStack - S_INT64 + S_INT64);
+                        if (i64 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) / i64;
                         break;
 
                     case JitOps.JIT_DIV_UN_I32I32:
                         OPCODE_USE(JitOps.JIT_DIV_UN_I32I32);
-                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
-                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) / *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32;
+                        u32 = *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
+                        if (u32 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) / u32;
                         break;
 
                     case JitOps.JIT_DIV_UN_I64I64:
                         OPCODE_USE(JitOps.JIT_DIV_UN_I64I64);
-                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
-                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) / *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64;
+                        u64 = *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
+                        if (u64 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) / u64;
+                        break;
+
+                    case JitOps.JIT_DIV_F32F32:
+                        OPCODE_USE(JitOps.JIT_DIV_F32F32);
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_FLOAT;
+                        f32 = *(float*)(pCurEvalStack - S_FLOAT + S_FLOAT);
+                        if (f32 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(float*)(pCurEvalStack - S_FLOAT) = *(float*)(pCurEvalStack - S_FLOAT) / f32;
+                        break;
+
+                    case JitOps.JIT_DIV_F64F64:
+                        OPCODE_USE(JitOps.JIT_DIV_F64F64);
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE;
+                        f64 = *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
+                        if (f64 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) / f64;
                         break;
 
                     case JitOps.JIT_REM_I32I32:
                         OPCODE_USE(JitOps.JIT_REM_I32I32);
-                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
-                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) % *(int*)(pCurEvalStack - S_INT32 + S_INT32);
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32;
+                        i32 = *(int*)(pCurEvalStack - S_INT32 + S_INT32);
+                        if (i32 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(int*)(pCurEvalStack - S_INT32) = *(int*)(pCurEvalStack - S_INT32) % i32;
                         break;
 
                     case JitOps.JIT_REM_I64I64:
                         OPCODE_USE(JitOps.JIT_REM_I64I64);
-                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64; 
-                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) % *(long*)(pCurEvalStack - S_INT64 + S_INT64);
+                        pCurEvalStack -= S_INT64 + S_INT64 - S_INT64;
+                        i64 = *(long*)(pCurEvalStack - S_INT64 + S_INT64);
+                        if (i64 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(long*)(pCurEvalStack - S_INT64) = *(long*)(pCurEvalStack - S_INT64) % i64;
                         break;
 
                     case JitOps.JIT_REM_UN_I32I32:
                         OPCODE_USE(JitOps.JIT_REM_UN_I32I32);
-                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32; 
-                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) % *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
+                        pCurEvalStack -= S_INT32 + S_INT32 - S_INT32;
+                        u32 = *(uint*)(pCurEvalStack - S_INT32 + S_INT32);
+                        if (u32 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(uint*)(pCurEvalStack - S_INT32) = *(uint*)(pCurEvalStack - S_INT32) % u32;
                         break;
 
                     case JitOps.JIT_REM_UN_I64I64:
                         OPCODE_USE(JitOps.JIT_REM_UN_I64I64);
                         pCurEvalStack -= S_INT64 + S_INT64 - S_INT64;
-                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) % *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
+                        u64 = *(ulong*)(pCurEvalStack - S_INT64 + S_INT64);
+                        if (u64 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(ulong*)(pCurEvalStack - S_INT64) = *(ulong*)(pCurEvalStack - S_INT64) % u64;
+                        break;
+
+                    case JitOps.JIT_REM_F32F32:
+                        OPCODE_USE(JitOps.JIT_REM_F32F32);
+                        pCurEvalStack -= S_FLOAT + S_FLOAT - S_FLOAT;
+                        f32 = *(float*)(pCurEvalStack - S_FLOAT + S_FLOAT);
+                        if (f32 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(float*)(pCurEvalStack - S_FLOAT) = *(float*)(pCurEvalStack - S_FLOAT) % f32;
+                        break;
+
+                    case JitOps.JIT_REM_F64F64:
+                        OPCODE_USE(JitOps.JIT_REM_F64F64);
+                        pCurEvalStack -= S_DOUBLE + S_DOUBLE - S_DOUBLE;
+                        f64 = *(double*)(pCurEvalStack - S_DOUBLE + S_DOUBLE);
+                        if (f64 == 0) {
+                            pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_DIVIDEBYZEROEXCEPTION]);
+                            goto throwHeapPtr;
+                        }
+                        *(double*)(pCurEvalStack - S_DOUBLE) = *(double*)(pCurEvalStack - S_DOUBLE) % f64;
                         break;
 
                     case JitOps.JIT_AND_I32I32:
@@ -2368,7 +2446,7 @@ namespace DnaUnity
                     case JitOps.JIT_CONV_R64_I64:
                         OPCODE_USE(JitOps.JIT_CONV_R64_I64);
                         {
-                            float value = POP_FLOAT();
+                            double value = POP_DOUBLE();
                             PUSH_U64((ulong)(long)value);
                         }
                         break;
@@ -2579,7 +2657,11 @@ namespace DnaUnity
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
-                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
                             PUSH_U32((uint)(sbyte)value);
                         }
                         break;
@@ -2593,7 +2675,11 @@ namespace DnaUnity
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
-                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
                             PUSH_U32((byte)value);
                         }
                         break;
@@ -2607,7 +2693,11 @@ namespace DnaUnity
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
-                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
                             PUSH_U32((uint)(short)value);
                         }
                         break;
@@ -2621,7 +2711,11 @@ namespace DnaUnity
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
-                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
                             PUSH_U32((ushort)value);
                         }
                         break;
@@ -2637,7 +2731,11 @@ namespace DnaUnity
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
-                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
                             PUSH_U32(value);
                         }
                         break;
@@ -2652,8 +2750,12 @@ namespace DnaUnity
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             ulong value;
-                            System_Array.LoadElement(null, heapPtr, idx, (byte*)&value);
+                            System_Array.LoadElement(heapPtr, idx, (byte*)&value);
                             PUSH_U64(value);
                         }
                         break;
@@ -2669,7 +2771,11 @@ namespace DnaUnity
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
-                            System_Array.LoadElement(null, heapPtr, idx, pCurEvalStack);
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            System_Array.LoadElement(heapPtr, idx, pCurEvalStack);
                             pCurEvalStack += size;
                         }
                         break;
@@ -2681,6 +2787,10 @@ namespace DnaUnity
                             byte* heapPtr = POP_O();
                             if (heapPtr == null) {
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
                             byte* pMem = System_Array.LoadElementAddress(null, heapPtr, idx);
@@ -2698,6 +2808,10 @@ namespace DnaUnity
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
                             System_Array.StoreElement(heapPtr, idx, (byte*)&value);
                         }
                         break;
@@ -2710,6 +2824,10 @@ namespace DnaUnity
                             byte* heapPtr = POP_O();
                             if (heapPtr == null) {
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
 #if TRACE_OPCODES
@@ -2731,6 +2849,10 @@ namespace DnaUnity
                             heapPtr = POP_O(); // Array on heap
                             if (heapPtr == null) {
                                 pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_NULLREFERENCEEXCEPTION]);
+                                goto throwHeapPtr;
+                            }
+                            if (idx >= System_Array.GetLength(heapPtr)) {
+                                pThrowExcept = THROW(Type.types[Type.TYPE_SYSTEM_INDEXOUTOFRANGEEXCEPTION]);
                                 goto throwHeapPtr;
                             }
                             System_Array.StoreElement(heapPtr, idx, pMem);
