@@ -272,7 +272,7 @@ namespace DnaUnity
                 #if UNITY_5 || UNITY_2017 || UNITY_2018
                 fileNameStr = fileNameStr.Substring(13);
                 UnityEngine.TextAsset bindata = UnityEngine.Resources.Load<UnityEngine.TextAsset>(fileNameStr);
-                return bindata.bytes;
+                return bindata != null ? bindata.bytes : null;
                 #else
                 return null;
                 #endif
