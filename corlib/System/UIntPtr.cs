@@ -20,62 +20,182 @@
 
 #if !LOCALTEST
 
+using System.Globalization;
+
 namespace System {
 	public unsafe struct UIntPtr {
 
-		private void* value;
+        unsafe private void* m_value;
 
-		public UIntPtr(uint value) {
-			this.value = (void*)value;
-		}
+        public static readonly UIntPtr Zero;
 
-		public UIntPtr(ulong value) {
-			this.value = (void*)value;
-		}
+        public unsafe UIntPtr(uint value)
+        {
+            m_value = (void*)value;
+        }
 
-		public UIntPtr(void* value) {
-			this.value = value;
-		}
+        public unsafe UIntPtr(ulong value)
+        {
+#if WIN32
+            m_value = (void*)checked((uint)value);
+#else
+            m_value = (void*)value;
+#endif
+        }
 
-		public static int Size {
-			get {
-				return sizeof(void*);
-			}
-		}
+        public unsafe UIntPtr(void* value)
+        {
+            m_value = value;
+        }
 
-		public uint ToUInt32() {
-			return (uint)this.value;
-		}
+//        private unsafe UIntPtr(SerializationInfo info, StreamingContext context)
+//        {
+//            ulong l = info.GetUInt64("value");
+//
+//            if (Size == 4 && l > UInt32.MaxValue) {
+//                throw new ArgumentException(Environment.GetResourceString("Serialization_InvalidPtrValue"));
+//            }
+//
+//            m_value = (void*)l;
+//        }
 
-		public ulong ToUInt64() {
-			return (ulong)this.value;
-		}
+#if FEATURE_SERIALIZATION
+        [System.Security.SecurityCritical]
+        unsafe void ISerializable.GetObjectData(SerializationInfo info, StreamingContext context)
+        {
+            if (info==null) {
+                throw new ArgumentNullException("info");
+            }
+            Contract.EndContractBlock();
+            info.AddValue("value", (ulong)m_value);
+        }
+#endif
 
-		public override bool Equals(object obj) {
-			return (obj is UIntPtr && ((UIntPtr)obj).value == this.value);
-		}
+        public unsafe override bool Equals(Object obj)
+        {
+            if (obj is UIntPtr) {
+                return (m_value == ((UIntPtr)obj).m_value);
+            }
+            return false;
+        }
 
-		public override int GetHashCode() {
-			return (int)this.value;
-		}
+        public unsafe override int GetHashCode()
+        {
+            return unchecked((int)((long)m_value)) & 0x7fffffff;
+        }
 
-		public static bool operator ==(UIntPtr a, UIntPtr b) {
-			return a.value == b.value;
-		}
+        public unsafe uint ToUInt32()
+        {
+#if WIN32
+            return (uint)m_value;
+#else
+            return checked((uint)m_value);
+#endif
+        }
 
-		public static bool operator !=(UIntPtr a, UIntPtr b) {
-			return a.value != b.value;
-		}
+        public unsafe ulong ToUInt64()
+        {
+            return (ulong)m_value;
+        }
 
-		public override string ToString() {
-			if (Size == 4) {
-				return string.Format("0x{0:x4}", (int)this.value);
-			} else {
-				return string.Format("0x{0:x8}", (long)this.value);
-			}
-		}
+        public unsafe override String ToString()
+        {
+#if WIN32
+            return ((uint)m_value).ToString(CultureInfo.InvariantCulture);
+#else
+            return ((ulong)m_value).ToString(CultureInfo.InvariantCulture);
+#endif
+        }
 
-	}
+        public static explicit operator UIntPtr(uint value)
+        {
+            return new UIntPtr(value);
+        }
+
+        public static explicit operator UIntPtr(ulong value)
+        {
+            return new UIntPtr(value);
+        }
+
+        public unsafe static explicit operator uint(UIntPtr value)
+        {
+#if WIN32
+            return (uint)value.m_value;
+#else
+            return checked((uint)value.m_value);
+#endif
+        }
+
+        public unsafe static explicit operator ulong(UIntPtr value)
+        {
+            return (ulong)value.m_value;
+        }
+
+        public static unsafe explicit operator UIntPtr(void* value)
+        {
+            return new UIntPtr(value);
+        }
+
+        public static unsafe explicit operator void* (UIntPtr value)
+        {
+            return value.m_value;
+        }
+
+        public unsafe static bool operator ==(UIntPtr value1, UIntPtr value2)
+        {
+            return value1.m_value == value2.m_value;
+        }
+
+        public unsafe static bool operator !=(UIntPtr value1, UIntPtr value2)
+        {
+            return value1.m_value != value2.m_value;
+        }
+
+        public static UIntPtr Add(UIntPtr pointer, int offset)
+        {
+            return pointer + offset;
+        }
+
+        public static UIntPtr operator +(UIntPtr pointer, int offset)
+        {
+#if WIN32
+                return new UIntPtr(pointer.ToUInt32() + (uint)offset);
+#else
+            return new UIntPtr(pointer.ToUInt64() + (ulong)offset);
+#endif
+        }
+
+        public static UIntPtr Subtract(UIntPtr pointer, int offset)
+        {
+            return pointer - offset;
+        }
+
+        public static UIntPtr operator -(UIntPtr pointer, int offset)
+        {
+#if WIN32
+                return new UIntPtr(pointer.ToUInt32() - (uint)offset);
+#else
+            return new UIntPtr(pointer.ToUInt64() - (ulong)offset);
+#endif
+        }
+
+        public static int Size {
+            get {
+#if WIN32
+                return 4;
+#else
+                return 8;
+#endif
+            }
+        }
+
+        public unsafe void* ToPointer()
+        {
+            return m_value;
+        }
+
+
+    }
 }
 
 #endif

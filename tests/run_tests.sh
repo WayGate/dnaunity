@@ -1,7 +1,7 @@
 echo "Running tests.."
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-TEST="./bin/Debug/test.exe"
+TEST="./bin/Release/test.exe"
 PASSED=0
 FAILED=0
 SKIPPED=0

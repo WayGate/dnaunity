@@ -166,8 +166,6 @@ namespace DnaUnity
         public static object MarshalToMonoObj(tMD_TypeDef* pTypeDef, byte* pPtr)
         {
             if (pTypeDef->hasMonoBase != 0) {
-                string typeNameSpace = pTypeDef->nameSpaceS;
-                string typeName = pTypeDef->nameS;
                 void* hPtr = *(void**)pPtr;
                 return hPtr != null ? H.objects[(int)hPtr] : null;
             } else {
