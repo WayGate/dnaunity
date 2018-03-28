@@ -11,6 +11,7 @@ public class SpinCubeComponent : MonoBehaviour
     // Update is called once per frame
     public void Update()
     {
+        Transform trans = GetComponent<Transform>();
         bool keyDown = false;
         if (Input.GetKeyDown(KeyCode.UpArrow)) {
             Debug.Log("Up " + rotXSpeed.ToString());
@@ -32,7 +33,7 @@ public class SpinCubeComponent : MonoBehaviour
         if (keyDown) {
             rot = Quaternion.Euler(rotXSpeed, rotYSpeed, 0);
         }
-        transform.rotation *= Quaternion.Slerp(Quaternion.identity, rot, Time.deltaTime);
+        trans.rotation *= Quaternion.Slerp(Quaternion.identity, rot, Time.deltaTime);
     }
 }
 

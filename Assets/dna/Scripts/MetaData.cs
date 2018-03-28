@@ -1040,7 +1040,7 @@ namespace DnaUnity
                     (monoType.IsInterface ? TYPEATTRIBUTES_INTERFACE : 0);
                 pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
                 pTypeDef->isGenericDefinition = (byte)(types[i].IsGenericTypeDefinition ? 1 : 0);
-                MonoType.monoTypes[monoType] = (PTR)pTypeDef;
+                MonoType.monoTypeToType[monoType] = (PTR)pTypeDef;
             }
 
             pMetaData->tables.data[MetaDataTable.MD_TABLE_TYPEDEF] = (PTR)pTypeDefs;

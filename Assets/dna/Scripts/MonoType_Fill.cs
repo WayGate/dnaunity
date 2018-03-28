@@ -96,6 +96,7 @@ namespace DnaUnity
             pMethodDef->pParentType = pParentType;
             pMethodDef->pMethodDef = pMethodDef;
             pMethodDef->isFilled = 1;
+            pMethodDef->isGenericDefinition = (byte)(methodBase.IsGenericMethodDefinition ? 1 : 0);
 
             if (methodBase.IsGenericMethodDefinition) {
                 // Generic definition method, so can't do any more.

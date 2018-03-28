@@ -124,7 +124,7 @@ namespace DnaUnity
                         tMD_TypeDef* pThisReturnType = MonoType.GetTypeForMonoType(((MethodInfo)methodBase).ReturnType, 
                             ppMethodClassTypeArgs, ppMethodMethodTypeArgs);
                         if (pReturnType == null) {
-                            if (pThisReturnType != Type.types[Type.TYPE_SYSTEM_VOID])
+                            if (pThisReturnType != Type.types[Type.TYPE_SYSTEM_VOID] && pThisReturnType != null)
                                 return 0;
                         }
                         else if (pReturnType != pThisReturnType)

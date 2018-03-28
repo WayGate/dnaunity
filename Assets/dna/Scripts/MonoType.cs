@@ -47,16 +47,19 @@ namespace DnaUnity
         const uint STACK_ALIGNMENT = 8;
 #endif
 
-        public static Dictionary<System.Type, PTR> monoTypes;
+        public static Dictionary<System.Type, PTR> monoTypeToType;
+        public static Dictionary<PTR, System.Type> typeToMonoType;
 
         public static void Init()
         {
-            monoTypes = new Dictionary<System.Type, PTR>();
+            monoTypeToType = new Dictionary<System.Type, PTR>();
+            typeToMonoType = new Dictionary<PTR, System.Type>();
         }
 
         public static void Clear()
         {
-            monoTypes = null;
+            monoTypeToType = null;
+            typeToMonoType = null;
         }
 
         public static void GetFieldTrampoline(tMD_FieldDef* pFieldInfo, byte* pThis, byte* pOutValue)
@@ -1351,7 +1354,7 @@ namespace DnaUnity
 
             PTR typePtr = 0;
             tMD_TypeDef* pType = null;
-            if (MonoType.monoTypes.TryGetValue(monoType, out typePtr)) {
+            if (MonoType.monoTypeToType.TryGetValue(monoType, out typePtr)) {
                 return (tMD_TypeDef*)typePtr;
             }
 
@@ -1445,14 +1448,15 @@ namespace DnaUnity
                 pType = Type.GetArrayTypeDef(pElemType, null, null);
             }
 
-            if (pType == null) {
+            if (pType == null && ! monoType.IsGenericParameter) { 
                 S.snprintf(nameSpace, 256, monoType.Namespace);
                 S.snprintf(name, 256, monoType.Name);
                 pType = CLIFile.FindTypeInAllLoadedAssemblies(nameSpace, name);
             }
 
             if (pType != null) {
-                MonoType.monoTypes[monoType] = (PTR)pType;
+                MonoType.monoTypeToType[monoType] = (PTR)pType;
+                MonoType.typeToMonoType[(PTR)pType] = monoType;
             }
 
             return pType;
@@ -1472,6 +1476,111 @@ namespace DnaUnity
             }
             return GetTypeForMonoType(obj.GetType(), ppClassTypeArgs, ppMethodTypeArgs);
         }
+
+        public static System.Type GetMonoTypeForType(tMD_TypeDef* pTypeDef)
+        {
+            if (pTypeDef == null) {
+                return null;
+            }
+
+            System.Type monoType = null;
+            tMD_TypeDef* pType = null;
+            if (MonoType.typeToMonoType.TryGetValue((PTR)pTypeDef, out monoType)) {
+                return monoType;
+            }
+
+            uint typeInitId = pTypeDef->typeInitId;
+
+            switch (typeInitId) {
+                case Type.TYPE_SYSTEM_OBJECT:
+                    monoType = typeof(System.Object);
+                    break;
+                case Type.TYPE_SYSTEM_VOID:
+                    monoType = typeof(void);
+                    break;
+                case Type.TYPE_SYSTEM_STRING:
+                    monoType = typeof(System.String);
+                    break;
+                case Type.TYPE_SYSTEM_BOOLEAN:
+                    monoType = typeof(System.Boolean);
+                    break;
+                case Type.TYPE_SYSTEM_CHAR:
+                    monoType = typeof(System.Char);
+                    break;
+                case Type.TYPE_SYSTEM_BYTE:
+                    monoType = typeof(System.Byte);
+                    break;
+                case Type.TYPE_SYSTEM_SBYTE:
+                    monoType = typeof(System.SByte);
+                    break;
+                case Type.TYPE_SYSTEM_INT16:
+                    monoType = typeof(System.Int16);
+                    break;
+                case Type.TYPE_SYSTEM_UINT16:
+                    monoType = typeof(System.UInt16);
+                    break;
+                case Type.TYPE_SYSTEM_INT32:
+                    monoType = typeof(System.Int32);
+                    break;
+                case Type.TYPE_SYSTEM_UINT32:
+                    monoType = typeof(System.UInt32);
+                    break;
+                case Type.TYPE_SYSTEM_INT64:
+                    monoType = typeof(System.Int64);
+                    break;
+                case Type.TYPE_SYSTEM_UINT64:
+                    monoType = typeof(System.UInt64);
+                    break;
+                case Type.TYPE_SYSTEM_SINGLE:
+                    monoType = typeof(System.Single);
+                    break;
+                case Type.TYPE_SYSTEM_DOUBLE:
+                    monoType = typeof(System.Double);
+                    break;
+                case Type.TYPE_SYSTEM_TYPE:
+                    monoType = typeof(System.Type);
+                    break;
+                case Type.TYPE_SYSTEM_ARRAY_OBJECT:
+                    monoType = typeof(object[]);
+                    break;
+                case Type.TYPE_SYSTEM_ARRAY_STRING:
+                    monoType = typeof(string[]);
+                    break;
+                case Type.TYPE_SYSTEM_ARRAY_INT32:
+                    monoType = typeof(int[]);
+                    break;
+                case Type.TYPE_SYSTEM_ARRAY_BYTE:
+                    monoType = typeof(byte[]);
+                    break;
+                case Type.TYPE_SYSTEM_ARRAY_CHAR:
+                    monoType = typeof(char[]);
+                    break;
+                case Type.TYPE_SYSTEM_DATETIME:
+                    monoType = typeof(System.DateTime);
+                    break;
+                case Type.TYPE_SYSTEM_UINTPTR:
+                    monoType = typeof(System.UIntPtr);
+                    break;
+                case Type.TYPE_SYSTEM_INTPTR:
+                    monoType = typeof(System.IntPtr);
+                    break;
+                case Type.TYPE_SYSTEM_TYPECODE:
+                    monoType = typeof(System.TypeCode);
+                    break;
+            }
+
+            if (pTypeDef->monoType != null) {
+                monoType = H.ToObj(pTypeDef->monoType) as System.Type;
+            }
+
+            if (monoType != null) {
+                MonoType.monoTypeToType[monoType] = (PTR)pTypeDef;
+                MonoType.typeToMonoType[(PTR)pTypeDef] = monoType;
+            }
+
+            return monoType;
+        }
+
 
     }
 }

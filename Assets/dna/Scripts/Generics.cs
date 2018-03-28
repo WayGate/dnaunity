@@ -236,19 +236,20 @@ namespace DnaUnity
         	/*SIG*/byte* sig;
         	uint argCount, i;
         	tMD_TypeDef **ppTypeArgs;
+            System.Reflection.MethodBase methodBase;
 
             Mem.heapcheck();
 
             pCoreMethod = MetaData.GetMethodDefFromDefRefOrSpec(pMethodSpec->pMetaData, pMethodSpec->method, 
                 null, null);//ppCallingClassTypeArgs, ppCallingMethodTypeArgs);
 
-        	//ppClassTypeArgs = pCoreMethod->pParentType->ppClassTypeArgs;
-        	sig = MetaData.GetBlob(pMethodSpec->instantiation, null);
-        	MetaData.DecodeSigEntry(&sig); // always 0x0a
-        	argCount = MetaData.DecodeSigEntry(&sig);
+            //ppClassTypeArgs = pCoreMethod->pParentType->ppClassTypeArgs;
+            sig = MetaData.GetBlob(pMethodSpec->instantiation, null);
+            MetaData.DecodeSigEntry(&sig); // always 0x0a
+            argCount = MetaData.DecodeSigEntry(&sig);
             ppTypeArgs = (tMD_TypeDef**)Mem.malloc((SIZE_T)(argCount * sizeof(tMD_TypeDef*)));
 
-        	for (i=0; i<argCount; i++) {
+            for (i=0; i<argCount; i++) {
         		tMD_TypeDef *pArgType;
 
         		pArgType = Type.GetTypeFromSig(pMethodSpec->pMetaData, &sig, ppCallingClassTypeArgs, ppCallingMethodTypeArgs, null);
@@ -302,7 +303,21 @@ namespace DnaUnity
         	pMethod->vTableOfs = pCoreMethod->vTableOfs;
             pMethod->ppMethodTypeArgs = pInst->ppTypeArgs;
 
-            MetaData.Fill_MethodDef(pParentType, pMethod, pParentType->ppClassTypeArgs, pInst->ppTypeArgs);
+            if (pCoreMethod->monoMethodInfo != null) {
+                System.Reflection.MethodInfo methodInfo = H.ToObj(pCoreMethod->monoMethodInfo) as System.Reflection.MethodInfo;
+                System.Type[] typeArgs = new System.Type[(int)numTypeArgs];
+                for (uint i = 0; i < numTypeArgs; i++) {
+                    typeArgs[i] = MonoType.GetMonoTypeForType(ppTypeArgs[i]);
+                    if (typeArgs[i] == null) {
+                        Sys.Crash("Unable to find mono type for type arg %s.%s in for generic method %s",
+                            (PTR)ppTypeArgs[i]->nameSpace, (PTR)ppTypeArgs[i]->name, (PTR)pCoreMethod->name);
+                    }
+                }
+                System.Reflection.MethodInfo genericMethodInfo = methodInfo.MakeGenericMethod(typeArgs);
+                MonoType.Fill_MethodDef(pParentType, genericMethodInfo, pMethod, pParentType->ppClassTypeArgs, pInst->ppTypeArgs);
+            } else {
+                MetaData.Fill_MethodDef(pParentType, pMethod, pParentType->ppClassTypeArgs, pInst->ppTypeArgs);
+            }
 
             Mem.heapcheck();
 
