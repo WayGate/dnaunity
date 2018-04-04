@@ -381,6 +381,42 @@ namespace DnaUnity
             typeInit = null;
         }
 
+        public static System.TypeCode GetTypeCode(tMD_TypeDef* pTypeDef)
+        {
+            switch (pTypeDef->typeInitId) {
+                case Type.TYPE_SYSTEM_STRING:
+                    return System.TypeCode.String;
+                case Type.TYPE_SYSTEM_BOOLEAN:
+                    return System.TypeCode.Boolean;
+                case Type.TYPE_SYSTEM_CHAR:
+                    return System.TypeCode.Char;
+                case Type.TYPE_SYSTEM_BYTE:
+                    return System.TypeCode.Byte;
+                case Type.TYPE_SYSTEM_SBYTE:
+                    return System.TypeCode.SByte;
+                case Type.TYPE_SYSTEM_UINT16:
+                    return System.TypeCode.UInt16;
+                case Type.TYPE_SYSTEM_INT16:
+                    return System.TypeCode.Int16;
+                case Type.TYPE_SYSTEM_UINT32:
+                    return System.TypeCode.UInt32;
+                case Type.TYPE_SYSTEM_INT32:
+                    return System.TypeCode.Int32;
+                case Type.TYPE_SYSTEM_UINT64:
+                    return System.TypeCode.UInt64;
+                case Type.TYPE_SYSTEM_INT64:
+                    return System.TypeCode.Int64;
+                case Type.TYPE_SYSTEM_SINGLE:
+                    return System.TypeCode.Single;
+                case Type.TYPE_SYSTEM_DOUBLE:
+                    return System.TypeCode.Double;
+                case Type.TYPE_SYSTEM_DATETIME:
+                    return System.TypeCode.DateTime;
+            }
+
+            return System.TypeCode.Object;
+        }
+
         static void GetMethodDefs() 
         {
         	/*IDX_TABLE*/uint token, last;

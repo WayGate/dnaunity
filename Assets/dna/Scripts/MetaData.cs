@@ -135,8 +135,11 @@ namespace DnaUnity
         public const uint METHODIMPLATTRIBUTES_CODETYPE_RUNTIME    = 0x3;
         public const uint METHODIMPLATTRIBUTES_INTERNALCALL        = 0x1000;
 
+        public const uint FIELD_ACCESS_MASK                        = 0x07;
+        public const uint FIELDATTRIBUTES_PUBLIC                   = 0x06;
         public const uint FIELDATTRIBUTES_STATIC                   = 0x10;
         public const uint FIELDATTRIBUTES_LITERAL                  = 0x40; // compile-time constant
+        public const uint FIELDATTRIBUTES_NOTSERIALIZED            = 0x80;
         public const uint FIELDATTRIBUTES_HASFIELDRVA              = 0x100;
 
         public const uint SIG_METHODDEF_DEFAULT                    = 0x0;

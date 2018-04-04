@@ -20,11 +20,17 @@
 
 #if UNITY_5 || UNITY_2017 || UNITY_2018
 
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DnaUnity
 {
 
+
+    /// <summary>
+    /// Dna script monobehavior (should only be one of these per scene)
+    /// </summary>
     public class DnaScript : MonoBehaviour
     {
         public string[] assembliesToLoad;
@@ -35,6 +41,11 @@ namespace DnaUnity
             "${PROJECT_DIR}/lib",
             "${PROJECT_DIR}/Library/ScriptAssemblies"
         };
+
+        /// <summary>
+        /// Keeps track of all of the property names for all classes serialized in this scene.
+        /// </summary>
+        public List<DnaSerializedTypeInfo> stringTables = new List<DnaSerializedTypeInfo>();
 
         public void Initialize()
         {
