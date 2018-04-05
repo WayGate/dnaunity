@@ -3,7 +3,7 @@
 *Current status: WIP*
 
 - [x] C version modified to run in 32/64 bit mode correctly
-- [x] All C code converted to C#
+- [x] All C code converted to C# (still basically C, just written with C# unsafe code)
 - [x] Successfully builds in Unity
 - [x] Successfully builds with IL2CPP for iOS target and WebGL target
 - [x] Stub functions (memory, string, gchandle, sprintf, printf, etc.) minimally working (no NotImplementedExceptions)
@@ -11,12 +11,15 @@
 - [X] Basic metadata tests pass.
 - [X] Simple call method test works.
 - [X] Simple "HelloWorld" prints to Unity console.
-- [X] Working mapping of Mono/Unity API's.
-- [ ] 32 bit and 64 bit mode tested/works
-- [ ] Basic unit test suite runs
-- [ ] Comprehensive unit test suite runs
-- [ ] Utility to convert existing scenes/prefabs to scenes/prefabs which interface with loadable scripts working.
-- [ ] Full unit test suite runs
+- [X] Working mapping of Mono/Unity API's, including working MonoBehaviors.
+- [X] 32 bit and 64 bit mode tested/works (unit test results match)
+- [X] Basic bootstrap unit test suite runs - most tests pass
+- [X] Serialization from DNA and Mono objs to unity compatible data (byte[] array + List<UnityEngine.Object> + List<TypeInfo>)
+- [ ] Deserialization from Unity data (byte[] array + List<UnityEngine.Object> + List<TypeInfo>) back to dna objects
+- [ ] DnaMonoBehavior auto-serialization fully supported just like MonoBehavior
+- [ ] Nice DnaMonoBehavior editor which displays state of script fields
+- [ ] Utility to convert existing scenes/prefabs to DnaScript scenes/prefabs
+- [ ] Comprehensive unit test suite runs - tests for all supported features pass
 - [ ] Production ready
  
 DotNetAnywhere interpreter ported to C#/Unity to run well with either Mono or IL2CPP.  Allows .NET assemblies
@@ -36,17 +39,14 @@ Details:
 - Implements Array, String, and other types beyond the basic types as wrappers around Mono/IL2CPP's
   version of those types.
   
-- Wraps unity/mono structs as Copy on Write (COW) boxed objects in the DNA stack for simplicity.
-
-- Uses fast internal call wrappers of most unity/mono classes/structs.  Falls back to slow System.Reflection wrappers for
-  uncommon classes/structs.
+- Uses fast call wrappers of most unity/mono classes/structs.  Falls back to slow System.Reflection wrappers for
+  uncommon classes/structs (but tries to avoid obj allocations).
   
-- Requires whitelist of objects to expose.
+- Uses whitelist/blacklist to expose/hide Unity API's for security.  Defaults to highest level of security.
 
-Further Work:
+- No change to existing code.  Scripted MonoBehavior derived classes just work the same way they do in Unity.
 
-- Support overridding MonoBehavior through DnaScript component.
+- Simple one step click conversion of standard mono scene to scripted scene, where any monobehaviros defined in
+  DLL assemblies marked as runtime scripted assemblies are converted to scripted monobehaviors.
 
-- Support auto-serialization of script component properties in existing scenes/prefabs through DnaScript component byte[] data fields.
 
-- Utility code to convert existing scene with standard MonoBehaviours to scene with DnaScript components.

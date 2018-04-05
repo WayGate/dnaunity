@@ -33,10 +33,10 @@ namespace DnaUnity
 
     #if UINTY_5 || UNITY_2017 || UNITY_2018
     using OBJ_TYPE = UnityEngine.Object;
-    using OBJ_ARRAY = List<UnityEngine.Object>;
+    using OBJ_LIST = List<UnityEngine.Object>;
 #else
     using OBJ_TYPE = System.Object;
-    using OBJ_ARRAY = List<System.Object>;
+    using OBJ_LIST = List<System.Object>;
 #endif
 
     /// <summary>
@@ -47,9 +47,6 @@ namespace DnaUnity
     {
         // Name of class who's strings this table records.
         public string name;
-
-        // Namespace of class who's strings this table records.
-        public string nameSpace;
 
         // Index in type array
         public int typeCode;
@@ -67,6 +64,10 @@ namespace DnaUnity
         // Ref to Mono System.Type (when serializing from Mono)
         [System.NonSerialized]
         public System.Type type;
+
+        // The target type info if we're reading
+        [System.NonSerialized]
+        public DnaSerializedTypeInfo targetTypeInfo;
 
         private static uint HashString(uint hash, string s)
         {
@@ -97,6 +98,18 @@ namespace DnaUnity
 
             this.hash = hash;
         }
+
+        public DnaSerializedFieldInfo FindField(string name)
+        {
+            int i;
+
+            for (i = 0; i < fields.Length; i++) {
+                if (string.CompareOrdinal(fields[i].name, name) == 0) {
+                    return fields[i];
+                }
+            }
+            return null;
+        }
     }
 
     /// <summary>
@@ -114,6 +127,10 @@ namespace DnaUnity
         // Type of element if array
         public int elementTypeCode;
 
+        // This field should be skipped during reading (it was deleted, type was changed, etc.)
+        [System.NonSerialized]
+        public bool skip;
+
         // Pointer to field def (when serializing from DNA)
         [System.NonSerialized]
         public PTR fieldDef;
@@ -121,39 +138,68 @@ namespace DnaUnity
         // Ref to field info (when serializing from Mono)
         [System.NonSerialized]
         public System.Reflection.FieldInfo fieldInfo;
+
+        public bool MatchesField(DnaSerializedFieldInfo field)
+        {
+            return string.CompareOrdinal(name, field.name) == 0 && typeCode == field.typeCode && elementTypeCode == field.elementTypeCode;
+        }
     }
 
     public unsafe static class Serialization
     {
+        // Serialize static fields
+        static byte* pWriteBuf = null;       // A growable buffer for writing
+        static byte* pWriteBufPos = null;
+        static uint writeBufSize = 0;
+        static OBJ_LIST writeObjsList;
+        static Dictionary<PTR, DnaSerializedTypeInfo> dnaWriteTypeMap;
+        static Dictionary<System.Type, DnaSerializedTypeInfo> monoWriteTypeMap;
 
-        static byte* pBuf = null;
-        static byte* pBufPos = null;
-        static uint bufSize = 0;
-        static OBJ_ARRAY objsList;
-        static Dictionary<PTR, DnaSerializedTypeInfo> dnaTypeMap;
-        static Dictionary<System.Type, DnaSerializedTypeInfo> monoTypeMap;
+        // Deserialize static fields
+        static byte* pReadBuf = null;
+        static byte* pReadBufPos = null;
+        static Dictionary<int, DnaSerializedTypeInfo> readTypeMap;
+        static OBJ_TYPE[] readObjList;
+
+        // Other fields
         static uint[] memSizes;
 
         public static void Init()
         {
-            pBuf = (byte*)Mem.malloc(2048);
-            pBufPos = pBuf;
-            bufSize = 2048;
-            objsList = new OBJ_ARRAY();
+            pWriteBuf = (byte*)Mem.malloc(2048);
+            pWriteBufPos = pWriteBuf;
+            writeBufSize = 2048;
+            writeObjsList = new OBJ_LIST();
         }
 
         public static void Clear()
         {
-
+            pWriteBuf = pWriteBufPos = pReadBuf = pReadBufPos = null;
+            dnaWriteTypeMap = null;
+            monoWriteTypeMap = null;
+            readTypeMap = null;
+            readObjList = null;
         }
 
         private static void WriteVarInt(uint i)
         {
             while (i != 0) {
-                *(pBufPos) = (byte)((i & 0x7fU) | (i > 0x7fU ? 0x80U : 0U));
-                pBufPos += 1;
+                *(pWriteBufPos) = (byte)((i & 0x7fU) | (i > 0x7fU ? 0x80U : 0U));
+                pWriteBufPos += 1;
                 i = i >> 7;
             }
+        }
+
+        private static uint ReadVarInt()
+        {
+            byte b;
+            uint i = 0;
+            do {
+                b = *pReadBufPos;
+                pReadBuf += 1;
+                i = (i << 7) | (b & 0x7FU);
+            } while ((b & 0x80) != 0);
+            return i;
         }
 
         private static void WriteString(string s)
@@ -164,8 +210,8 @@ namespace DnaUnity
             ushort u16;
 
             if (s == null) {
-                *pBufPos = 0; // Null string
-                pBufPos += 1;
+                *pWriteBufPos = 0; // Null string
+                pWriteBufPos += 1;
             } else {
                 len = (uint)s.Length;
                 // Check if string is 7-bit ascii (is ansi)
@@ -177,33 +223,65 @@ namespace DnaUnity
                     }
                 }
                 if (isAnsi) {
-                    while ((pBufPos - pBuf) + len + 8 >= bufSize) {
-                        bufSize = bufSize * 2;
-                        pBuf = (byte*)Mem.realloc(pBuf, (SIZE_T)(bufSize));
+                    while ((pWriteBufPos - pWriteBuf) + len + 8 >= writeBufSize) {
+                        writeBufSize = writeBufSize * 2;
+                        pWriteBuf = (byte*)Mem.realloc(pWriteBuf, (SIZE_T)(writeBufSize));
                     }
-                    *pBufPos = 1; // Is Ansi (8 bit)
-                    pBufPos++;
+                    *pWriteBufPos = 1; // Is Ansi (8 bit)
+                    pWriteBufPos++;
                     WriteVarInt(len);
                     for (i = 0; i < len; i++) {
-                        *(pBufPos) = (byte)s[i];
-                        pBufPos += 1;
+                        *(pWriteBufPos) = (byte)s[i];
+                        pWriteBufPos += 1;
                     }
                 } else {
-                    while ((pBufPos - pBuf) + (len << 1) + 8 >= bufSize) {
-                        bufSize = bufSize * 2;
-                        pBuf = (byte*)Mem.realloc(pBuf, (SIZE_T)(bufSize));
+                    while ((pWriteBufPos - pWriteBuf) + (len << 1) + 8 >= writeBufSize) {
+                        writeBufSize = writeBufSize * 2;
+                        pWriteBuf = (byte*)Mem.realloc(pWriteBuf, (SIZE_T)(writeBufSize));
                     }
-                    *pBufPos = 2; // Is UTF16 (16 bit)
-                    pBufPos++;
+                    *pWriteBufPos = 2; // Is UTF16 (16 bit)
+                    pWriteBufPos++;
                     WriteVarInt(len);
                     for (i = 0; i < len; i++) {
                         u16 = (ushort)s[i];
-                        *(pBufPos) = (byte)u16;
-                        *(pBufPos + 1) = (byte)(u16 >> 8);
-                        pBufPos += 2;
+                        *(pWriteBufPos) = (byte)u16;
+                        *(pWriteBufPos + 1) = (byte)(u16 >> 8);
+                        pWriteBufPos += 2;
                     }
 
                 }
+            }
+        }
+
+        private static string ReadString()
+        {
+            byte b;
+            int len;
+            int i;
+            char* pCharBuf;
+
+            b = *pReadBuf;
+            pReadBuf += 1;
+
+            if (b == 0) {
+                return null;
+            } else if (b == 1) {
+                len = (int)ReadVarInt();
+                StringBuilder sb = new StringBuilder(len);
+                for (i = 0; i < len; i++) {
+                    sb.Append((char)pReadBuf[i]);
+                }
+                pReadBuf += len;
+                return sb.ToString();
+            } else {
+                len = (int)ReadVarInt();
+                StringBuilder sb = new StringBuilder(len);
+                pCharBuf = (char*)pReadBuf;
+                for (i = 0; i < len; i++) {
+                    sb.Append(pCharBuf[i]);
+                }
+                pReadBuf += len + len;
+                return sb.ToString();
             }
         }
 
@@ -247,11 +325,15 @@ namespace DnaUnity
             List<DnaSerializedFieldInfo> fieldList;
             DnaSerializedFieldInfo fieldInfo;
 
+            if (pTypeDef == null) {
+                return null;
+            }
+
             typeInfo = new DnaSerializedTypeInfo();
             typeInfo.name = pTypeDef->fullNameS;
-            typeInfo.typeCode = dnaTypeMap.Count + 100;
+            typeInfo.typeCode = dnaWriteTypeMap.Count + 100;
             typeInfo.typeDef = (PTR)pTypeDef;
-            dnaTypeMap.Add((PTR)pTypeDef, typeInfo);
+            dnaWriteTypeMap.Add((PTR)pTypeDef, typeInfo);
             fieldList = new List<DnaSerializedFieldInfo>();
 
             for (i = 0; i < pTypeDef->numFields; i++) {
@@ -282,7 +364,7 @@ namespace DnaUnity
                     if (typeCode != System.TypeCode.Object) {
                         fieldInfo.elementTypeCode = (int)typeCode;
                     } else {
-                        if (!dnaTypeMap.TryGetValue((PTR)pFieldDef->pType->pArrayElementType, out fieldTypeInfo)) {
+                        if (!dnaWriteTypeMap.TryGetValue((PTR)pFieldDef->pType->pArrayElementType, out fieldTypeInfo)) {
                             fieldTypeInfo = BuildDnaTypeInfo(pFieldDef->pType->pArrayElementType);
                         }
                         fieldInfo.elementTypeCode = fieldTypeInfo.typeCode + 100;
@@ -295,13 +377,13 @@ namespace DnaUnity
                     if (typeCode != System.TypeCode.Object) {
                         fieldInfo.elementTypeCode = (int)typeCode;
                     } else {
-                        if (!dnaTypeMap.TryGetValue((PTR)pFieldDef->pType->ppClassTypeArgs[0], out fieldTypeInfo)) {
+                        if (!dnaWriteTypeMap.TryGetValue((PTR)pFieldDef->pType->ppClassTypeArgs[0], out fieldTypeInfo)) {
                             fieldTypeInfo = BuildDnaTypeInfo(pFieldDef->pType->ppClassTypeArgs[0]);
                         }
                         fieldInfo.elementTypeCode = fieldTypeInfo.typeCode + 100;
                     }
                 } else { 
-                    if (!dnaTypeMap.TryGetValue((PTR)pFieldDef->pType, out fieldTypeInfo)) {
+                    if (!dnaWriteTypeMap.TryGetValue((PTR)pFieldDef->pType, out fieldTypeInfo)) {
                         fieldTypeInfo = BuildDnaTypeInfo(pFieldDef->pType);
                     }
                     fieldInfo.typeCode = fieldTypeInfo.typeCode + 100;
@@ -332,7 +414,7 @@ namespace DnaUnity
             DnaSerializedFieldInfo fieldInfo;
             int typeCode;
 
-            if (!dnaTypeMap.TryGetValue((PTR)pTypeDef, out typeInfo)) {
+            if (!dnaWriteTypeMap.TryGetValue((PTR)pTypeDef, out typeInfo)) {
                 typeInfo = BuildDnaTypeInfo(pTypeDef);
             }
 
@@ -345,9 +427,9 @@ namespace DnaUnity
                 typeCode = fieldInfo.typeCode;
 
                 // Check to see if we need to expand serialization buffer
-                if ((pBufPos - pBuf) + memSize + 8 >= bufSize) {
-                    bufSize = bufSize * 2;
-                    pBuf = (byte*)Mem.realloc(pBuf, (SIZE_T)(bufSize * 2));
+                if ((pWriteBufPos - pWriteBuf) + memSize + 8 >= writeBufSize) {
+                    writeBufSize = writeBufSize * 2;
+                    pWriteBuf = (byte*)Mem.realloc(pWriteBuf, (SIZE_T)(writeBufSize * 2));
                 }
 
                 if (pFieldDef->pType->isValueType == 0) {
@@ -365,11 +447,11 @@ namespace DnaUnity
                         pPtr = *(void**)(pInst + memOffset);
                         obj = pPtr != null ? Heap.GetMonoObject((byte*)pPtr) as OBJ_TYPE : null;
                         if (pPtr == null) {
-                            *pBufPos = 0;
-                            pBufPos += 1;
+                            *pWriteBufPos = 0;
+                            pWriteBufPos += 1;
                         } else {
-                            objsList.Add(obj);
-                            u32 = (uint)objsList.Count;
+                            writeObjsList.Add(obj);
+                            u32 = (uint)writeObjsList.Count;
                             WriteVarInt(u32);
                         }
 #endif
@@ -387,9 +469,11 @@ namespace DnaUnity
 
                         pPtr = *(void**)(pInst + memOffset);
                         if (pPtr == null) {
-                            *pBufPos = 0;
-                            pBufPos += 1;
+                            *pWriteBufPos = 0;
+                            pWriteBufPos += 1;
                         } else {
+                            *pWriteBufPos = 1;
+                            pWriteBufPos += 1;
                             SerializeDnaInst(pFieldDef->pType, (byte*)pPtr);
                         }
 
@@ -401,38 +485,38 @@ namespace DnaUnity
 
                     // NOTE: We can't assume alignment so we have to serialize byte by byte
 
-                    if (fieldInfo.typeCode < 98) { // Standard System.TypeCode - this is a basic type
+                    if (fieldInfo.typeCode <= 18) { // Standard System.TypeCode - this is a basic type
 
                         switch (pFieldDef->memSize) {
                             case 1:
-                                *pBufPos = *(pInst + memOffset);
-                                pBufPos += 1;
+                                *pWriteBufPos = *(pInst + memOffset);
+                                pWriteBufPos += 1;
                                 break;
                             case 2:
                                 u16 = *(ushort*)(pInst + memOffset);
-                                *(byte*)(pBufPos) = (byte)u16;
-                                *(byte*)(pBufPos + 1) = (byte)(u16 >> 8);
-                                pBufPos += 2;
+                                *(byte*)(pWriteBufPos) = (byte)u16;
+                                *(byte*)(pWriteBufPos + 1) = (byte)(u16 >> 8);
+                                pWriteBufPos += 2;
                                 break;
                             case 4:
                                 u32 = *(uint*)(pInst + memOffset);
-                                *(byte*)(pBufPos) = (byte)u32;
-                                *(byte*)(pBufPos + 1) = (byte)(u32 >> 8);
-                                *(byte*)(pBufPos + 2) = (byte)(u32 >> 16);
-                                *(byte*)(pBufPos + 3) = (byte)(u32 >> 24);
-                                pBufPos += 4;
+                                *(byte*)(pWriteBufPos) = (byte)u32;
+                                *(byte*)(pWriteBufPos + 1) = (byte)(u32 >> 8);
+                                *(byte*)(pWriteBufPos + 2) = (byte)(u32 >> 16);
+                                *(byte*)(pWriteBufPos + 3) = (byte)(u32 >> 24);
+                                pWriteBufPos += 4;
                                 break;
                             case 8:
                                 u64 = *(ulong*)(pInst + memOffset);
-                                *(byte*)(pBufPos) = (byte)u64;
-                                *(byte*)(pBufPos + 1) = (byte)(u64 >> 8);
-                                *(byte*)(pBufPos + 2) = (byte)(u64 >> 16);
-                                *(byte*)(pBufPos + 3) = (byte)(u64 >> 24);
-                                *(byte*)(pBufPos + 4) = (byte)(u64 >> 32);
-                                *(byte*)(pBufPos + 5) = (byte)(u64 >> 40);
-                                *(byte*)(pBufPos + 6) = (byte)(u64 >> 48);
-                                *(byte*)(pBufPos + 7) = (byte)(u64 >> 56);
-                                pBufPos += 8;
+                                *(byte*)(pWriteBufPos) = (byte)u64;
+                                *(byte*)(pWriteBufPos + 1) = (byte)(u64 >> 8);
+                                *(byte*)(pWriteBufPos + 2) = (byte)(u64 >> 16);
+                                *(byte*)(pWriteBufPos + 3) = (byte)(u64 >> 24);
+                                *(byte*)(pWriteBufPos + 4) = (byte)(u64 >> 32);
+                                *(byte*)(pWriteBufPos + 5) = (byte)(u64 >> 40);
+                                *(byte*)(pWriteBufPos + 6) = (byte)(u64 >> 48);
+                                *(byte*)(pWriteBufPos + 7) = (byte)(u64 >> 56);
+                                pWriteBufPos += 8;
                                 break;
                             default:
                                 Sys.Crash("Invalid value type to serialize");
@@ -456,24 +540,24 @@ namespace DnaUnity
         {
             DnaSerializedTypeInfo typeInfo;
 
-            objsList.Clear();
-            dnaTypeMap = typeMap;
+            writeObjsList.Clear();
+            dnaWriteTypeMap = typeMap;
 
-            pBufPos = pBuf;
+            pWriteBufPos = pWriteBuf;
 
             if (pInst == null) {
-                *pBufPos = 0;
-                pBufPos += 1;
+                *pWriteBufPos = 0;
+                pWriteBufPos += 1;
             } else {
-                if (!dnaTypeMap.TryGetValue((PTR)pTypeDef, out typeInfo)) {
+                if (!dnaWriteTypeMap.TryGetValue((PTR)pTypeDef, out typeInfo)) {
                     typeInfo = BuildDnaTypeInfo(pTypeDef);
                 }
                 WriteVarInt((uint)typeInfo.typeCode);
             }
 
-            buf = new byte[(int)(pBufPos - pBuf)];
-            System.Runtime.InteropServices.Marshal.Copy((System.IntPtr)pBuf, buf, 0, buf.Length);
-            objs = objsList.ToArray();
+            buf = new byte[(int)(pWriteBufPos - pWriteBuf)];
+            System.Runtime.InteropServices.Marshal.Copy((System.IntPtr)pWriteBuf, buf, 0, buf.Length);
+            objs = writeObjsList.ToArray();
         }
 
         // ******************
@@ -489,11 +573,15 @@ namespace DnaUnity
             System.Reflection.FieldInfo monoFieldInfo;
             System.Type[] typeArgs;
 
+            if (type == null) {
+                return null;
+            }
+
             typeInfo = new DnaSerializedTypeInfo();
             typeInfo.name = type.FullName;
-            typeInfo.typeCode = monoTypeMap.Count + 100;
+            typeInfo.typeCode = monoWriteTypeMap.Count + 100;
             typeInfo.type = type;
-            monoTypeMap.Add(type, typeInfo);
+            monoWriteTypeMap.Add(type, typeInfo);
             fieldList = new List<DnaSerializedFieldInfo>();
 
             System.Reflection.FieldInfo[] fieldInfos = type.GetFields(System.Reflection.BindingFlags.NonPublic | 
@@ -524,7 +612,7 @@ namespace DnaUnity
                     if (typeCode != System.TypeCode.Object) {
                         fieldInfo.elementTypeCode = (int)typeCode;
                     } else {
-                        if (!monoTypeMap.TryGetValue(monoFieldInfo.FieldType.GetElementType(), out fieldTypeInfo)) {
+                        if (!monoWriteTypeMap.TryGetValue(monoFieldInfo.FieldType.GetElementType(), out fieldTypeInfo)) {
                             fieldTypeInfo = BuildMonoTypeInfo(monoFieldInfo.FieldType.GetElementType());
                         }
                         fieldInfo.elementTypeCode = fieldTypeInfo.typeCode + 100;
@@ -537,13 +625,13 @@ namespace DnaUnity
                     if (typeCode != System.TypeCode.Object) {
                         fieldInfo.elementTypeCode = (int)typeCode;
                     } else {
-                        if (!monoTypeMap.TryGetValue(typeArgs[0], out fieldTypeInfo)) {
+                        if (!monoWriteTypeMap.TryGetValue(typeArgs[0], out fieldTypeInfo)) {
                             fieldTypeInfo = BuildMonoTypeInfo(typeArgs[0]);
                         }
                         fieldInfo.elementTypeCode = fieldTypeInfo.typeCode + 100;
                     }
                 } else {
-                    if (!monoTypeMap.TryGetValue(monoFieldInfo.FieldType, out fieldTypeInfo)) {
+                    if (!monoWriteTypeMap.TryGetValue(monoFieldInfo.FieldType, out fieldTypeInfo)) {
                         fieldTypeInfo = BuildMonoTypeInfo(monoFieldInfo.FieldType);
                     }
                     fieldInfo.typeCode = fieldTypeInfo.typeCode + 100;
@@ -577,7 +665,7 @@ namespace DnaUnity
 
             type = inst.GetType();
 
-            if (!monoTypeMap.TryGetValue(type, out typeInfo)) {
+            if (!monoWriteTypeMap.TryGetValue(type, out typeInfo)) {
                 typeInfo = BuildMonoTypeInfo(type);
             }
 
@@ -590,9 +678,9 @@ namespace DnaUnity
                 memSize = GetMemSize(fieldInfo.typeCode);
 
                 // Check to see if we need to expand serialization buffer
-                if ((pBufPos - pBuf) + memSize + 8 >= bufSize) {
-                    bufSize = bufSize * 2;
-                    pBuf = (byte*)Mem.realloc(pBuf, (SIZE_T)(bufSize * 2));
+                if ((pWriteBufPos - pWriteBuf) + memSize + 8 >= writeBufSize) {
+                    writeBufSize = writeBufSize * 2;
+                    pWriteBuf = (byte*)Mem.realloc(pWriteBuf, (SIZE_T)(writeBufSize * 2));
                 }
 
                 if (!monoFieldInfo.FieldType.IsValueType) {
@@ -612,11 +700,11 @@ namespace DnaUnity
 
                         obj = monoFieldInfo.GetValue(inst) as OBJ_TYPE;
                         if (obj == null) {
-                            *pBufPos = 0;
-                            pBufPos += 1;
+                            *pWriteBufPos = 0;
+                            pWriteBufPos += 1;
                         } else {
-                            objsList.Add(obj);
-                            u32 = (uint)objsList.Count;
+                            writeObjsList.Add(obj);
+                            u32 = (uint)writeObjsList.Count;
                             WriteVarInt(u32);
                         }
 
@@ -636,9 +724,11 @@ namespace DnaUnity
                         childInst = monoFieldInfo.GetValue(inst);
 
                         if (childInst == null) {
-                            *pBufPos = 0;
-                            pBufPos += 1;
+                            *pWriteBufPos = 0;
+                            pWriteBufPos += 1;
                         } else {
+                            *pWriteBufPos = 1;
+                            pWriteBufPos += 1;
                             SerializeMonoInst(childInst);
                         }
 
@@ -650,7 +740,7 @@ namespace DnaUnity
 
                     // NOTE: We can't assume alignment so we have to serialize byte by byte
 
-                    if (fieldInfo.typeCode < 98) { // Standard System.TypeCode - this is a basic type
+                    if (fieldInfo.typeCode <= 18) { // Standard System.TypeCode - this is a basic type
 
                         switch ((System.TypeCode)fieldInfo.typeCode) {
                             case System.TypeCode.Empty:          // Null reference
@@ -707,34 +797,34 @@ namespace DnaUnity
 
                         switch (memSize) { 
                             case 1:
-                                *pBufPos = *(pTemp);
-                                pBufPos += 1;
+                                *pWriteBufPos = *(pTemp);
+                                pWriteBufPos += 1;
                                 break;
                             case 2:
                                 u16 = *(ushort*)(pTemp);
-                                *(byte*)(pBufPos) = (byte)u16;
-                                *(byte*)(pBufPos + 1) = (byte)(u16 >> 8);
-                                pBufPos += 2;
+                                *(byte*)(pWriteBufPos) = (byte)u16;
+                                *(byte*)(pWriteBufPos + 1) = (byte)(u16 >> 8);
+                                pWriteBufPos += 2;
                                 break;
                             case 4:
                                 u32 = *(uint*)(pTemp);
-                                *(byte*)(pBufPos) = (byte)u32;
-                                *(byte*)(pBufPos + 1) = (byte)(u32 >> 8);
-                                *(byte*)(pBufPos + 2) = (byte)(u32 >> 16);
-                                *(byte*)(pBufPos + 3) = (byte)(u32 >> 24);
-                                pBufPos += 4;
+                                *(byte*)(pWriteBufPos) = (byte)u32;
+                                *(byte*)(pWriteBufPos + 1) = (byte)(u32 >> 8);
+                                *(byte*)(pWriteBufPos + 2) = (byte)(u32 >> 16);
+                                *(byte*)(pWriteBufPos + 3) = (byte)(u32 >> 24);
+                                pWriteBufPos += 4;
                                 break;
                             case 8:
                                 u64 = *(ulong*)(pTemp);
-                                *(byte*)(pBufPos) = (byte)u64;
-                                *(byte*)(pBufPos + 1) = (byte)(u64 >> 8);
-                                *(byte*)(pBufPos + 2) = (byte)(u64 >> 16);
-                                *(byte*)(pBufPos + 3) = (byte)(u64 >> 24);
-                                *(byte*)(pBufPos + 4) = (byte)(u64 >> 32);
-                                *(byte*)(pBufPos + 5) = (byte)(u64 >> 40);
-                                *(byte*)(pBufPos + 6) = (byte)(u64 >> 48);
-                                *(byte*)(pBufPos + 7) = (byte)(u64 >> 56);
-                                pBufPos += 8;
+                                *(byte*)(pWriteBufPos) = (byte)u64;
+                                *(byte*)(pWriteBufPos + 1) = (byte)(u64 >> 8);
+                                *(byte*)(pWriteBufPos + 2) = (byte)(u64 >> 16);
+                                *(byte*)(pWriteBufPos + 3) = (byte)(u64 >> 24);
+                                *(byte*)(pWriteBufPos + 4) = (byte)(u64 >> 32);
+                                *(byte*)(pWriteBufPos + 5) = (byte)(u64 >> 40);
+                                *(byte*)(pWriteBufPos + 6) = (byte)(u64 >> 48);
+                                *(byte*)(pWriteBufPos + 7) = (byte)(u64 >> 56);
+                                pWriteBufPos += 8;
                                 break;
                             default:
                                 Sys.Crash("Invalid value type to serialize");
@@ -759,35 +849,211 @@ namespace DnaUnity
         {
             DnaSerializedTypeInfo typeInfo;
 
-            objsList.Clear();
-            monoTypeMap = typeMap;
+            writeObjsList.Clear();
+            monoWriteTypeMap = typeMap;
 
-            pBufPos = pBuf;
+            pWriteBufPos = pWriteBuf;
 
             if (inst == null) {
-                *pBufPos = 0;
-                pBufPos += 1;
+                *pWriteBufPos = 0;
+                pWriteBufPos += 1;
             } else {
-                if (!monoTypeMap.TryGetValue(inst.GetType(), out typeInfo)) {
+                if (!monoWriteTypeMap.TryGetValue(inst.GetType(), out typeInfo)) {
                     typeInfo = BuildMonoTypeInfo(inst.GetType());
                 }
                 WriteVarInt((uint)typeInfo.typeCode);
                 SerializeMonoInst(inst);
             }
 
-            buf = new byte[(int)(pBufPos - pBuf)];
-            System.Runtime.InteropServices.Marshal.Copy((System.IntPtr)pBuf, buf, 0, buf.Length);
-            objs = objsList.ToArray();
+            buf = new byte[(int)(pWriteBufPos - pWriteBuf)];
+            System.Runtime.InteropServices.Marshal.Copy((System.IntPtr)pWriteBuf, buf, 0, buf.Length);
+            objs = writeObjsList.ToArray();
         }
 
         // ***************
         // DESERIALIZE DNA
         // ***************
 
-        public static void DeserializeDna(OBJ_TYPE wrapInst, byte[] buf, OBJ_TYPE[] objs, 
-            Dictionary<PTR, DnaSerializedTypeInfo> typeMap)
+        private static void DeserializeDnaInst(byte* pInst, DnaSerializedTypeInfo typeInfo)
         {
+            int i;
+            tMD_FieldDef* pFieldDef;
+            uint memOffset;
+            uint memSize;
+            string s;
+            byte b;
+            ushort u16;
+            uint u32;
+            ulong u64;
+            OBJ_TYPE obj;
+            DnaSerializedFieldInfo fieldInfo;
+            DnaSerializedTypeInfo childTypeInfo;
+            int typeCode;
+            byte* pChildInst;
+            int objId;
 
+            for (i = 0; i < typeInfo.fields.Length; i++) {
+
+                fieldInfo = typeInfo.fields[i];
+                if (fieldInfo.skip)
+                    continue;
+
+                pFieldDef = (tMD_FieldDef*)fieldInfo.fieldDef;
+                memOffset = pFieldDef->memOffset;
+                memSize = pFieldDef->memSize;
+                typeCode = fieldInfo.typeCode;
+
+                if (pFieldDef->pType->isValueType == 0) {
+
+                    if (typeCode == (int)System.TypeCode.String) {
+
+                        // String (special case)
+
+                        s = ReadString();
+                        *(tSystemString**)(pInst + memOffset) = (s != null ? System_String.FromMonoString(s) : null);
+
+#if UNITY_5 || UNITY_2017 || UNITY_2018
+                    } else if (typeCode == 97) { // UnityEngine.Object derived types
+
+                        objId = (int)ReadVarInt();
+
+                        if (objId == 0) {
+                            *(void**)(pInst + memOffset) = null;
+                        } else {
+                            obj = readObjList[objId - 1];
+                            *(void**)(pInst + memOffset) = Heap.AllocMonoObject(MonoType.GetTypeForMonoObject(obj, null, null), obj);
+                        }
+#endif
+                    } else if (typeCode == 98) {  // Array type
+
+                        Sys.Crash("Array serialization not implemented yet!");
+
+                    } else if (typeCode == 99) {  // List<T> type
+
+                        Sys.Crash("List<T> serialization not implemented yet!");
+
+                    } else {
+
+                        // Other DNA Reference types (we assume they're serializable)
+
+                        b = *(byte*)pReadBuf;
+                        pReadBufPos += 1;
+                        if (b == 0) {
+                            *(void**)(pInst + memOffset) = null;
+                        } else {
+                            childTypeInfo = readTypeMap[fieldInfo.typeCode];
+                            pChildInst = Heap.AllocType((tMD_TypeDef*)childTypeInfo.typeDef);
+                            DeserializeDnaInst(pChildInst, childTypeInfo);
+                            *(void**)(pInst + memOffset) = pChildInst;
+                        }
+
+                    }
+
+                } else {
+
+                    // Value types
+
+                    // NOTE: We can't assume alignment so we have to serialize byte by byte
+
+                    if (fieldInfo.typeCode <= 18) { // Standard System.TypeCode - this is a basic type
+
+                        switch (pFieldDef->memSize) {
+                            case 1:
+                                *(pInst + memOffset) = *pReadBufPos;
+                                pReadBufPos += 1;
+                                break;
+                            case 2:
+                                u16 = (ushort)((ushort)*(byte*)(pReadBufPos) |
+                                               (ushort)*(byte*)(pReadBufPos + 1) << 8);
+                                *(ushort*)(pInst + memOffset) = u16;
+                                pReadBufPos += 2;
+                                break;
+                            case 4:
+                                u32 = (uint)((uint)*(byte*)(pReadBufPos) |
+                                             (uint)*(byte*)(pReadBufPos + 1) << 8 |
+                                             (uint)*(byte*)(pReadBufPos + 2) << 16 |
+                                             (uint)*(byte*)(pReadBufPos + 3) << 24);
+                                *(uint*)(pInst + memOffset) = u32;
+                                pReadBufPos += 4;
+                                break;
+                            case 8:
+                                u64 = (ulong)((ulong)*(byte*)(pReadBufPos) |
+                                             (ulong)*(byte*)(pReadBufPos + 1) << 8 |
+                                             (ulong)*(byte*)(pReadBufPos + 2) << 16 |
+                                             (ulong)*(byte*)(pReadBufPos + 3) << 24 |
+                                             (ulong)*(byte*)(pReadBufPos + 4) << 32 |
+                                             (ulong)*(byte*)(pReadBufPos + 5) << 40 |
+                                             (ulong)*(byte*)(pReadBufPos + 6) << 48 |
+                                             (ulong)*(byte*)(pReadBufPos + 7) << 56);
+                                *(ulong*)(pInst + memOffset) = u64;
+                                pReadBufPos += 8;
+                                break;
+                            default:
+                                Sys.Crash("Invalid value type to serialize");
+                                break;
+                        }
+
+                    } else {
+
+                        childTypeInfo = readTypeMap[fieldInfo.typeCode];
+                        pChildInst = (pInst + memOffset);
+                        DeserializeDnaInst(pChildInst, childTypeInfo);
+                    }
+
+                }
+            }
+        }
+
+        public static byte* DeserializeDna(object wrapInst, byte[] buf, OBJ_TYPE[] objs, 
+            DnaSerializedTypeInfo[] typeList)
+        {
+            int i, j;
+
+            readObjList = objs;
+            readTypeMap = new Dictionary<int, DnaSerializedTypeInfo>();
+
+            // Get type map for reading.  Take into account any types that may have been changed, fields that may have been 
+            // added or deleted, etc.
+            for (i = 0; i < typeList.Length; i++) {
+                DnaSerializedTypeInfo sourceTypeInfo = typeList[i];
+                DnaSerializedTypeInfo targetTypeInfo = BuildDnaTypeInfo((tMD_TypeDef*)Dna.FindType(sourceTypeInfo.name));
+                sourceTypeInfo.targetTypeInfo = targetTypeInfo;
+                if (targetTypeInfo != null) {
+                    sourceTypeInfo.typeDef = targetTypeInfo.typeDef;
+                    if (sourceTypeInfo.hash == targetTypeInfo.hash) {
+                        sourceTypeInfo.fields = targetTypeInfo.fields;
+                    } else {
+                        if (sourceTypeInfo.targetTypeInfo != null) {
+                            for (j = 0; j < sourceTypeInfo.fields.Length; j++) {
+                                DnaSerializedFieldInfo sourceFieldInfo = sourceTypeInfo.fields[j];
+                                DnaSerializedFieldInfo targetFieldInfo = targetTypeInfo.FindField(sourceFieldInfo.name);
+                                if (targetFieldInfo == null || !sourceFieldInfo.MatchesField(targetFieldInfo)) {
+                                    sourceFieldInfo.skip = true;
+                                } else {
+                                    sourceFieldInfo.fieldDef = targetFieldInfo.fieldDef;
+                                }
+                            }
+                        }
+                    }
+                    readTypeMap[sourceTypeInfo.typeCode] = sourceTypeInfo;
+                }
+            }
+
+            // Read the top type
+            byte* pRet = null;
+            fixed (byte* pBuf = buf) {
+                pReadBuf = pReadBufPos = pBuf;
+                int typeCode = (int)ReadVarInt();
+                DnaSerializedTypeInfo typeInfo = readTypeMap[typeCode];
+                if (wrapInst != null) {
+                    pRet = Heap.AllocMonoObject((tMD_TypeDef*)typeInfo.typeDef, wrapInst);
+                } else {
+                    pRet = Heap.AllocType((tMD_TypeDef*)typeInfo.typeDef);
+                }
+                DeserializeDnaInst(pRet, typeInfo);
+            }
+
+            return pRet;
         }
 
 
