@@ -877,6 +877,7 @@ namespace DnaUnity
         private static void DeserializeDnaInst(byte* pInst, DnaSerializedTypeInfo typeInfo)
         {
             int i;
+            bool skip;
             tMD_FieldDef* pFieldDef;
             uint memOffset;
             uint memSize;
@@ -895,9 +896,7 @@ namespace DnaUnity
             for (i = 0; i < typeInfo.fields.Length; i++) {
 
                 fieldInfo = typeInfo.fields[i];
-                if (fieldInfo.skip)
-                    continue;
-
+                skip = (pInst == null) || fieldInfo.skip;
                 pFieldDef = (tMD_FieldDef*)fieldInfo.fieldDef;
                 memOffset = pFieldDef->memOffset;
                 memSize = pFieldDef->memSize;
@@ -910,18 +909,21 @@ namespace DnaUnity
                         // String (special case)
 
                         s = ReadString();
-                        *(tSystemString**)(pInst + memOffset) = (s != null ? System_String.FromMonoString(s) : null);
+                        if (!skip) {
+                            *(tSystemString**)(pInst + memOffset) = (s != null ? System_String.FromMonoString(s) : null);
+                        }
 
 #if UNITY_5 || UNITY_2017 || UNITY_2018
                     } else if (typeCode == 97) { // UnityEngine.Object derived types
 
                         objId = (int)ReadVarInt();
-
-                        if (objId == 0) {
-                            *(void**)(pInst + memOffset) = null;
-                        } else {
-                            obj = readObjList[objId - 1];
-                            *(void**)(pInst + memOffset) = Heap.AllocMonoObject(MonoType.GetTypeForMonoObject(obj, null, null), obj);
+                        if (!skip) {
+                            if (objId == 0) {
+                                *(void**)(pInst + memOffset) = null;
+                            } else {
+                                obj = readObjList[objId - 1];
+                                *(void**)(pInst + memOffset) = Heap.AllocMonoObject(MonoType.GetTypeForMonoObject(obj, null, null), obj);
+                            }
                         }
 #endif
                     } else if (typeCode == 98) {  // Array type
@@ -939,12 +941,16 @@ namespace DnaUnity
                         b = *(byte*)pReadBuf;
                         pReadBufPos += 1;
                         if (b == 0) {
-                            *(void**)(pInst + memOffset) = null;
+                            if (!skip) {
+                                *(void**)(pInst + memOffset) = null;
+                            }
                         } else {
                             childTypeInfo = readTypeMap[fieldInfo.typeCode];
-                            pChildInst = Heap.AllocType((tMD_TypeDef*)childTypeInfo.typeDef);
+                            pChildInst = skip ? null : Heap.AllocType((tMD_TypeDef*)childTypeInfo.typeDef);
                             DeserializeDnaInst(pChildInst, childTypeInfo);
-                            *(void**)(pInst + memOffset) = pChildInst;
+                            if (!skip) {
+                                *(void**)(pInst + memOffset) = pChildInst;
+                            }
                         }
 
                     }
@@ -959,33 +965,41 @@ namespace DnaUnity
 
                         switch (pFieldDef->memSize) {
                             case 1:
-                                *(pInst + memOffset) = *pReadBufPos;
+                                if (!skip) {
+                                    *(pInst + memOffset) = *pReadBufPos;
+                                }
                                 pReadBufPos += 1;
                                 break;
                             case 2:
-                                u16 = (ushort)((ushort)*(byte*)(pReadBufPos) |
-                                               (ushort)*(byte*)(pReadBufPos + 1) << 8);
-                                *(ushort*)(pInst + memOffset) = u16;
+                                if (!skip) {
+                                    u16 = (ushort)((ushort)*(byte*)(pReadBufPos) |
+                                                   (ushort)*(byte*)(pReadBufPos + 1) << 8);
+                                    *(ushort*)(pInst + memOffset) = u16;
+                                }
                                 pReadBufPos += 2;
                                 break;
                             case 4:
-                                u32 = (uint)((uint)*(byte*)(pReadBufPos) |
-                                             (uint)*(byte*)(pReadBufPos + 1) << 8 |
-                                             (uint)*(byte*)(pReadBufPos + 2) << 16 |
-                                             (uint)*(byte*)(pReadBufPos + 3) << 24);
-                                *(uint*)(pInst + memOffset) = u32;
+                                if (!skip) {
+                                    u32 = (uint)((uint)*(byte*)(pReadBufPos) |
+                                                 (uint)*(byte*)(pReadBufPos + 1) << 8 |
+                                                 (uint)*(byte*)(pReadBufPos + 2) << 16 |
+                                                 (uint)*(byte*)(pReadBufPos + 3) << 24);
+                                    *(uint*)(pInst + memOffset) = u32;
+                                }
                                 pReadBufPos += 4;
                                 break;
                             case 8:
-                                u64 = (ulong)((ulong)*(byte*)(pReadBufPos) |
-                                             (ulong)*(byte*)(pReadBufPos + 1) << 8 |
-                                             (ulong)*(byte*)(pReadBufPos + 2) << 16 |
-                                             (ulong)*(byte*)(pReadBufPos + 3) << 24 |
-                                             (ulong)*(byte*)(pReadBufPos + 4) << 32 |
-                                             (ulong)*(byte*)(pReadBufPos + 5) << 40 |
-                                             (ulong)*(byte*)(pReadBufPos + 6) << 48 |
-                                             (ulong)*(byte*)(pReadBufPos + 7) << 56);
-                                *(ulong*)(pInst + memOffset) = u64;
+                                if (!skip) {
+                                    u64 = (ulong)((ulong)*(byte*)(pReadBufPos) |
+                                                 (ulong)*(byte*)(pReadBufPos + 1) << 8 |
+                                                 (ulong)*(byte*)(pReadBufPos + 2) << 16 |
+                                                 (ulong)*(byte*)(pReadBufPos + 3) << 24 |
+                                                 (ulong)*(byte*)(pReadBufPos + 4) << 32 |
+                                                 (ulong)*(byte*)(pReadBufPos + 5) << 40 |
+                                                 (ulong)*(byte*)(pReadBufPos + 6) << 48 |
+                                                 (ulong)*(byte*)(pReadBufPos + 7) << 56);
+                                    *(ulong*)(pInst + memOffset) = u64;
+                                }
                                 pReadBufPos += 8;
                                 break;
                             default:
@@ -996,8 +1010,9 @@ namespace DnaUnity
                     } else {
 
                         childTypeInfo = readTypeMap[fieldInfo.typeCode];
-                        pChildInst = (pInst + memOffset);
+                        pChildInst = skip ? null : (pInst + memOffset);
                         DeserializeDnaInst(pChildInst, childTypeInfo);
+
                     }
 
                 }
