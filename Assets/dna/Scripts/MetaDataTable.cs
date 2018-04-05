@@ -205,10 +205,18 @@ namespace DnaUnity
         // The Mono Handle to a MonoType object if this is a wrapper around a mono type, null if a native type
         public /*Handle*/ void* monoType;
 
-        #if DEBUG
         public string nameS { get { return S.str(name); } }
+
         public string nameSpaceS { get { return S.str(nameSpace); } }
-        #endif
+
+        public string fullNameS {
+            get {
+                if (nameSpace != null && nameSpace[0] != 0)
+                    return S.str(nameSpace) + "." + S.str(name);
+                else
+                    return S.str(name);
+            }
+        }
     }
 
     // Table 0x04 - FieldDef
@@ -255,9 +263,7 @@ namespace DnaUnity
         // The Mono Handle to field setter method if this is mono type, null if not
         public /*Handle*/ void* monoSetter;
 
-#if DEBUG
         public string nameS { get { return S.str(name); } }
-#endif
     }
 
     // Table 0x06 - MethodDef

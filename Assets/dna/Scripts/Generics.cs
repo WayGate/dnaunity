@@ -236,7 +236,6 @@ namespace DnaUnity
         	/*SIG*/byte* sig;
         	uint argCount, i;
         	tMD_TypeDef **ppTypeArgs;
-            System.Reflection.MethodBase methodBase;
 
             Mem.heapcheck();
 
