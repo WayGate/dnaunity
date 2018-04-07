@@ -39,6 +39,13 @@ namespace DnaUnity
     using OBJ_LIST = List<System.Object>;
 #endif
 
+    // List<T> struct
+    public unsafe struct tGenericList
+    {
+        public tSystemArray* pItems;
+        public int size;
+    }
+
     /// <summary>
     /// Serialization information for 
     /// </summary>
@@ -147,9 +154,12 @@ namespace DnaUnity
 
     public unsafe static class Serialization
     {
+        const uint DEFAULT_WRITE_BUF_SIZE = 2048;
+
         // Serialize static fields
         static byte* pWriteBuf = null;       // A growable buffer for writing
         static byte* pWriteBufPos = null;
+        static byte* pWriteBufEnd = null;
         static uint writeBufSize = 0;
         static OBJ_LIST writeObjsList;
         static Dictionary<PTR, DnaSerializedTypeInfo> dnaWriteTypeMap;
@@ -163,13 +173,17 @@ namespace DnaUnity
 
         // Other fields
         static uint[] memSizes;
+        static tMD_TypeDef* pListTypeDef;
+
 
         public static void Init()
         {
-            pWriteBuf = (byte*)Mem.malloc(2048);
+            pWriteBuf = (byte*)Mem.malloc(DEFAULT_WRITE_BUF_SIZE);
             pWriteBufPos = pWriteBuf;
+            pWriteBufEnd = pWriteBuf + DEFAULT_WRITE_BUF_SIZE;
             writeBufSize = 2048;
             writeObjsList = new OBJ_LIST();
+            pListTypeDef = null;
         }
 
         public static void Clear()
@@ -177,8 +191,25 @@ namespace DnaUnity
             pWriteBuf = pWriteBufPos = pReadBuf = pReadBufPos = null;
             dnaWriteTypeMap = null;
             monoWriteTypeMap = null;
+            pReadBuf = pReadBufPos = null;
             readTypeMap = null;
             readObjList = null;
+            memSizes = null;
+            pListTypeDef = null;
+        }
+
+        private static void ExpandWriteBuf(uint size)
+        {
+            uint minSize = writeBufSize + size;
+            uint newSize = writeBufSize;
+            while (newSize < minSize) {
+                newSize = newSize * 2;
+            }
+            uint pos = (uint)(pWriteBufPos - pWriteBuf);
+            pWriteBuf = (byte*)Mem.realloc(pWriteBuf, newSize);
+            pWriteBufPos = pWriteBuf + pos;
+            writeBufSize = newSize;
+            pWriteBufEnd = pWriteBuf + writeBufSize;
         }
 
         private static void WriteVarInt(uint i)
@@ -223,9 +254,8 @@ namespace DnaUnity
                     }
                 }
                 if (isAnsi) {
-                    while ((pWriteBufPos - pWriteBuf) + len + 8 >= writeBufSize) {
-                        writeBufSize = writeBufSize * 2;
-                        pWriteBuf = (byte*)Mem.realloc(pWriteBuf, (SIZE_T)(writeBufSize));
+                    while (pWriteBufPos + (len + 8) >= pWriteBufEnd) {
+                        ExpandWriteBuf(len + 8);
                     }
                     *pWriteBufPos = 1; // Is Ansi (8 bit)
                     pWriteBufPos++;
@@ -235,9 +265,8 @@ namespace DnaUnity
                         pWriteBufPos += 1;
                     }
                 } else {
-                    while ((pWriteBufPos - pWriteBuf) + (len << 1) + 8 >= writeBufSize) {
-                        writeBufSize = writeBufSize * 2;
-                        pWriteBuf = (byte*)Mem.realloc(pWriteBuf, (SIZE_T)(writeBufSize));
+                    if (pWriteBufPos + ((len << 1) + 8) >= pWriteBufEnd) {
+                        ExpandWriteBuf((len << 1) + 8);
                     }
                     *pWriteBufPos = 2; // Is UTF16 (16 bit)
                     pWriteBufPos++;
@@ -400,19 +429,20 @@ namespace DnaUnity
 
         private static void SerializeDnaInst(tMD_TypeDef* pTypeDef, byte* pInst)
         {
-            int i;
+            int i, j, len, typeCode;
             tMD_FieldDef* pFieldDef;
-            uint memOffset;
-            uint memSize;
+            tMD_TypeDef* pElemType;
+            uint memOffset, memSize, elemSize;
             string s;
             ushort u16;
             uint u32;
             ulong u64;
             OBJ_TYPE obj;
-            void* pPtr;
+            byte* pPtr, pElem;
+            tSystemArray* pArray;
+            tGenericList* pList;
             DnaSerializedTypeInfo typeInfo;
             DnaSerializedFieldInfo fieldInfo;
-            int typeCode;
 
             if (!dnaWriteTypeMap.TryGetValue((PTR)pTypeDef, out typeInfo)) {
                 typeInfo = BuildDnaTypeInfo(pTypeDef);
@@ -427,9 +457,8 @@ namespace DnaUnity
                 typeCode = fieldInfo.typeCode;
 
                 // Check to see if we need to expand serialization buffer
-                if ((pWriteBufPos - pWriteBuf) + memSize + 8 >= writeBufSize) {
-                    writeBufSize = writeBufSize * 2;
-                    pWriteBuf = (byte*)Mem.realloc(pWriteBuf, (SIZE_T)(writeBufSize * 2));
+                if (pWriteBufPos + (memSize + 8) >= pWriteBufEnd) {
+                    ExpandWriteBuf(memSize + 8);
                 }
 
                 if (pFieldDef->pType->isValueType == 0) {
@@ -444,8 +473,8 @@ namespace DnaUnity
 #if UNITY_5 || UNITY_2017 || UNITY_2018
                     } else if (typeCode == 97) { // UnityEngine.Object derived types
 
-                        pPtr = *(void**)(pInst + memOffset);
-                        obj = pPtr != null ? Heap.GetMonoObject((byte*)pPtr) as OBJ_TYPE : null;
+                        pPtr = *(byte**)(pInst + memOffset);
+                        obj = pPtr != null ? Heap.GetMonoObject(pPtr) as OBJ_TYPE : null;
                         if (pPtr == null) {
                             *pWriteBufPos = 0;
                             pWriteBufPos += 1;
@@ -455,19 +484,119 @@ namespace DnaUnity
                             WriteVarInt(u32);
                         }
 #endif
-                    } else if (typeCode == 98) {  // Array type
+                    } else if (typeCode == 98 || typeCode == 99) {  // Array or List<T> type
 
-                        Sys.Crash("Array serialization not implemented yet!");
+                        if (typeCode == 98) {   // Array
+                            pArray = *(tSystemArray**)(pInst + memOffset);
+                            if (pArray != null) {
+                                len = (int)System_Array.GetLength(pArray);
+                            } else {
+                                len = 0;
+                            }
+                        } else {                // List<T>
+                            pList = *(tGenericList**)(pInst + memOffset);
+                            if (pList != null) {
+                                pArray = pList->pItems;
+                                len = pList->size;
+                            } else {
+                                pArray = null;
+                                len = 0;
+                            }
+                        }
 
-                    } else if (typeCode == 99) {  // List<T> type
+                        if (pArray != null) {
+                            pPtr = tSystemArray.GetElements(pArray);
+                            pElemType = pFieldDef->pType->pArrayElementType;
+                            elemSize = pElemType->arrayElementSize;
+                        } else {
+                            pPtr = null;
+                            pElemType = null;
+                            elemSize = 0;
+                        }
 
-                        Sys.Crash("List<T> serialization not implemented yet!");
+                        if (pArray == null) {
+
+                            // 0 len is null
+                            WriteVarInt(0);
+
+                        } else {
+
+                            // len + 1 is array
+                            WriteVarInt((uint)(len + 1));
+
+                            if (pElemType->fixedBlittable != 0) {
+
+                                // Check to see if we need to expand serialization buffer
+                                if (pWriteBufPos + (elemSize * len + 16) >= pWriteBufEnd) {
+                                    ExpandWriteBuf((uint)(elemSize * len + 16));
+                                }
+
+                                Mem.memcpy(pWriteBufPos, pPtr, (SIZE_T)(elemSize * len));
+                                pWriteBufPos += (elemSize * len);
+
+                            } else if (fieldInfo.elementTypeCode == (int)System.TypeCode.String) {
+
+                                // Check to see if we need to expand serialization buffer
+                                if (pWriteBufPos + (len + 16) >= pWriteBufEnd) {
+                                    ExpandWriteBuf((uint)(len + 16));
+                                }
+
+                                for (j = 0; j < len; j++, pPtr += sizeof(void*)) {
+                                    s = System_String.ToMonoString(*(tSystemString**)pPtr);
+                                    WriteString(s);
+                                }
+
+#if UNITY_5 || UNITY_2017 || UNITY_2018
+
+                            } else if (fieldInfo.elementTypeCode == 97) {  // UnityEngine.Object derived type
+
+                                // Check to see if we need to expand serialization buffer
+                                if (pWriteBufPos + (len + 16) >= pWriteBufEnd) {
+                                    ExpandWriteBuf((uint)(len + 16));
+                                }
+
+                                for (j = 0; j < len; j++, pPtr += sizeof(void*)) {
+                                    pInst = *(byte**)(pPtr);
+                                    obj = (pInst != null ? Heap.GetMonoObject(pInst) as OBJ_TYPE : null);
+                                    if (obj == null) {
+                                        *pWriteBufPos = 0;
+                                        pWriteBufPos += 1;
+                                    } else {
+                                        writeObjsList.Add(obj);
+                                        u32 = (uint)writeObjsList.Count;
+                                        WriteVarInt(u32);
+                                    }
+                                }
+
+#endif
+                            } else {
+
+                                if (pElemType->isValueType != 0) {
+                                    for (j = 0; j < len; j++, pPtr += elemSize) {
+                                        SerializeDnaInst(pElemType, pPtr);
+                                    }
+                                } else {
+                                    for (j = 0; j < len; j++, pPtr += sizeof(void*)) {
+                                        pInst = *(byte**)pPtr;
+                                        if (pInst == null) {
+                                            *pWriteBufPos = 0;
+                                            pWriteBufPos += 1;
+                                        } else {
+                                            *pWriteBufPos = 1;
+                                            pWriteBufPos += 1;
+                                            SerializeDnaInst(pElemType, pInst);
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
 
                     } else { 
 
                         // Other DNA Reference types (we assume they're serializable)
 
-                        pPtr = *(void**)(pInst + memOffset);
+                        pPtr = *(byte**)(pInst + memOffset);
                         if (pPtr == null) {
                             *pWriteBufPos = 0;
                             pWriteBufPos += 1;
@@ -648,8 +777,8 @@ namespace DnaUnity
 
         private static void SerializeMonoInst(object inst)
         {
-            int i;
-            System.Reflection.FieldInfo monoFieldInfo;
+            int i, j, len, elemSize;
+            System.Reflection.FieldInfo monoFieldInfo, listItemsFieldInfo;
             uint memSize;
             string s;
             ushort u16;
@@ -659,7 +788,10 @@ namespace DnaUnity
             object childInst;
             DnaSerializedTypeInfo typeInfo;
             DnaSerializedFieldInfo fieldInfo;
-            System.Type type;
+            System.Array array;
+            System.Collections.IList list;
+            System.Type type, elemType;
+            byte* pPtr, pInst;
             int typeCode;
             byte* pTemp = stackalloc byte[16];
 
@@ -678,9 +810,8 @@ namespace DnaUnity
                 memSize = GetMemSize(fieldInfo.typeCode);
 
                 // Check to see if we need to expand serialization buffer
-                if ((pWriteBufPos - pWriteBuf) + memSize + 8 >= writeBufSize) {
-                    writeBufSize = writeBufSize * 2;
-                    pWriteBuf = (byte*)Mem.realloc(pWriteBuf, (SIZE_T)(writeBufSize * 2));
+                if (pWriteBufPos + (memSize + 8) >= pWriteBufEnd) {
+                    ExpandWriteBuf(memSize + 8);
                 }
 
                 if (!monoFieldInfo.FieldType.IsValueType) {
@@ -709,13 +840,119 @@ namespace DnaUnity
                         }
 
 #endif
-                    } else if (typeCode == 98) {  // Array type
+                    } else if (typeCode == 98 || typeCode == 99) {  // Array or List<T> type
 
-                        Sys.Crash("Array serialization not implemented yet!");
+                        if (typeCode == 98) {   // Array
+                            array = monoFieldInfo.GetValue(inst) as System.Array;
+                            if (array != null) {
+                                len = array.Length;
+                            } else {
+                                len = 0;
+                            }
+                        } else {                // List<T>
+                            list = monoFieldInfo.GetValue(inst) as System.Collections.IList;
+                            if (list != null) {
+                                listItemsFieldInfo = list.GetType().GetField("items",
+                                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                                array = listItemsFieldInfo.GetValue(list) as System.Array;
+                                len = list.Count;
+                            } else {
+                                array = null;
+                                len = 0;
+                            }
+                        }
 
-                    } else if (typeCode == 99) {  // List<T> type
+                        if (array == null) {
 
-                        Sys.Crash("List<T> serialization not implemented yet!");
+                            // 0 len is null
+                            WriteVarInt(0);
+
+                        } else {
+
+                            elemType = array.GetType().GetElementType();
+                            elemSize = System.Runtime.InteropServices.Marshal.SizeOf(elemType);
+
+                            pPtr = null;
+                            if (elemType.IsValueType) { 
+                                try {
+                                    pPtr = (byte*)System.Runtime.InteropServices.GCHandle.Alloc(array, 
+                                        System.Runtime.InteropServices.GCHandleType.Pinned).AddrOfPinnedObject();
+                                } catch {
+                                }
+                            }
+
+                            // len + 1 is array
+                            WriteVarInt((uint)(len + 1));
+
+                            if (pPtr != null) {
+
+                                // Check to see if we need to expand serialization buffer
+                                if (pWriteBufPos + (elemSize * len + 16) >= pWriteBufEnd) {
+                                    ExpandWriteBuf((uint)(elemSize * len + 16));
+                                }
+
+                                Mem.memcpy(pWriteBufPos, pPtr, (SIZE_T)(elemSize * len));
+                                pWriteBufPos += (elemSize * len);
+
+                                System.Runtime.InteropServices.GCHandle.FromIntPtr((System.IntPtr)pPtr).Free();
+
+                            } else if (fieldInfo.elementTypeCode == (int)System.TypeCode.String) {
+
+                                // Check to see if we need to expand serialization buffer
+                                if (pWriteBufPos + (len + 16) >= pWriteBufEnd) {
+                                    ExpandWriteBuf((uint)(len + 16));
+                                }
+
+                                for (j = 0; j < len; j++, pPtr += sizeof(void*)) {
+                                    s = array.GetValue(j) as string;
+                                    WriteString(s);
+                                }
+
+#if UNITY_5 || UNITY_2017 || UNITY_2018
+
+                            } else if (fieldInfo.elementTypeCode == 97) {  // UnityEngine.Object derived type
+
+                                // Check to see if we need to expand serialization buffer
+                                if (pWriteBufPos + (len + 16) >= pWriteBufEnd) {
+                                    ExpandWriteBuf((uint)(len + 16));
+                                }
+
+                                for (j = 0; j < len; j++) {
+                                    obj = array.GetValue(j) as OBJ_TYPE;
+                                    if (pPtr == null) {
+                                        *pWriteBufPos = 0;
+                                        pWriteBufPos += 1;
+                                    } else {
+                                        writeObjsList.Add(obj);
+                                        u32 = (uint)writeObjsList.Count;
+                                        WriteVarInt(u32);
+                                    }
+                                }
+
+#endif
+                            } else {
+
+                                if (elemType.IsValueType) {
+                                    for (j = 0; j < len; j++) {
+                                        childInst = array.GetValue(j);
+                                        SerializeMonoInst(childInst);
+                                    }
+                                } else {
+                                    for (j = 0; j < len; j++) {
+                                        childInst = array.GetValue(j);
+                                        if (childInst == null) {
+                                            *pWriteBufPos = 0;
+                                            pWriteBufPos += 1;
+                                        } else {
+                                            *pWriteBufPos = 1;
+                                            pWriteBufPos += 1;
+                                            SerializeMonoInst(childInst);
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
 
                     } else {
 
@@ -876,11 +1113,11 @@ namespace DnaUnity
 
         private static void DeserializeDnaInst(byte* pInst, DnaSerializedTypeInfo typeInfo)
         {
-            int i;
+            int i, j, len;
             bool skip;
+            tMD_TypeDef* pArrayType, pElemType; 
             tMD_FieldDef* pFieldDef;
-            uint memOffset;
-            uint memSize;
+            uint memOffset, memSize, elemSize;
             string s;
             byte b;
             ushort u16;
@@ -890,8 +1127,17 @@ namespace DnaUnity
             DnaSerializedFieldInfo fieldInfo;
             DnaSerializedTypeInfo childTypeInfo;
             int typeCode;
-            byte* pChildInst;
+            byte* pChildInst, pPtr;
+            tSystemArray* pArray;
+            tGenericList* pList;
             int objId;
+
+            if (pListTypeDef == null) {
+                pListTypeDef = CLIFile.FindTypeInAllLoadedAssemblies(new S("System.Collections.Generic"), new S("List`1"));
+                if (pListTypeDef == null) {
+                    Sys.Crash("Unable to find List<T>");
+                }
+            }
 
             for (i = 0; i < typeInfo.fields.Length; i++) {
 
@@ -926,13 +1172,86 @@ namespace DnaUnity
                             }
                         }
 #endif
-                    } else if (typeCode == 98) {  // Array type
+                    } else if (typeCode == 98 || typeCode == 99) {  // Array or List<T> type
 
-                        Sys.Crash("Array serialization not implemented yet!");
+                        len = (int)ReadVarInt();
 
-                    } else if (typeCode == 99) {  // List<T> type
+                        if (len == 0) {
 
-                        Sys.Crash("List<T> serialization not implemented yet!");
+                            *(void**)(pInst + memOffset) = null;
+
+                        } else {
+
+                            len--; // 0 = null, so we have to -1 to get actual array len
+
+                            if (typeCode == 98) {
+                                pArrayType = pFieldDef->pType;
+                                pArray = (tSystemArray*)System_Array.NewVector(pArrayType, (uint)len);
+                                *(void**)(pInst + memOffset) = pArray;
+                            } else {
+                                if (pFieldDef->pType->ppClassTypeArgs == null) {
+                                    Sys.Crash("No generic type arg for List<T>");
+                                }
+                                pArrayType = Type.GetArrayTypeDef(pFieldDef->pType->ppClassTypeArgs[0], null, null);
+                                pArray = (tSystemArray*)System_Array.NewVector(pArrayType, (uint)len);
+                                pList = (tGenericList*)Heap.AllocType(pListTypeDef);
+                                pList->pItems = pArray;
+                                pList->size = len;
+                                *(void**)(pInst + memOffset) = pList;
+                            }
+
+                            pElemType = pArrayType->pArrayElementType;
+                            elemSize = pElemType->arrayElementSize;
+                            pPtr = System_Array.GetElements(pArray);
+
+                            if (pElemType->fixedBlittable != 0) {
+
+                                Mem.memcpy(pPtr, pReadBufPos, (SIZE_T)(elemSize * len));
+                                pReadBufPos += (elemSize * len);
+
+                            } else if (fieldInfo.elementTypeCode == (int)System.TypeCode.String) {
+
+                                for (j = 0; j < len; j++, pPtr += sizeof(void*)) {
+                                    s = ReadString();
+                                    *(tSystemString**)pPtr = s != null ? System_String.FromMonoString(s) : null;
+                                }
+
+#if UNITY_5 || UNITY_2017 || UNITY_2018
+
+                            } else if (fieldInfo.elementTypeCode == 97) {  // UnityEngine.Object derived type
+
+                                for (j = 0; j < len; j++, pPtr += sizeof(void*)) {
+                                    u32 = ReadVarInt();
+                                    if (u32 == 0) {
+                                        *(byte**)(pPtr) = null;
+                                    } else {
+                                        *(byte**)(pPtr) = Heap.AllocMonoObject(pElemType, readObjList[u32]);
+                                    }
+                                }
+
+#endif
+                            } else {
+
+                                childTypeInfo = readTypeMap[fieldInfo.elementTypeCode];
+
+                                if (pElemType->isValueType != 0) {
+                                    for (j = 0; j < len; j++, pPtr += elemSize) {
+                                        DeserializeDnaInst(pPtr, childTypeInfo);
+                                    }
+                                } else {
+                                    for (j = 0; j < len; j++, pPtr += sizeof(void*)) {
+                                        b = *pReadBufPos;
+                                        pReadBufPos++;
+                                        if (b == 0) {
+                                            *(byte**)pPtr = null;
+                                        } else {
+                                            DeserializeDnaInst(pPtr, childTypeInfo);
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
 
                     } else {
 

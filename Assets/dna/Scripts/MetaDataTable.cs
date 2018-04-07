@@ -143,8 +143,14 @@ namespace DnaUnity
         public tMD_MethodDef **pVTable;
     	// The number of virtual methods in the vTable
         public uint numVirtualMethods;
-        // Padding 3
-        public uint padding3;
+        // Is this type blittable (parent is bittable and contains only blittable non-ref fields)
+        public byte blittable;
+        // Is blittable and has no pointer types (has a fixed size on all platforms)
+        public byte fixedBlittable;
+        // This is one of the basic .NET blittable types (byte, sbyte, short, ushort, int, uint, long, ulong, float, double, enum, intptr, uintptr)
+        public byte basicBlittable;
+        // Padding 5
+        public byte padding5;
     	// Pointer to the memory for any static fields in this type. This will be null if type has no static fields
         public byte* pStaticFields;
     	// Has the static constructor been executed yet?
@@ -157,8 +163,8 @@ namespace DnaUnity
         public byte isPrimed;
         // Is either a mono reference type, or has a mono reference type as a base class
         public byte hasMonoBase;
-    	// Padding 4
-        public uint padding4;
+    	// Padding 6
+        public uint padding6;
     	// If this type has a static constructor, then store it here. null if no static constructor
         public tMD_MethodDef *pStaticConstructor;
     	// The size of this type when in an array
@@ -167,14 +173,14 @@ namespace DnaUnity
         public uint stackSize;
     	// How many interfaces does this type implement
         public uint numInterfaces;
-        // Padding 5
-        public uint padding5;
+        // Padding 7
+        public uint padding7;
     	// All interfaces that this type implements are mapped here
         public tInterfaceMap *pInterfaceMaps;
     	// The original table index of this TypeDef
         public /*IDX_TABLE*/uint tableIndex;
-        // Padding 6
-        public uint padding6;
+        // Padding 8
+        public uint padding8;
     	// If this is a generic type definition, then store any instantiatations here (in a linked list)
         public tGenericInstance *pGenericInstances;
     	// If this is a generic instance, then store link to its core definition type
@@ -185,8 +191,8 @@ namespace DnaUnity
         public tMD_TypeDef *pArrayElementType;
     	// The number of fields in this type. This includes and static fields, but not inherited fields
         public uint numFields;
-        // Padding 7
-        public uint padding7;
+        // Padding 9
+        public uint padding9;
     	// Links to all the fields (in memory order), including statics (not inherited)
         public tMD_FieldDef **ppFields;
     	// The memory needed for static fields, in bytes

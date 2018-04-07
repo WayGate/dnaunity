@@ -86,6 +86,7 @@ namespace DnaUnity
             MetaData.Init();
             MonoType.Init();
             Generics.Init();
+            Serialization.Init();
             Heap.Init();
             Finalizer.Init();
             InternalCall.Init();
@@ -105,6 +106,7 @@ namespace DnaUnity
             InternalCall.Clear();
             Finalizer.Clear();
             Heap.Clear();
+            Serialization.Clear();
             Generics.Clear();
             MonoType.Clear();
             MetaData.Clear();

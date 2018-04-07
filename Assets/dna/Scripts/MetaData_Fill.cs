@@ -360,9 +360,16 @@ namespace DnaUnity
                     } else if (pParent->fillState < Type.TYPE_FILL_ALL) {
                         MetaData.Fill_Defer(pParent, null, null);
                     }
-                    if (pParent->hasMonoBase != 0) {
-                        pTypeDef->hasMonoBase = 1;
+                    pTypeDef->hasMonoBase = pParent->hasMonoBase;
+                    if (pParent->hasMonoBase == 0) {
+                        // If we have a mono base type, we have at least 1 non-blittable field
+                        pTypeDef->blittable = pParent->blittable;
+                        pTypeDef->fixedBlittable = pParent->fixedBlittable;
+                    } else {
+                        pTypeDef->blittable = pTypeDef->fixedBlittable = 0;
                     }
+                } else {
+                    pTypeDef->blittable = pTypeDef->fixedBlittable = 1;
                 }
 
                 // If this type is an interface, then return 0
@@ -412,6 +419,7 @@ namespace DnaUnity
                     pTypeDef->stackSize = sizeof(PTR);
                     pTypeDef->instanceMemSize = 4;
                     pTypeDef->arrayElementSize = 4;
+                    pTypeDef->blittable = pTypeDef->fixedBlittable = 1;
                 }
 
                 if (pTypeDef->fillState >= resolve)
@@ -482,6 +490,15 @@ namespace DnaUnity
                             } else {
                                 MetaData.Fill_FieldDef(pTypeDef, pFieldDef, instanceMemSize, &(pTypeDef->alignment), ppClassTypeArgs);
                                 instanceMemSize = pFieldDef->memOffset + pFieldDef->memSize;
+                            }
+                            // Update blittable and fixedBlittable status for type - if any non-blittable fields are included set to 0
+                            if (pTypeDef->blittable != 0 || pTypeDef->fixedBlittable != 0) {
+                                if (pFieldDef->pType->isValueType == 0 || pFieldDef->pType->blittable == 0) {
+                                    pTypeDef->blittable = pTypeDef->fixedBlittable = 0;
+                                } else if (pFieldDef->pType->typeInitId == Type.TYPE_SYSTEM_INTPTR || 
+                                           pFieldDef->pType->typeInitId == Type.TYPE_SYSTEM_UINTPTR) {
+                                    pTypeDef->fixedBlittable = 0;
+                                }
                             }
                             pTypeDef->ppFields[i] = pFieldDef;
                         }

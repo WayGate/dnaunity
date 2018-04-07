@@ -336,10 +336,22 @@ namespace DnaUnity
                 pTypeDef->pParent = MonoType.GetTypeForMonoType(monoType.BaseType, null, null);
                 pParent = pTypeDef->pParent;
 
+                pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
+
                 if (pParent != null) {
                     MetaData.Fill_TypeDef(pParent, null, null, Type.TYPE_FILL_PARENTS);
+                    if (pParent->hasMonoBase == 0) {
+                        // If we have a mono base type, we have at least 1 non-blittable field
+                        pTypeDef->blittable = pParent->blittable;
+                        pTypeDef->fixedBlittable = pParent->fixedBlittable;
+                    } else {
+                        pTypeDef->blittable = pTypeDef->fixedBlittable = 0;
+                    }
+                } else {
+                    // For mono types - reference types are NEVER blittable in our implementation
+                    pTypeDef->blittable = pTypeDef->fixedBlittable = pTypeDef->isValueType;
                 }
-                pTypeDef->isValueType = (byte)(monoType.IsValueType ? 1 : 0);
+
                 pTypeDef->alignment = 1;
 
                 // Mark all ref types as having a base Mono Handle pointer as the first slot in their instance data.  This allows
@@ -360,6 +372,7 @@ namespace DnaUnity
                     pTypeDef->stackSize = sizeof(PTR);
                     pTypeDef->instanceMemSize = 4;
                     pTypeDef->arrayElementSize = 4;
+                    pTypeDef->blittable = pTypeDef->fixedBlittable = 1;
                 }
 
                 if (pTypeDef->fillState >= resolve)
@@ -430,6 +443,15 @@ namespace DnaUnity
                             } else {
                                 MonoType.Fill_FieldDef(pTypeDef, fieldInfo, pFieldDef, instanceMemSize, &(pTypeDef->alignment), ppClassTypeArgs);
                                 instanceMemSize = pFieldDef->memOffset + pFieldDef->memSize;
+                            }
+                            // Update blittable and fixedBlittable status for type - if any non-blittable fields are included set to 0
+                            if (pTypeDef->blittable != 0 || pTypeDef->fixedBlittable != 0) {
+                                if (pFieldDef->pType->isValueType == 0 || pFieldDef->pType->blittable == 0) {
+                                    pTypeDef->blittable = pTypeDef->fixedBlittable = 0;
+                                } else if (pFieldDef->pType->typeInitId == Type.TYPE_SYSTEM_INTPTR || 
+                                           pFieldDef->pType->typeInitId == Type.TYPE_SYSTEM_UINTPTR) {
+                                    pTypeDef->fixedBlittable = 0;
+                                }
                             }
                             pTypeDef->ppFields[i] = pFieldDef;
                         }
